@@ -1,70 +1,33 @@
 # =============================================
 # File: app.py
-# Ultra-thin Flask backend — filters only
-# Schema: [msg_id, text, timestamp, author, company, stage]
+# Flask + MongoDB backend (JobStats)
+# Schema in MongoDB: [msg_id, text, timestamp, author, company, stage]
 # =============================================
 from flask import Flask, jsonify, request, send_from_directory
-from datetime import datetime, timedelta
+from datetime import datetime
 from flask_cors import CORS
-import random
+from pymongo import MongoClient
 import os
 
-
+# ---- Flask App ----
 app = Flask(__name__)
 CORS(app)
 
+# ---- MongoDB Setup ----
+
+
+uri = os.getenv("MONGO_URI")
+
+mongo_client = MongoClient(uri)
+db = mongo_client["JobStats"]
+collection = db["interview_processes"]
+
+# ---- Constants ----
 STAGE_ORDER = [
-    "Applied",
-    "OA",
-    "Phone",
-    "Onsite",
-    "HM",
-    "Offer",
-    "Accept",
+    "App", "OA", "Phone/R1", "Interview", "Onsite", "HM", "Offer"
 ]
-COMPANIES = ["Google", "Stripe", "Amazon", "Netflix"]
-AUTHORS = ["sam", "jane", "adam", "paul", "neetu", "Jacob"]
-TEXTS = [
-    "Applied via portal.", "Completed OA.", "Phone screen done.",
-    "Onsite finished.", "Manager chat scheduled.",
-    "Offer received!", "Accepted offer.",
-]
-
-# ---- Mock dataset (20 messages) ----
-# ---- Mock dataset (chronologically consistent per candidate–company) ----
-base = datetime.now() - timedelta(days=100)
-random.seed(17)
-
-messages = []
-msg_id = 1
-
-for author in AUTHORS:
-    for company in COMPANIES:
-        # Randomly decide how many stages this candidate reached
-        max_stage_idx = random.randint(2, len(STAGE_ORDER))
-        stages = STAGE_ORDER[:max_stage_idx]
-
-        # Starting date for this candidate-company pipeline
-        current_time = base + timedelta(days=random.randint(0, 40))
-
-        for stage in stages:
-            messages.append({
-                "msg_id": msg_id,
-                "text": random.choice(TEXTS),
-                "timestamp": current_time.strftime('%Y-%m-%dT%H:%M:%S'),
-                "author": author,
-                "company": company,
-                "stage": stage,
-            })
-            msg_id += 1
-            # Ensure strictly increasing time between stages
-            current_time += timedelta(days=random.randint(2, 7), hours=random.randint(0, 23))
-
-# Example: messages now have correct temporal ordering per author-company
-
 
 # ---- Helpers ----
-
 def parse_date(s):
     if not s:
         return None
@@ -72,48 +35,69 @@ def parse_date(s):
         try:
             return datetime.strptime(s, fmt)
         except ValueError:
-            pass
+            continue
     return None
-
-def filter_msgs(msgs, start=None, end=None, companies=None, stages=None):
-    out = []
-    for m in msgs:
-        ts = datetime.strptime(m["timestamp"], "%Y-%m-%dT%H:%M:%S")
-        if start and ts < start: continue
-        if end and ts > end: continue
-        if companies and m["company"] not in companies: continue
-        if stages and m["stage"] not in stages: continue
-        out.append(m)
-    return out
 
 # ---- Routes ----
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
 
+
 @app.route('/api/meta')
 def meta():
-    ts = [datetime.strptime(m['timestamp'], '%Y-%m-%dT%H:%M:%S') for m in messages]
+    """Return meta information: companies, stages, and date range."""
+    query = {"spam": False}
+    docs = list(collection.find(query, {"timestamp": 1, "company": 1}))
+    if not docs:
+        return jsonify({'companies': [], 'stages': STAGE_ORDER, 'min_timestamp': None, 'max_timestamp': None, 'count': 0})
+
+    timestamps = [
+        datetime.fromisoformat(d['timestamp']) if isinstance(d['timestamp'], str) else d['timestamp']
+        for d in docs if d.get('timestamp')
+    ]
+    companies = sorted({d.get('company', '') for d in docs if d.get('company')})
+
     return jsonify({
-        'companies': sorted({m['company'] for m in messages}),
+        'companies': companies,
         'stages': STAGE_ORDER,
-        'min_timestamp': min(ts).strftime('%Y-%m-%dT%H:%M:%S'),
-        'max_timestamp': max(ts).strftime('%Y-%m-%dT%H:%M:%S'),
-        'count': len(messages)
+        'min_timestamp': min(timestamps).strftime('%Y-%m-%dT%H:%M:%S') if timestamps else None,
+        'max_timestamp': max(timestamps).strftime('%Y-%m-%dT%H:%M:%S') if timestamps else None,
+        'count': len(docs)
     })
+
 
 @app.route('/api/messages')
 def api_messages():
+    """Return filtered messages based on query params."""
     start = parse_date(request.args.get('start'))
     end = parse_date(request.args.get('end'))
-    companies = set(filter(None, (request.args.get('companies') or '').split(','))) or None
-    stages = set(filter(None, (request.args.get('stages') or '').split(','))) or None
-    res = filter_msgs(messages, start, end, companies, stages)
-    # Sort newest first
-    res = sorted(res, key=lambda m: m['timestamp'], reverse=True)
-    return jsonify({'items': res, 'total': len(res)})
+    companies = [c for c in (request.args.get('companies') or '').split(',') if c]
+    stages = [s for s in (request.args.get('stages') or '').split(',') if s]
 
+    query = {"spam": False}
+
+    # Apply filters
+    if companies:
+        query['company'] = {'$in': companies}
+    if stages:
+        query['stage'] = {'$in': stages}
+    if start or end:
+        query['timestamp'] = {}
+        if start:
+            query['timestamp']['$gte'] = start.isoformat()
+        if end:
+            query['timestamp']['$lte'] = end.isoformat()
+
+    query['spam']
+
+    # Query MongoDB
+    cursor = collection.find(query, {"_id": 0}).sort("timestamp", -1)
+    results = list(cursor)
+
+    return jsonify({'items': results, 'total': len(results)})
+
+# ---- Entry ----
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=False)
-

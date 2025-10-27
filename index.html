@@ -195,13 +195,8 @@ function renderFunnel(order,counts){
 
 // -------------------- Heatmap --------------------
 function shortenStage(stage){
-  const map={
-    "Applied":"App",
-    "Phone":"Phone",
-    "HM":"HM",
-    "Accept":"Accept"
-  };
-  return map[stage]||stage;
+  // Keep the exact stage names without shortening
+  return stage;
 }
 
 function renderHeatmap(sel,companies,transitions,convMat){
@@ -349,9 +344,22 @@ async function refresh(){
   // Use all companies for heatmap if none selected
   const compsForHeatmap=selectedComps.length>0?selectedComps:META.companies;
 
-  // Calculate real conversion rates from data
+  // Count messages per company to get top 8 by frequency
+  const compCounts={};
+  compsForHeatmap.forEach(c=>compCounts[c]=0);
+  data.forEach(d=>{
+    if(compCounts[d.company]!=null)compCounts[d.company]++;
+  });
+
+  // Sort companies by count (descending) and take top 8
+  const top8Companies=Object.entries(compCounts)
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,8)
+    .map(entry=>entry[0]);
+
+  // Calculate real conversion rates from data (only for top 8 companies)
   const convMat={};
-  compsForHeatmap.forEach(c=>{
+  top8Companies.forEach(c=>{
     convMat[c]={};
     const compData=data.filter(d=>d.company===c);
     const compCounts=Object.fromEntries(stages.map(s=>[s,0]));
@@ -419,7 +427,7 @@ async function refresh(){
 
   const transitions=stages.slice(0,-1).map((s,i)=>`${stages[i]}→${stages[i+1]}`);
   renderFunnel(stages,counts);
-  renderHeatmap("#heatmap",compsForHeatmap,transitions,convMat);
+  renderHeatmap("#heatmap",top8Companies,transitions,convMat);
   renderTimeline("#timeline",stages,stageTimes);
   renderBarLine(stages,counts);
 }
