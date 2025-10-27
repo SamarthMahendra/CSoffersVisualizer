@@ -16,7 +16,7 @@ CORS(app)
 # ---- MongoDB Setup ----
 
 
-uri = os.getenv("MONGO_URI")
+uri = os.getenv("MONGO_URI", '')
 
 mongo_client = MongoClient(uri)
 db = mongo_client["JobStats"]
@@ -77,19 +77,21 @@ def api_messages():
 
     query = {"spam": False}
 
-    # Apply filters
+    # Apply company filter (OR logic with $in operator)
     if companies:
         query['company'] = {'$in': companies}
+
+    # Apply stage filter
     if stages:
         query['stage'] = {'$in': stages}
+
+    # Apply date filters
     if start or end:
         query['timestamp'] = {}
         if start:
             query['timestamp']['$gte'] = start.isoformat()
         if end:
             query['timestamp']['$lte'] = end.isoformat()
-
-    query['spam']
 
     # Query MongoDB
     cursor = collection.find(query, {"_id": 0}).sort("timestamp", -1)

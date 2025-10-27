@@ -46,6 +46,18 @@ aside label{font-size:13px;color:var(--muted);display:block;margin-top:10px}
 aside input,aside select{width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.3);color:var(--text);font-size:14px;margin-top:4px}
 aside button{margin-top:12px;width:100%;padding:10px;border:none;border-radius:10px;background:var(--accent);color:white;font-weight:600;font-size:14px;cursor:pointer;transition:background 0.3s}
 aside button:hover{background:#005bbb}
+.company-search-wrapper{margin-top:4px;position:relative}
+.company-search{width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.3);color:var(--text);font-size:14px}
+.company-dropdown{position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-top:4px;z-index:10;display:none}
+.company-dropdown.active{display:block}
+.company-option{padding:8px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)}
+.company-option:last-child{border-bottom:none}
+.company-option:hover{background:rgba(0,113,227,0.15)}
+.selected-companies{margin-top:10px;min-height:40px;border:1px solid var(--border);border-radius:10px;padding:8px;background:rgba(255,255,255,0.2);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.selected-companies.empty{justify-content:center;align-items:center}
+.selected-companies.empty span{color:var(--muted);font-size:12px}
+.company-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;background:var(--accent);color:white;font-size:12px}
+.company-tag button{background:none;border:none;color:white;cursor:pointer;padding:0 2px;font-size:14px;font-weight:700}
 .dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px}
 .card{border-radius:var(--radius);background:var(--card);backdrop-filter:blur(var(--blur));border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);transition:transform 0.2s ease,box-shadow 0.3s}
 .card:hover{transform:translateY(-2px);box-shadow:0 12px 35px rgba(0,0,0,0.08)}
@@ -73,12 +85,18 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
   <aside>
     <h2>Filters</h2>
     <label>Start Date</label>
-    <input type="date">
+    <input type="date" id="startDate">
     <label>End Date</label>
-    <input type="date">
+    <input type="date" id="endDate">
     <label>Company</label>
-    <select multiple></select>
-    <button>Apply</button>
+    <div class="company-search-wrapper">
+      <input type="text" class="company-search" id="companySearch" placeholder="Search companies...">
+      <div class="company-dropdown" id="companyDropdown"></div>
+    </div>
+    <div class="selected-companies empty" id="selectedCompanies">
+      <span>No companies selected</span>
+    </div>
+    <button id="applyBtn">Apply</button>
   </aside>
 
   <div>
@@ -109,6 +127,52 @@ const SERVER=window.location.origin;
 const $=s=>document.querySelector(s);
 const $$=s=>Array.from(document.querySelectorAll(s));
 let META=null,DATA=[],charts={},currentPage=1,pageSize=10;
+let selectedCompanies=[];
+
+// -------------------- Company Search & Selection --------------------
+function renderSelectedCompanies(){
+  const container=$("#selectedCompanies");
+  if(!selectedCompanies.length){
+    container.className="selected-companies empty";
+    container.innerHTML='<span>No companies selected</span>';
+    return;
+  }
+  container.className="selected-companies";
+  container.innerHTML=selectedCompanies.map((c,i)=>
+    `<div class="company-tag"><span>${c}</span><button onclick="removeCompany(${i})">×</button></div>`
+  ).join("");
+}
+
+function removeCompany(index){
+  selectedCompanies.splice(index,1);
+  renderSelectedCompanies();
+}
+
+function renderCompanyDropdown(searchTerm){
+  const dropdown=$("#companyDropdown");
+  const filtered=META.companies.filter(c=>
+    c.toLowerCase().includes(searchTerm.toLowerCase()) && !selectedCompanies.includes(c)
+  );
+
+  if(!searchTerm || !filtered.length){
+    dropdown.classList.remove("active");
+    return;
+  }
+
+  dropdown.classList.add("active");
+  dropdown.innerHTML=filtered.map(c=>
+    `<div class="company-option" onclick="selectCompany('${c.replace(/'/g,"\\'")}')">${c}</div>`
+  ).join("");
+}
+
+function selectCompany(company){
+  if(!selectedCompanies.includes(company)){
+    selectedCompanies.push(company);
+    renderSelectedCompanies();
+  }
+  $("#companySearch").value="";
+  $("#companyDropdown").classList.remove("active");
+}
 
 // -------------------- Fetch --------------------
 async function fetchMeta(){
@@ -117,9 +181,7 @@ async function fetchMeta(){
   const meta=await res.json();
   META=meta;
   console.log("META received:",META);
-
-  const companiesSel=$("select[multiple]");
-  companiesSel.innerHTML=META.companies.map(c=>`<option>${c}</option>`).join("");
+  renderSelectedCompanies();
 }
 
 async function fetchMessages(params={}){
@@ -332,17 +394,18 @@ function renderBarLine(stages,counts){
 // -------------------- Refresh Dashboard --------------------
 async function refresh(){
   console.log("Refreshing dashboard...");
-  const start=$("input[type=date]").value;
-  const selectedComps=$$("select[multiple] option:checked").map(o=>o.value);
-  const params={start,companies:selectedComps.join(",")};
+  const start=$("#startDate").value;
+  const end=$("#endDate").value;
+  const companies=selectedCompanies.join(",");
+  const params={start,end,companies};
   const data=await fetchMessages(params);
 
   const stages=META.stages;
   const counts=Object.fromEntries(stages.map(s=>[s,0]));
   data.forEach(d=>{if(counts[d.stage]!=null)counts[d.stage]++;});
 
-  // Use all companies for heatmap if none selected
-  const compsForHeatmap=selectedComps.length>0?selectedComps:META.companies;
+  // Use selected companies for heatmap, or all if none selected
+  const compsForHeatmap=selectedCompanies.length>0?selectedCompanies:META.companies;
 
   // Count messages per company to get top 8 by frequency
   const compCounts={};
@@ -438,7 +501,17 @@ async function initDashboard(){
   await fetchMeta();
   await fetchMessages();
   await refresh();
-  $("button").addEventListener("click",()=>{currentPage=1;refresh();});
+
+  // Event listeners for company search
+  $("#companySearch").addEventListener("input",(e)=>renderCompanyDropdown(e.target.value));
+  $("#applyBtn").addEventListener("click",()=>{currentPage=1;refresh();});
+
+  // Close dropdown when clicking outside
+  document.addEventListener("click",(e)=>{
+    if(!e.target.closest(".company-search-wrapper")){
+      $("#companyDropdown").classList.remove("active");
+    }
+  });
 }
 
 window.addEventListener("DOMContentLoaded",initDashboard);
