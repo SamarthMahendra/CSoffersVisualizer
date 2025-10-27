@@ -22,8 +22,8 @@ STAGE_ORDER = [
     "Offer",
     "Accept",
 ]
-COMPANIES = ["Google"]
-AUTHORS = ["sam", "jane"]
+COMPANIES = ["Google", "Stripe", "Amazon", "Netflix"]
+AUTHORS = ["sam", "jane", "adam", "paul", "neetu", "Jacob"]
 TEXTS = [
     "Applied via portal.", "Completed OA.", "Phone screen done.",
     "Onsite finished.", "Manager chat scheduled.",
