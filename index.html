@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Interview Journey — Student + Pro Insights</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+
+<style>
+:root {
+  --text: #111;
+  --muted: #555;
+  --bg: #f8f9fb;
+  --card: rgba(255,255,255,0.7);
+  --border: rgba(0,0,0,0.08);
+  --accent: #0071e3;
+  --radius: 18px;
+  --blur: 16px;
+  --shadow: 0 8px 30px rgba(0,0,0,0.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #f2f2f2;
+    --muted: #9ea5ad;
+    --bg: #0c0d10;
+    --card: rgba(18,18,22,0.55);
+    --border: rgba(255,255,255,0.1);
+    --accent: #2997ff;
+    --shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,-apple-system;background:var(--bg);color:var(--text);line-height:1.6;font-size:15px;padding-bottom:100px}
+header{position:sticky;top:0;z-index:100;backdrop-filter:blur(var(--blur));background:rgba(255,255,255,0.6);border-bottom:1px solid var(--border);padding:18px 24px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
+@media (prefers-color-scheme:dark){header{background:rgba(18,18,22,0.55)}}
+.logo{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),#a0d0ff);color:white;font-weight:700;font-size:18px}
+h1{font-size:20px;font-weight:600;letter-spacing:-0.3px}
+.main{display:grid;grid-template-columns:280px 1fr;gap:24px;max-width:1400px;margin:40px auto;padding:0 24px}
+@media(max-width:980px){.main{grid-template-columns:1fr;gap:20px}}
+aside{border-radius:var(--radius);background:var(--card);backdrop-filter:blur(var(--blur));border:1px solid var(--border);padding:20px 18px;box-shadow:var(--shadow)}
+aside h2{font-size:14px;font-weight:600;margin-bottom:10px}
+aside label{font-size:13px;color:var(--muted);display:block;margin-top:10px}
+aside input,aside select{width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.3);color:var(--text);font-size:14px;margin-top:4px}
+aside button{margin-top:12px;width:100%;padding:10px;border:none;border-radius:10px;background:var(--accent);color:white;font-weight:600;font-size:14px;cursor:pointer;transition:background 0.3s}
+aside button:hover{background:#005bbb}
+.dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px}
+.card{border-radius:var(--radius);background:var(--card);backdrop-filter:blur(var(--blur));border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);transition:transform 0.2s ease,box-shadow 0.3s}
+.card:hover{transform:translateY(-2px);box-shadow:0 12px 35px rgba(0,0,0,0.08)}
+.card h3{font-size:15px;font-weight:600;margin-bottom:10px;color:var(--muted)}
+canvas,svg{width:100%!important;height:280px!important;border-radius:12px;background:rgba(255,255,255,0.2);border:1px solid var(--border)}
+.kpi{display:flex;gap:12px;flex-wrap:wrap}
+.kpi .stat{border-radius:12px;padding:6px 10px;background:rgba(0,0,0,0.05);font-size:13px;font-weight:500;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+thead{font-weight:600;color:var(--muted);background:rgba(255,255,255,0.2)}
+tbody tr:hover{background:rgba(255,255,255,0.3)}
+.pagination{display:flex;justify-content:center;gap:10px;margin-top:12px}
+.pagination button{padding:6px 12px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:13px;cursor:pointer}
+.pagination button[disabled]{opacity:0.5;cursor:not-allowed}
+</style>
+</head>
+
+<body>
+<header>
+  <div class="logo">IJ</div>
+  <h1>Interview Journey — Student + Pro Insights</h1>
+</header>
+
+<div class="main">
+  <aside>
+    <h2>Filters</h2>
+    <label>Start Date</label>
+    <input type="date">
+    <label>End Date</label>
+    <input type="date">
+    <label>Company</label>
+    <select multiple></select>
+    <button>Apply</button>
+  </aside>
+
+  <div>
+    <div class="dashboard">
+      <div class="card"><h3>1) The Journey — Funnel</h3><canvas id="funnel"></canvas></div>
+      <div class="card"><h3>2) Conversion Heatmap</h3><svg id="heatmap"></svg></div>
+      <div class="card"><h3>3) Avg Days Between Stages</h3><svg id="timeline"></svg></div>
+      <div class="card"><h3>4) Focus Stage</h3><canvas id="barline"></canvas></div>
+    </div>
+
+    <div class="card" style="margin-top:24px">
+      <h3>Messages</h3>
+      <table>
+        <thead><tr><th>Time</th><th>Company</th><th>Stage</th><th>Author</th><th>Text</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="pagination">
+        <button id="prevPage">Prev</button>
+        <span id="pageInfo"></span>
+        <button id="nextPage">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SERVER=window.location.origin;
+const $=s=>document.querySelector(s);
+const $$=s=>Array.from(document.querySelectorAll(s));
+let META=null,DATA=[],charts={},currentPage=1,pageSize=10;
+
+// -------------------- Fetch --------------------
+async function fetchMeta(){
+  console.log("Fetching META...");
+  const res=await fetch(`${SERVER}/api/meta`);
+  const meta=await res.json();
+  META=meta;
+  console.log("META received:",META);
+
+  const companiesSel=$("select[multiple]");
+  companiesSel.innerHTML=META.companies.map(c=>`<option>${c}</option>`).join("");
+}
+
+async function fetchMessages(params={}){
+  console.log("Fetching messages with params:",params);
+  const query=new URLSearchParams(params).toString();
+  const res=await fetch(`${SERVER}/api/messages?${query}`);
+  const data=await res.json();
+  console.log("Messages fetched:",data);
+  DATA=data.items||[];
+  renderTable();
+  return DATA;
+}
+
+// -------------------- Render Table + Pagination --------------------
+function renderTable(){
+  console.log("Rendering table... page:",currentPage);
+  const tbody=document.querySelector("tbody");
+  tbody.innerHTML="";
+  if(!DATA.length){
+    tbody.innerHTML=`<tr><td colspan="5" style="color:#999">No messages</td></tr>`;
+    return;
+  }
+
+  const start=(currentPage-1)*pageSize;
+  const pageItems=DATA.slice(start,start+pageSize);
+  console.log(`Page items (${pageItems.length}):`,pageItems);
+
+  for(const m of pageItems){
+    const tr=document.createElement("tr");
+    const t=new Date(m.timestamp).toLocaleString();
+    tr.innerHTML=`<td>${t}</td><td>${m.company}</td><td>${m.stage}</td><td>${m.author}</td><td>${m.text}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  const totalPages=Math.ceil(DATA.length/pageSize);
+  $("#pageInfo").textContent=`Page ${currentPage} / ${totalPages}`;
+  $("#prevPage").disabled=currentPage===1;
+  $("#nextPage").disabled=currentPage===totalPages;
+}
+
+// -------------------- Pagination Events --------------------
+$("#prevPage").addEventListener("click",()=>{
+  if(currentPage>1){currentPage--;renderTable();}
+});
+$("#nextPage").addEventListener("click",()=>{
+  const totalPages=Math.ceil(DATA.length/pageSize);
+  if(currentPage<totalPages){currentPage++;renderTable();}
+});
+
+// -------------------- Funnel Example --------------------
+function destroyChart(id){if(charts[id]){charts[id].destroy();charts[id]=null;}}
+function renderFunnel(order,counts){
+  console.log("Rendering Funnel:",order,counts);
+  destroyChart("funnel");
+  const ctx=document.getElementById("funnel");
+  const vals=order.map(s=>counts[s]||0);
+  if(!vals.some(v=>v>0)){console.warn("No funnel data");return;}
+  const shortLabels=order.map(s=>shortenStage(s));
+  charts.funnel=new Chart(ctx,{
+    type:"bar",
+    data:{labels:shortLabels,datasets:[{label:"Stage Counts",data:vals,backgroundColor:"rgba(0,113,227,0.25)",borderColor:"#0071e3",borderWidth:2,borderRadius:8}]},
+    options:{
+      indexAxis:"y",
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{beginAtZero:true,ticks:{font:{size:11,family:"Inter, system-ui, -apple-system"}}},
+        y:{ticks:{font:{size:11,family:"Inter, system-ui, -apple-system"}}}
+      },
+      animation:{duration:600}
+    }
+  });
+}
+
+// -------------------- Heatmap --------------------
+function shortenStage(stage){
+  const map={
+    "Applied":"App",
+    "Phone":"Phone",
+    "HM":"HM",
+    "Accept":"Accept"
+  };
+  return map[stage]||stage;
+}
+
+function renderHeatmap(sel,companies,transitions,convMat){
+  console.log("Rendering Heatmap:",companies,transitions,convMat);
+  const svg=d3.select(sel);svg.selectAll("*").remove();
+  if(!companies.length)return;
+  const margin={top:20,right:80,bottom:50,left:100};
+  const W=svg.node().getBoundingClientRect().width,H=svg.node().getBoundingClientRect().height;
+  const w=W-margin.left-margin.right,h=H-margin.top-margin.bottom;
+  const g=svg.append("g").attr("transform",`translate(${margin.left},${margin.top})`);
+  const y=d3.scaleBand().domain(companies).range([0,h]).padding(0.15);
+
+  // Shorten transition labels for display
+  const shortTransitions=transitions.map(t=>{
+    const parts=t.split("→");
+    return `${shortenStage(parts[0])}→${shortenStage(parts[1])}`;
+  });
+
+  const x=d3.scaleBand().domain(shortTransitions).range([0,w]).padding(0.15);
+  const color=d3.scaleSequential(d3.interpolateBlues).domain([0,100]);
+  g.append("g").attr("transform",`translate(0,${h})`).call(d3.axisBottom(x)).selectAll("text").attr("transform","rotate(25)").style("text-anchor","start").style("font-size","11px").style("font-family","Inter, system-ui, -apple-system");
+  g.append("g").call(d3.axisLeft(y)).selectAll("text").style("font-size","11px").style("font-family","Inter, system-ui, -apple-system");
+
+  companies.forEach(c=>transitions.forEach((t,i)=>{
+    const val=convMat[c]?.[t]||0;
+    const shortT=shortTransitions[i];
+    g.append("rect").attr("x",x(shortT)).attr("y",y(c)).attr("width",x.bandwidth()).attr("height",y.bandwidth())
+    .attr("rx",6).attr("fill",color(val)).append("title").text(`${c} ${t}: ${val.toFixed(1)}%`);
+  }));
+
+  // Add color scale legend
+  const legendWidth=20,legendHeight=h;
+  const legendX=w+20;
+  const legendScale=d3.scaleLinear().domain([0,100]).range([legendHeight,0]);
+  const legendAxis=d3.axisRight(legendScale).ticks(5).tickFormat(d=>`${d}%`);
+
+  const defs=svg.append("defs");
+  const gradient=defs.append("linearGradient").attr("id","heatmap-gradient").attr("x1","0%").attr("y1","100%").attr("x2","0%").attr("y2","0%");
+  for(let i=0;i<=100;i+=10){
+    gradient.append("stop").attr("offset",`${i}%`).attr("stop-color",color(i));
+  }
+
+  g.append("rect").attr("x",legendX).attr("y",0).attr("width",legendWidth).attr("height",legendHeight)
+    .attr("rx",4).style("fill","url(#heatmap-gradient)");
+  g.append("g").attr("transform",`translate(${legendX+legendWidth},0)`).call(legendAxis).selectAll("text").style("font-size","11px").style("font-family","Inter, system-ui, -apple-system");
+  g.append("text").attr("x",legendX+legendWidth/2).attr("y",-5).style("font-size","11px").style("font-weight","600").style("font-family","Inter, system-ui, -apple-system")
+    .attr("text-anchor","middle").text("Conv %");
+}
+
+// -------------------- Timeline --------------------
+function renderTimeline(sel,stages,stageTimes){
+  console.log("Rendering Timeline:",stages,stageTimes);
+  const svg=d3.select(sel);svg.selectAll("*").remove();
+  if(!stages.length)return;
+  const margin={top:30,right:30,bottom:50,left:100};
+  const W=svg.node().getBoundingClientRect().width,H=svg.node().getBoundingClientRect().height;
+  const w=W-margin.left-margin.right,h=H-margin.top-margin.bottom;
+  const g=svg.append("g").attr("transform",`translate(${margin.left},${margin.top})`);
+
+  // Build transitions from pre-calculated average days
+  const transitions=stages.slice(0,-1).map((s,i)=>{
+    const fromStage=s,toStage=stages[i+1];
+    const key=`${fromStage}→${toStage}`;
+    const avgDays=Math.round(stageTimes[key]||0);
+
+    return {
+      from:fromStage,
+      to:toStage,
+      days:avgDays,
+      fullLabel:`${fromStage}→${toStage}`,
+      shortLabel:`${shortenStage(fromStage)}→${shortenStage(toStage)}`
+    };
+  });
+
+  const y=d3.scaleBand().domain(transitions.map(t=>t.shortLabel)).range([0,h]).padding(0.2);
+  const x=d3.scaleLinear().domain([0,d3.max(transitions,d=>d.days)+5]).range([0,w]);
+  const color=d3.scaleSequential(d3.interpolateViridis).domain([0,transitions.length-1]);
+
+  g.append("g").call(d3.axisLeft(y)).selectAll("text").style("font-size","11px").style("font-family","Inter, system-ui, -apple-system");
+  const xAxis=g.append("g").attr("transform",`translate(0,${h})`).call(d3.axisBottom(x).ticks(5));
+  xAxis.selectAll("text").style("font-size","11px").style("font-family","Inter, system-ui, -apple-system");
+  xAxis.append("text").attr("x",w/2).attr("y",35).attr("fill","currentColor").style("text-anchor","middle").style("font-size","11px").style("font-weight","600").style("font-family","Inter, system-ui, -apple-system").text("Days");
+
+  transitions.forEach((t,i)=>{
+    g.append("rect").attr("x",0).attr("y",y(t.shortLabel)).attr("width",x(t.days)).attr("height",y.bandwidth())
+      .attr("rx",6).attr("fill",color(i)).append("title").text(`${t.fullLabel}: ${t.days} days`);
+    g.append("text").attr("x",x(t.days)+5).attr("y",y(t.shortLabel)+y.bandwidth()/2+4)
+      .style("font-size","11px").style("font-family","Inter, system-ui, -apple-system").attr("fill","currentColor").text(`${t.days}d`);
+  });
+}
+
+// -------------------- Focus Stage (Bar+Line) --------------------
+function renderBarLine(stages,counts){
+  console.log("Rendering BarLine:",stages,counts);
+  destroyChart("barline");
+  const ctx=document.getElementById("barline");
+  const vals=stages.map(s=>counts[s]||0);
+  if(!vals.some(v=>v>0)){console.warn("No barline data");return;}
+
+  // Calculate cumulative (line)
+  const cumulative=[];
+  let sum=0;
+  for(const v of vals){sum+=v;cumulative.push(sum);}
+
+  const shortLabels=stages.map(s=>shortenStage(s));
+  charts.barline=new Chart(ctx,{
+    type:"bar",
+    data:{
+      labels:shortLabels,
+      datasets:[
+        {label:"Count",data:vals,backgroundColor:"rgba(41,151,255,0.3)",borderColor:"#2997ff",borderWidth:2,borderRadius:8,yAxisID:"y"},
+        {label:"Cumulative",type:"line",data:cumulative,borderColor:"#ff9500",borderWidth:3,fill:false,tension:0.3,yAxisID:"y1"}
+      ]
+    },
+    options:{
+      plugins:{
+        legend:{
+          display:true,
+          position:"top",
+          labels:{font:{size:11,family:"Inter, system-ui, -apple-system"}}
+        }
+      },
+      scales:{
+        x:{ticks:{font:{size:11,family:"Inter, system-ui, -apple-system"}}},
+        y:{beginAtZero:true,position:"left",title:{display:true,text:"Count",font:{size:11,family:"Inter, system-ui, -apple-system"}},ticks:{font:{size:11,family:"Inter, system-ui, -apple-system"}}},
+        y1:{beginAtZero:true,position:"right",grid:{drawOnChartArea:false},title:{display:true,text:"Cumulative",font:{size:11,family:"Inter, system-ui, -apple-system"}},ticks:{font:{size:11,family:"Inter, system-ui, -apple-system"}}}
+      },
+      animation:{duration:600}
+    }
+  });
+}
+
+// -------------------- Refresh Dashboard --------------------
+async function refresh(){
+  console.log("Refreshing dashboard...");
+  const start=$("input[type=date]").value;
+  const selectedComps=$$("select[multiple] option:checked").map(o=>o.value);
+  const params={start,companies:selectedComps.join(",")};
+  const data=await fetchMessages(params);
+
+  const stages=META.stages;
+  const counts=Object.fromEntries(stages.map(s=>[s,0]));
+  data.forEach(d=>{if(counts[d.stage]!=null)counts[d.stage]++;});
+
+  // Use all companies for heatmap if none selected
+  const compsForHeatmap=selectedComps.length>0?selectedComps:META.companies;
+
+  // Calculate real conversion rates from data
+  const convMat={};
+  compsForHeatmap.forEach(c=>{
+    convMat[c]={};
+    const compData=data.filter(d=>d.company===c);
+    const compCounts=Object.fromEntries(stages.map(s=>[s,0]));
+    compData.forEach(d=>{if(compCounts[d.stage]!=null)compCounts[d.stage]++;});
+
+    for(let i=0;i<stages.length-1;i++){
+      const from=stages[i],to=stages[i+1];
+      const fromCount=compCounts[from];
+      const toCount=compCounts[to];
+      // Calculate conversion as percentage: if there are applications in "from" stage,
+      // what % made it to "to" stage
+      const conv=fromCount>0?(toCount/fromCount)*100:0;
+      convMat[c][`${from}→${to}`]=conv;
+    }
+  });
+
+  // Calculate real average days between stages by tracking individual applications
+  // Group messages by (company, author) to track each person's application journey
+  const applications={};
+  data.forEach(d=>{
+    const key=`${d.company}|${d.author}`;
+    if(!applications[key])applications[key]=[];
+    applications[key].push({stage:d.stage,timestamp:new Date(d.timestamp).getTime()});
+  });
+
+  // For each stage transition, collect time differences across all applications
+  const transitionDays={};
+  stages.slice(0,-1).forEach((s,i)=>{
+    const from=s,to=stages[i+1];
+    transitionDays[`${from}→${to}`]=[];
+  });
+
+  // Process each application's journey
+  Object.values(applications).forEach(msgs=>{
+    // Sort messages by timestamp
+    msgs.sort((a,b)=>a.timestamp-b.timestamp);
+
+    // Track stages we've seen in chronological order
+    const stageMap={};
+    msgs.forEach(m=>{
+      // Keep only the earliest timestamp for each stage
+      if(!stageMap[m.stage]){
+        stageMap[m.stage]=m.timestamp;
+      }
+    });
+
+    // Calculate time between consecutive stages
+    for(let i=0;i<stages.length-1;i++){
+      const from=stages[i],to=stages[i+1];
+      if(stageMap[from]&&stageMap[to]){
+        const days=(stageMap[to]-stageMap[from])/(1000*60*60*24);
+        if(days>=0){
+          transitionDays[`${from}→${to}`].push(days);
+        }
+      }
+    }
+  });
+
+  // Calculate average for each transition
+  const stageTimes={};
+  Object.keys(transitionDays).forEach(key=>{
+    const days=transitionDays[key];
+    stageTimes[key]=days.length>0?days.reduce((a,b)=>a+b,0)/days.length:0;
+  });
+
+  const transitions=stages.slice(0,-1).map((s,i)=>`${stages[i]}→${stages[i+1]}`);
+  renderFunnel(stages,counts);
+  renderHeatmap("#heatmap",compsForHeatmap,transitions,convMat);
+  renderTimeline("#timeline",stages,stageTimes);
+  renderBarLine(stages,counts);
+}
+
+// -------------------- Init --------------------
+async function initDashboard(){
+  console.log("Initializing dashboard...");
+  await fetchMeta();
+  await fetchMessages();
+  await refresh();
+  $("button").addEventListener("click",()=>{currentPage=1;refresh();});
+}
+
+window.addEventListener("DOMContentLoaded",initDashboard);
+</script>
+</body>
+</html>
