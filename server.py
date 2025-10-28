@@ -18,6 +18,7 @@ CORS(app)
 
 uri = os.getenv("MONGO_URI", '')
 
+
 mongo_client = MongoClient(uri)
 db = mongo_client["JobStats"]
 collection = db["interview_processes"]
@@ -135,7 +136,7 @@ def api_messages():
     companies = [c for c in (request.args.get('companies') or '').split(',') if c]
     stages = [s for s in (request.args.get('stages') or '').split(',') if s]
 
-    query = {"spam": False}
+    query = {"spam": False, "stage": {"$ne": "App"}}
 
     # Apply company filter (OR logic with $in operator)
     if companies:
