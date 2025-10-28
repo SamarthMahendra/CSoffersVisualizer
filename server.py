@@ -40,8 +40,13 @@ def parse_date(s):
 
 def fill_missing_stages(messages):
     """
-    Postprocessing: For each (company, author) combination, add missing stages
-    before the earliest actual stage with null timestamp.
+    Postprocessing: For each (company, author) combination, optionally add
+    earlier missing stages *only if there is NO Reject* in the journey.
+
+    Notes:
+    - Never add anything if Reject is present.
+    - Never autogenerate "App" or "Interview" (as in your code).
+    - Never autogenerate "Offer" (extra guard added).
     """
     if not messages:
         return messages
@@ -49,52 +54,49 @@ def fill_missing_stages(messages):
     # Group messages by (company, author)
     grouped = {}
     for msg in messages:
-        company = msg.get('company', '')
-        author = msg.get('author', '')
-        key = (company, author)
-        if key not in grouped:
-            grouped[key] = []
-        grouped[key].append(msg)
+        key = (msg.get('company', ''), msg.get('author', ''))
+        grouped.setdefault(key, []).append(msg)
 
-    # Process each group
-    augmented_messages = []
+    augmented = []
     for (company, author), msgs in grouped.items():
-        # Find which stages are present
-        present_stages = {msg.get('stage') for msg in msgs if msg.get('stage')}
+        present_stages = {m.get('stage') for m in msgs if m.get('stage')}
 
+        # If Reject exists, just pass through original messages – do NOT autogen.
         if 'Reject' in present_stages:
+            augmented.extend(msgs)
             continue
 
-        if len(present_stages) == 1 and 'App' in present_stages:
+        # If only 'App' exists, also pass through messages as-is.
+        if present_stages == {'App'}:
+            augmented.extend(msgs)
             continue
 
-        # Find the earliest stage index in STAGE_ORDER
+        # Find the earliest present stage in STAGE_ORDER
         earliest_idx = len(STAGE_ORDER)
-        for stage in present_stages:
-            if stage in STAGE_ORDER:
-                idx = STAGE_ORDER.index(stage)
-                earliest_idx = min(earliest_idx, idx)
+        for st in present_stages:
+            if st in STAGE_ORDER:
+                earliest_idx = min(earliest_idx, STAGE_ORDER.index(st))
 
-        # Add missing stages before earliest_idx
+        # Add earlier missing stages (guards: no App, no Interview, no Offer)
+        to_add = []
         for i in range(earliest_idx):
-            stage = STAGE_ORDER[i]
-            if stage not in present_stages:
-                # Add a synthetic message with null timestamp
-                if stage != "Interview" and stage != "App":
-                    augmented_messages.append({
-                        'company': company,
-                        'author': author,
-                        'stage': stage,
-                        'timestamp': None,
-                        'text': '[Auto-generated since the user submitted next stage on discord]',
-                        'msg_id': f'auto_{company}_{author}_{stage}',
-                        'spam': False
-                    })
+            st = STAGE_ORDER[i]
+            if st not in present_stages and st not in {'App', 'Offer'}:
+                to_add.append({
+                    'company': company,
+                    'author': author,
+                    'stage': st,
+                    'timestamp': None,  # synthetic
+                    'text': '[Auto-generated since the user submitted next stage on discord]',
+                    'msg_id': f'auto_{company}_{author}_{st}',
+                    'spam': False
+                })
 
-        # Add original messages
-        augmented_messages.extend(msgs)
+        augmented.extend(to_add)
+        augmented.extend(msgs)
 
-    return augmented_messages
+    return augmented
+
 
 # ---- Routes ----
 @app.route('/')
