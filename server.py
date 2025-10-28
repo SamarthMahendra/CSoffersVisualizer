@@ -24,9 +24,11 @@ uri = os.getenv("MONGO_URI", '')
 
 
 
+
 mongo_client = MongoClient(uri)
 db = mongo_client["JobStats"]
 collection = db["interview_processes"]
+sessions_collection = db["active_sessions"]
 
 # ---- Constants ----
 STAGE_ORDER = [
@@ -700,6 +702,65 @@ def api_dashboard():
             'unique_candidates': len({k.split('|')[1] for k in applications.keys() if '|' in k})
         }
     })
+
+
+@app.route('/api/session/start', methods=['POST'])
+def session_start():
+    """Register a new active session."""
+    data = request.get_json() or {}
+    session_id = data.get('session_id')
+
+    if not session_id:
+        return jsonify({'error': 'session_id required'}), 400
+
+    now = datetime.utcnow()
+    sessions_collection.update_one(
+        {'session_id': session_id},
+        {
+            '$set': {
+                'session_id': session_id,
+                'last_heartbeat': now,
+                'created_at': now
+            }
+        },
+        upsert=True
+    )
+
+    return jsonify({'success': True})
+
+
+@app.route('/api/session/heartbeat', methods=['POST'])
+def session_heartbeat():
+    """Update session heartbeat to keep it active."""
+    data = request.get_json() or {}
+    session_id = data.get('session_id')
+
+    if not session_id:
+        return jsonify({'error': 'session_id required'}), 400
+
+    now = datetime.utcnow()
+    result = sessions_collection.update_one(
+        {'session_id': session_id},
+        {'$set': {'last_heartbeat': now}}
+    )
+
+    return jsonify({'success': result.modified_count > 0 or result.upserted_id is not None})
+
+
+@app.route('/api/viewers/count')
+def viewers_count():
+    """Return count of active viewers (sessions active within last 5 minutes)."""
+    cutoff_time = datetime.utcnow()
+    # Subtract 5 minutes (300 seconds)
+    from datetime import timedelta
+    cutoff_time = cutoff_time - timedelta(minutes=5)
+
+    # Count sessions with heartbeat within last 5 minutes
+    count = sessions_collection.count_documents({
+        'last_heartbeat': {'$gte': cutoff_time}
+    })
+
+    return jsonify({'count': count})
 
 
 # ---- Entry ----
