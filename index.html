@@ -11,20 +11,28 @@
   <!-- Datadog RUM SDK -->
 <script src="https://www.datadoghq-browser-agent.com/datadog-rum.js"></script>
 <script>
-  window.DD_RUM && window.DD_RUM.init({
-    applicationId: '5aca5b04-e27e-415f-a828-456408d700d8',
-    clientToken: 'pubff3c239a28fc040fc4dd99ab202f9135',
-    site: 'us5.datadoghq.com',
-    service: 'jobstats.fyi',
-    env: 'prod',
-    sessionSampleRate: 100,
-    sessionReplaySampleRate: 20,
-    trackBfcacheViews: true,
-    defaultPrivacyLevel: 'mask-user-input',
-  });
+  (function(h,o,u,n,d){
+    h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}};
+    d=o.createElement(u);d.async=1;d.src='https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js';
+    n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n);
+  })(window,document,'script','https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js','DD_RUM');
 
-  // Optional: start recording user sessions
-  window.DD_RUM && window.DD_RUM.startSessionReplayRecording();
+  window.DD_RUM.onReady(function(){
+    window.DD_RUM.init({
+      applicationId: '5aca5b04-e27e-415f-a828-456408d700d8',
+      clientToken: 'pubff3c239a28fc040fc4dd99ab202f9135',
+      site: 'us5.datadoghq.com',
+      service: 'jobstats.fyi',
+      env: 'prod',
+      sessionSampleRate: 100,
+      sessionReplaySampleRate: 20,
+      trackBfcacheViews: true,
+      defaultPrivacyLevel: 'mask-user-input',
+    });
+
+    // Optional: start recording user session replays
+    window.DD_RUM.startSessionReplayRecording();
+  });
 </script>
 
 <style>
