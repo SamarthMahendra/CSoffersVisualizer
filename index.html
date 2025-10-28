@@ -176,6 +176,15 @@ function shortenStage(stage) {
   return stage;
 }
 
+function updateCompanyPlaceholder() {
+  const input = $("#companySearch");
+  // Unique companies in the *current filtered* dataset
+  const uniqueFromData = new Set(DATA.filter(d => d.company).map(d => d.company));
+  // Fallback to META if nothing is loaded yet
+  const total = uniqueFromData.size || (META?.companies?.length || 0);
+  input.placeholder = `Search companies (${total} total)…`;
+}
+
 /* ------------ Company Picker UI ------------ */
 function renderSelectedCompanies() {
   const container = $("#selectedCompanies");
@@ -264,6 +273,7 @@ async function fetchMessages(params = {}) {
   const payload = await res.json();
   DATA = payload.items || [];
   updateCompanyCounts();
+  updateCompanyPlaceholder();
   renderTable();
   return DATA;
 }
@@ -748,6 +758,7 @@ async function initDashboard() {
 
   await fetchMeta();
   await fetchMessages();
+  updateCompanyPlaceholder();
   await refresh();
 
   // Company search interactions
