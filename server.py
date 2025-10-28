@@ -16,7 +16,8 @@ CORS(app)
 # ---- MongoDB Setup ----
 
 
-uri = os.getenv("MONGO_URI", '')
+uri = os.getenv("MONGO_URI", 'mongodb+srv://stackoverflow:stackoverflow%40123@cluster0.3kqbc.mongodb.net/myDatabase?retryWrites=true&w=majority&appName=Cluster0')
+
 
 
 
@@ -149,6 +150,7 @@ def api_messages():
     end = parse_date(request.args.get('end'))
     companies = [c for c in (request.args.get('companies') or '').split(',') if c]
     stages = [s for s in (request.args.get('stages') or '').split(',') if s]
+    job_types = [j for j in (request.args.get('job_types') or '').split(',') if j]
 
     query = {"spam": False, "stage": {"$ne": "App"}}
 
@@ -159,6 +161,14 @@ def api_messages():
     # Apply stage filter
     if stages:
         query['stage'] = {'$in': stages}
+
+    # Apply job type filter (new_grad vs intern)
+    if job_types and len(job_types) == 1:
+        if 'new_grad' in job_types:
+            query['new_grad'] = True
+        elif 'intern' in job_types:
+            # Intern records either don't have new_grad field or have it set to false
+            query['$or'] = [{'new_grad': False}, {'new_grad': {'$exists': False}}]
 
     # Apply date filters
     if start or end:
@@ -184,11 +194,19 @@ def api_funnel():
     start = parse_date(request.args.get('start'))
     end = parse_date(request.args.get('end'))
     companies = [c for c in (request.args.get('companies') or '').split(',') if c]
+    job_types = [j for j in (request.args.get('job_types') or '').split(',') if j]
 
     query = {"spam": False, "stage": {"$ne": "App"}}
 
     if companies:
         query['company'] = {'$in': companies}
+
+    # Apply job type filter
+    if job_types and len(job_types) == 1:
+        if 'new_grad' in job_types:
+            query['new_grad'] = True
+        elif 'intern' in job_types:
+            query['$or'] = [{'new_grad': False}, {'new_grad': {'$exists': False}}]
 
     if start or end:
         query['timestamp'] = {}

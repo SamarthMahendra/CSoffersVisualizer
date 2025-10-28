@@ -81,34 +81,54 @@
   }
 }
 *{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow-x:hidden;max-width:100vw}
 body{font-family:'Inter',system-ui,-apple-system;background:var(--bg);color:var(--text);line-height:1.6;font-size:15px;padding-bottom:100px}
 header{position:sticky;top:0;z-index:100;backdrop-filter:blur(var(--blur));background:rgba(255,255,255,0.6);border-bottom:1px solid var(--border);padding:18px 24px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
 @media (prefers-color-scheme:dark){header{background:rgba(18,18,22,0.55)}}
 .logo{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),#a0d0ff);color:white;font-weight:700;font-size:18px}
 h1{font-size:20px;font-weight:600;letter-spacing:-0.3px}
-.main{display:grid;grid-template-columns:280px 1fr;gap:24px;max-width:1400px;margin:40px auto;padding:0 24px}
+.main{display:grid;grid-template-columns:280px 1fr;gap:24px;max-width:1400px;margin:40px auto;padding:0 24px;width:100%;box-sizing:border-box}
 @media(max-width:980px){.main{grid-template-columns:1fr;gap:20px}}
-aside{border-radius:var(--radius);background:var(--card);backdrop-filter:blur(var(--blur));border:1px solid var(--border);padding:20px 18px;box-shadow:var(--shadow)}
+@media(max-width:768px){
+  header{padding:12px 16px;gap:8px;width:100%;box-sizing:border-box}
+  .logo{width:36px;height:36px;font-size:16px}
+  h1{font-size:17px}
+  .main{margin:20px auto;padding:0 16px;gap:16px;width:100%;max-width:100vw}
+}
+aside{border-radius:var(--radius);background:var(--card);backdrop-filter:blur(var(--blur));border:1px solid var(--border);padding:20px 18px;box-shadow:var(--shadow);width:100%;max-width:100%;box-sizing:border-box}
 aside h2{font-size:14px;font-weight:600;margin-bottom:10px}
 aside label{font-size:13px;color:var(--muted);display:block;margin-top:10px}
-aside input,aside select{width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.3);color:var(--text);font-size:14px;margin-top:4px}
-aside button{margin-top:12px;width:100%;padding:10px;border:none;border-radius:10px;background:var(--accent);color:white;font-weight:600;font-size:14px;cursor:pointer;transition:background 0.3s}
+aside input,aside select{width:100%;max-width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.3);color:var(--text);font-size:14px;margin-top:4px;box-sizing:border-box}
+aside button{margin-top:12px;width:100%;max-width:100%;padding:10px;border:none;border-radius:10px;background:var(--accent);color:white;font-weight:600;font-size:14px;cursor:pointer;transition:background 0.3s;box-sizing:border-box}
 aside button:hover{background:#005bbb}
-.company-search-wrapper{margin-top:4px;position:relative}
-.company-search{width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.3);color:var(--text);font-size:14px}
-.company-dropdown{position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:rgba(255,255,255,0.98);border:1px solid var(--border);border-radius:10px;margin-top:4px;z-index:10;display:none;backdrop-filter:blur(10px)}
+@media(max-width:768px){
+  aside{padding:16px;border-radius:14px;width:100%;max-width:100%}
+  aside h2{font-size:15px;margin-bottom:12px}
+  aside label{font-size:14px;margin-top:12px}
+  aside input,aside select{padding:10px 12px;font-size:16px;border-radius:12px;max-width:100%}
+  aside button{padding:12px;font-size:15px;margin-top:16px;border-radius:12px;max-width:100%}
+}
+.company-search-wrapper{margin-top:4px;position:relative;width:100%;max-width:100%}
+.company-search{width:100%;max-width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.3);color:var(--text);font-size:14px;box-sizing:border-box}
+.company-dropdown{position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:rgba(255,255,255,0.98);border:1px solid var(--border);border-radius:10px;margin-top:4px;z-index:10;display:none;backdrop-filter:blur(10px);max-width:100%}
 .company-dropdown.active{display:block}
 @media (prefers-color-scheme:dark){.company-dropdown{background:rgba(18,18,22,0.98)}}
 .company-option{padding:8px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)}
 .company-option:last-child{border-bottom:none}
 .company-option:hover{background:rgba(0,113,227,0.15)}
-.selected-companies{margin-top:10px;min-height:40px;border:1px solid var(--border);border-radius:10px;padding:8px;background:rgba(255,255,255,0.2);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+@media(max-width:768px){
+  .company-search{padding:10px 12px;font-size:16px}
+  .company-dropdown{max-height:250px;border-radius:12px}
+  .company-option{padding:12px 14px;font-size:14px}
+}
+.selected-companies{margin-top:10px;min-height:40px;border:1px solid var(--border);border-radius:10px;padding:8px;background:rgba(255,255,255,0.2);display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%;max-width:100%;box-sizing:border-box}
 .selected-companies.empty{justify-content:center;align-items:center}
 .selected-companies.empty span{color:var(--muted);font-size:12px}
-.company-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;background:var(--accent);color:white;font-size:12px}
-.company-tag button{background:none;border:none;color:white;cursor:pointer;padding:0 2px;font-size:14px;font-weight:700}
-.dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px}
-.card{border-radius:var(--radius);background:var(--card);backdrop-filter:blur(var(--blur));border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);transition:transform 0.2s ease,box-shadow 0.3s}
+.company-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;background:var(--accent);color:white;font-size:12px;word-break:break-word}
+.company-tag button{background:none;border:none;color:white;cursor:pointer;padding:0 2px;font-size:14px;font-weight:700;flex-shrink:0}
+.dashboard-wrapper{width:100%;max-width:100%;box-sizing:border-box;overflow:hidden}
+.dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;width:100%;max-width:100%;box-sizing:border-box}
+.card{border-radius:var(--radius);background:var(--card);backdrop-filter:blur(var(--blur));border:1px solid var(--border);padding:20px;box-shadow:var(--shadow);transition:transform 0.2s ease,box-shadow 0.3s;width:100%;max-width:100%;box-sizing:border-box}
 .card:hover{transform:translateY(-2px);box-shadow:0 12px 35px rgba(0,0,0,0.08)}
 .card h3{font-size:15px;font-weight:600;margin-bottom:10px;color:var(--muted)}
 canvas,svg{width:100%!important;height:280px!important;border-radius:12px;background:rgba(255,255,255,0.2);border:1px solid var(--border)}
@@ -131,6 +151,19 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
 .metric-card:hover .metric-icon{transform:scale(1.1);opacity:1}
 .metric-value{font-size:32px;font-weight:700;color:var(--accent);margin-bottom:8px;line-height:1.2;transition:color 0.3s}
 .metric-label{font-size:13px;color:var(--muted);font-weight:500;letter-spacing:0.3px}
+@media(max-width:768px){
+  .metrics-banner{margin:16px auto 0 auto;padding:0 12px;grid-template-columns:repeat(2,1fr);gap:10px;max-width:100%}
+  .metric-card{padding:14px 12px;border-radius:12px}
+  .metric-card:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,113,227,0.12)}
+  .metric-value{font-size:22px;margin-bottom:6px}
+  .metric-label{font-size:10px;line-height:1.3}
+}
+@media(max-width:400px){
+  .metrics-banner{padding:0 10px;gap:8px}
+  .metric-card{padding:12px 10px}
+  .metric-value{font-size:20px}
+  .metric-label{font-size:9px}
+}
 .skeleton{background:linear-gradient(90deg,rgba(0,0,0,0.04) 25%,rgba(0,0,0,0.08) 50%,rgba(0,0,0,0.04) 75%);background-size:200% 100%;animation:skeleton-loading 1.5s infinite;border-radius:8px}
 @keyframes skeleton-loading{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .skeleton-text{height:16px;margin:8px 0;width:100%}
@@ -143,6 +176,38 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
 .date-preset-btn{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,0.3);color:var(--text);font-size:12px;cursor:pointer;transition:all 0.2s;font-weight:500}
 .date-preset-btn:hover{background:var(--accent);color:white;border-color:var(--accent)}
 .date-preset-btn.active{background:var(--accent);color:white;border-color:var(--accent)}
+.job-type-checkboxes{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.checkbox-wrapper{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 8px;border-radius:8px;transition:background 0.2s}
+.checkbox-wrapper:hover{background:rgba(0,113,227,0.05)}
+.checkbox-wrapper input[type="checkbox"]{width:18px;height:18px;cursor:pointer;accent-color:var(--accent)}
+.checkbox-wrapper label{font-size:13px;color:var(--text);cursor:pointer;margin:0;user-select:none}
+@media(max-width:768px){
+  .date-presets{gap:8px;margin-top:10px}
+  .date-preset-btn{padding:8px 14px;font-size:13px;border-radius:10px;min-height:44px}
+  .selected-companies{min-height:48px;padding:10px;border-radius:12px}
+  .selected-companies.empty span{font-size:13px}
+  .company-tag{padding:6px 10px;font-size:13px;border-radius:8px;min-height:32px}
+  .company-tag button{font-size:16px;padding:0 4px;min-width:20px;min-height:32px}
+  .dashboard{grid-template-columns:1fr;gap:16px;max-width:100%}
+  .card{padding:16px;border-radius:14px;max-width:100%;overflow:hidden}
+  .card:hover{transform:none;box-shadow:var(--shadow)}
+  .card h3{font-size:14px;margin-bottom:12px}
+  canvas,svg{height:240px!important;border-radius:10px;max-width:100%}
+  table{font-size:12px;display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+  th,td{padding:10px 8px;white-space:nowrap}
+  .pagination{flex-wrap:wrap;gap:8px;margin-top:16px}
+  .pagination button{padding:8px 16px;font-size:14px;border-radius:10px;min-height:44px}
+  .pagination span{font-size:13px;padding:8px;min-height:44px;display:flex;align-items:center}
+  body{font-size:16px;padding-bottom:60px}
+}
+@media(max-width:400px){
+  .main{padding:0 12px}
+  header{padding:10px 12px}
+  .date-preset-btn{padding:6px 10px;font-size:12px;min-height:40px}
+  .card{padding:12px}
+  canvas,svg{height:220px!important}
+  .pagination button{padding:6px 12px;font-size:13px;min-height:40px}
+}
 </style>
       <script>
       (function(h,o,u,n,d){
@@ -213,10 +278,21 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
     <div class="selected-companies empty" id="selectedCompanies">
       <span>No companies selected</span>
     </div>
+    <label style="margin-top:12px">Job Type</label>
+    <div class="job-type-checkboxes">
+      <div class="checkbox-wrapper">
+        <input type="checkbox" id="newGradCheckbox" checked>
+        <label for="newGradCheckbox">New Grad</label>
+      </div>
+      <div class="checkbox-wrapper">
+        <input type="checkbox" id="internCheckbox" checked>
+        <label for="internCheckbox">Intern</label>
+      </div>
+    </div>
     <button id="applyBtn">Apply</button>
   </aside>
 
-  <div>
+  <div class="dashboard-wrapper">
     <div class="dashboard">
       <div class="card"><h3>1) The Journey — Funnel</h3><canvas id="funnel"></canvas></div>
       <div class="card"><h3>2) Conversion Heatmap</h3><svg id="heatmap"></svg></div>
@@ -772,9 +848,19 @@ async function refresh() {
   const end = $("#endDate").value;
   const companies = selectedCompanies.join(",");
 
+  // Get job type checkbox values
+  const newGradChecked = $("#newGradCheckbox").checked;
+  const internChecked = $("#internCheckbox").checked;
+  const jobTypes = [];
+  if (newGradChecked) jobTypes.push("new_grad");
+  if (internChecked) jobTypes.push("intern");
+
   const params = { start, end };
   if (selectedCompanies.length) {
     params.companies = selectedCompanies.join(",");
+  }
+  if (jobTypes.length > 0) {
+    params.job_types = jobTypes.join(",");
   }
   const data = await fetchMessages(params);
 
