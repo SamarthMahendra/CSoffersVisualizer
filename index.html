@@ -120,7 +120,11 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
   </div>
   <div class="metric-card">
     <div class="metric-value" id="totalCandidates">-</div>
-    <div class="metric-label">Total Candidates (from 100k pool)</div>
+    <div class="metric-label">Total Candidates (from 147k pool)</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value" id="totalSubmissions">-</div>
+    <div class="metric-label">Total Submissions</div>
   </div>
   <div class="metric-card">
     <div class="metric-value" id="lastUpdated">-</div>
@@ -287,16 +291,26 @@ function selectCompany(company) {
 }
 
 /* ------------ Metrics Display ------------ */
+function formatMetricWithPlus(value, roundTo) {
+  // Round down to nearest multiple of roundTo
+  const rounded = Math.floor(value / roundTo) * roundTo;
+  return `${rounded.toLocaleString()}+`;
+}
+
 function updateMetrics() {
   if (!META) return;
 
-  // Total Companies
+  // Total Companies - round to nearest 10
   const totalCompanies = META.companies?.length || 0;
-  $("#totalCompanies").textContent = totalCompanies.toLocaleString();
+  $("#totalCompanies").textContent = formatMetricWithPlus(totalCompanies, 10);
 
-  // Total Candidates from 100k pool
+  // Total Candidates - round to nearest 100
   const authorCount = META.author_count || 0;
-  $("#totalCandidates").textContent = authorCount.toLocaleString();
+  $("#totalCandidates").textContent = formatMetricWithPlus(authorCount, 100);
+
+  // Total Submissions - round to nearest 1000
+  const submissionCount = META.submission_count || 0;
+  $("#totalSubmissions").textContent = formatMetricWithPlus(submissionCount, 1000);
 
   // Last Updated
   if (META.max_timestamp) {
