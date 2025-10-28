@@ -8,6 +8,24 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <!-- Datadog RUM SDK -->
+<script src="https://www.datadoghq-browser-agent.com/datadog-rum.js"></script>
+<script>
+  window.DD_RUM && window.DD_RUM.init({
+    applicationId: '5aca5b04-e27e-415f-a828-456408d700d8',
+    clientToken: 'pubff3c239a28fc040fc4dd99ab202f9135',
+    site: 'us5.datadoghq.com',
+    service: 'jobstats.fyi',
+    env: 'prod',
+    sessionSampleRate: 100,
+    sessionReplaySampleRate: 20,
+    trackBfcacheViews: true,
+    defaultPrivacyLevel: 'mask-user-input',
+  });
+
+  // Optional: start recording user sessions
+  window.DD_RUM && window.DD_RUM.startSessionReplayRecording();
+</script>
 
 <style>
 :root {
