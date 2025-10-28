@@ -19,6 +19,7 @@ CORS(app)
 uri = os.getenv("MONGO_URI", '')
 
 
+
 mongo_client = MongoClient(uri)
 db = mongo_client["JobStats"]
 collection = db["interview_processes"]
@@ -108,7 +109,7 @@ def index():
 @app.route('/api/meta')
 def meta():
     """Return meta information: companies, stages, date range, and author count."""
-    query = {"spam": False}
+    query = {"spam": False, "stage": {"$ne": "App"}}
     docs = list(collection.find(query, {"timestamp": 1, "company": 1, "author": 1}))
     if not docs:
         return jsonify({
