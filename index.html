@@ -87,6 +87,20 @@ header{position:sticky;top:0;z-index:100;backdrop-filter:blur(var(--blur));backg
 @media (prefers-color-scheme:dark){header{background:rgba(18,18,22,0.55)}}
 .logo{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),#a0d0ff);color:white;font-weight:700;font-size:18px}
 h1{font-size:20px;font-weight:600;letter-spacing:-0.3px}
+.viewer-counter{margin-left:auto;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:12px;background:rgba(0,113,227,0.1);border:1px solid var(--border);transition:all 0.3s;cursor:help}
+.viewer-counter:hover{background:rgba(0,113,227,0.15);border-color:var(--accent);transform:translateY(-1px)}
+.viewer-icon{font-size:18px;line-height:1;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+.viewer-count{font-size:18px;font-weight:700;color:var(--accent);min-width:20px;text-align:center;transition:transform 0.2s}
+.viewer-count.updated{animation:pop 0.3s ease-out}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.viewer-label{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:0.3px}
+@media(max-width:768px){
+  .viewer-counter{padding:6px 10px;gap:4px}
+  .viewer-icon{font-size:16px}
+  .viewer-count{font-size:16px}
+  .viewer-label{font-size:11px}
+}
 .main{display:grid;grid-template-columns:280px 1fr;gap:18px;max-width:1400px;margin:30px auto;padding:0 24px;width:100%;box-sizing:border-box}
 @media(max-width:980px){.main{grid-template-columns:1fr;gap:20px}}
 @media(max-width:768px){
@@ -234,6 +248,11 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
 <header>
   <div class="logo">G2G</div>
   <h1>Grad2Gig Dashboard</h1>
+  <div class="viewer-counter" id="viewerCounter" title="Number of people currently viewing this dashboard">
+    <span class="viewer-icon">👁️</span>
+    <span class="viewer-count" id="viewerCount">-</span>
+    <span class="viewer-label">viewing now</span>
+  </div>
 </header>
 
 <div class="metrics-banner">
@@ -1007,6 +1026,70 @@ renderBarLine(stages, counts);
 
 }
 
+/* ------------ Session Tracking & Viewer Count ------------ */
+let SESSION_ID = null;
+
+function generateSessionId() {
+  // Generate a unique session ID (or retrieve from localStorage)
+  let sessionId = localStorage.getItem('viewer_session_id');
+  if (!sessionId) {
+    sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    localStorage.setItem('viewer_session_id', sessionId);
+  }
+  return sessionId;
+}
+
+async function startSession() {
+  SESSION_ID = generateSessionId();
+  try {
+    await fetch(`${SERVER}/api/session/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: SESSION_ID })
+    });
+  } catch (error) {
+    console.error('Failed to start session:', error);
+  }
+}
+
+async function sendHeartbeat() {
+  if (!SESSION_ID) return;
+  try {
+    await fetch(`${SERVER}/api/session/heartbeat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: SESSION_ID })
+    });
+  } catch (error) {
+    console.error('Failed to send heartbeat:', error);
+  }
+}
+
+async function updateViewerCount() {
+  try {
+    const res = await fetch(`${SERVER}/api/viewers/count`);
+    const data = await res.json();
+    $("#viewerCount").textContent = data.count || 0;
+  } catch (error) {
+    console.error('Failed to fetch viewer count:', error);
+    $("#viewerCount").textContent = '-';
+  }
+}
+
+function initSessionTracking() {
+  // Start session
+  startSession();
+
+  // Update viewer count immediately
+  updateViewerCount();
+
+  // Send heartbeat every 30 seconds
+  setInterval(sendHeartbeat, 30000);
+
+  // Update viewer count every 30 seconds
+  setInterval(updateViewerCount, 30000);
+}
+
 /* ------------ Init ------------ */
 async function initDashboard() {
   // Default range: last 3 months
@@ -1071,6 +1154,9 @@ async function initDashboard() {
       $("#companyDropdown").classList.remove("active");
     }
   });
+
+  // Initialize session tracking
+  initSessionTracking();
 }
 
 window.addEventListener("DOMContentLoaded", initDashboard);
