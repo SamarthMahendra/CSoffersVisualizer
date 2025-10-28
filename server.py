@@ -24,7 +24,7 @@ collection = db["interview_processes"]
 
 # ---- Constants ----
 STAGE_ORDER = [
-    "App", "OA", "Phone/R1", "Interview", "Onsite", "HM", "Offer"
+    "OA", "Phone/R1", "Interview", "Onsite", "HM", "Offer"
 ]
 
 # ---- Helpers ----
@@ -74,7 +74,7 @@ def fill_missing_stages(messages):
             stage = STAGE_ORDER[i]
             if stage not in present_stages:
                 # Add a synthetic message with null timestamp
-                if stage != "Interview":
+                if stage != "Interview" and stage != App:
                     augmented_messages.append({
                         'company': company,
                         'author': author,
