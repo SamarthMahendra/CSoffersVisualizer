@@ -19,6 +19,7 @@ CORS(app)
 uri = os.getenv("MONGO_URI", '')
 
 
+
 mongo_client = MongoClient(uri)
 db = mongo_client["JobStats"]
 collection = db["interview_processes"]
@@ -107,24 +108,33 @@ def index():
 
 @app.route('/api/meta')
 def meta():
-    """Return meta information: companies, stages, and date range."""
-    query = {"spam": False}
-    docs = list(collection.find(query, {"timestamp": 1, "company": 1}))
+    """Return meta information: companies, stages, date range, and author count."""
+    query = {"spam": False, "stage": {"$ne": "App"}}
+    docs = list(collection.find(query, {"timestamp": 1, "company": 1, "author": 1}))
     if not docs:
-        return jsonify({'companies': [], 'stages': STAGE_ORDER, 'min_timestamp': None, 'max_timestamp': None, 'count': 0})
+        return jsonify({
+            'companies': [],
+            'stages': STAGE_ORDER,
+            'min_timestamp': None,
+            'max_timestamp': None,
+            'count': 0,
+            'author_count': 0
+        })
 
     timestamps = [
         datetime.fromisoformat(d['timestamp']) if isinstance(d['timestamp'], str) else d['timestamp']
         for d in docs if d.get('timestamp')
     ]
     companies = sorted({d.get('company', '') for d in docs if d.get('company')})
+    authors = {d.get('author', '') for d in docs if d.get('author')}
 
     return jsonify({
         'companies': companies,
         'stages': STAGE_ORDER,
         'min_timestamp': min(timestamps).strftime('%Y-%m-%dT%H:%M:%S') if timestamps else None,
         'max_timestamp': max(timestamps).strftime('%Y-%m-%dT%H:%M:%S') if timestamps else None,
-        'count': len(docs)
+        'count': len(docs),
+        'author_count': len(authors)
     })
 
 
