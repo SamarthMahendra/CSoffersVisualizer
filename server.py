@@ -24,7 +24,7 @@ collection = db["interview_processes"]
 
 # ---- Constants ----
 STAGE_ORDER = [
-    "OA", "Phone/R1", "Interview", "Onsite", "HM", "Offer"
+    "OA", "Phone/R1", "Interview", "Onsite", "HM", "Offer", "Reject"
 ]
 
 # ---- Helpers ----
@@ -61,6 +61,9 @@ def fill_missing_stages(messages):
     for (company, author), msgs in grouped.items():
         # Find which stages are present
         present_stages = {msg.get('stage') for msg in msgs if msg.get('stage')}
+
+        if 'Reject' in present_stages:
+            continue
 
         # Find the earliest stage index in STAGE_ORDER
         earliest_idx = len(STAGE_ORDER)
