@@ -65,6 +65,9 @@ def fill_missing_stages(messages):
         if 'Reject' in present_stages:
             continue
 
+        if len(present_stages) == 1 and 'App' in present_stages:
+            continue
+
         # Find the earliest stage index in STAGE_ORDER
         earliest_idx = len(STAGE_ORDER)
         for stage in present_stages:
