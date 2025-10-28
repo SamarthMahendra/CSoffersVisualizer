@@ -74,15 +74,16 @@ def fill_missing_stages(messages):
             stage = STAGE_ORDER[i]
             if stage not in present_stages:
                 # Add a synthetic message with null timestamp
-                augmented_messages.append({
-                    'company': company,
-                    'author': author,
-                    'stage': stage,
-                    'timestamp': None,
-                    'text': '[Auto-generated]',
-                    'msg_id': f'auto_{company}_{author}_{stage}',
-                    'spam': False
-                })
+                if stage != "Interview":
+                    augmented_messages.append({
+                        'company': company,
+                        'author': author,
+                        'stage': stage,
+                        'timestamp': None,
+                        'text': '[Auto-generated since the user submitted next stage on discord]',
+                        'msg_id': f'auto_{company}_{author}_{stage}',
+                        'spam': False
+                    })
 
         # Add original messages
         augmented_messages.extend(msgs)
