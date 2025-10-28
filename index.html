@@ -205,6 +205,12 @@ function renderSelectedCompanies() {
 function removeCompany(index) {
   selectedCompanies.splice(index, 1);
   renderSelectedCompanies();
+
+  // If no companies selected, auto-reset the table & charts to "all"
+  if (selectedCompanies.length === 0) {
+    currentPage = 1;
+    refresh();
+  }
 }
 
 function updateCompanyCounts() {
@@ -595,7 +601,10 @@ async function refresh() {
   const end = $("#endDate").value;
   const companies = selectedCompanies.join(",");
 
-  const params = { start, end, companies };
+  const params = { start, end };
+  if (selectedCompanies.length) {
+    params.companies = selectedCompanies.join(",");
+  }
   const data = await fetchMessages(params);
 
   const stages = META.stages || [];
