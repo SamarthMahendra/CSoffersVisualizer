@@ -124,438 +124,628 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
 </div>
 
 <script>
-const SERVER=window.location.origin;
-const $=s=>document.querySelector(s);
-const $$=s=>Array.from(document.querySelectorAll(s));
-let META=null,DATA=[],charts={},currentPage=1,pageSize=10;
-let selectedCompanies=[];
-let companyCounts={};
+/* ------------ Globals & Helpers ------------ */
+const SERVER = window.location.origin;
+const $  = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
 
-// -------------------- Company Search & Selection --------------------
-function renderSelectedCompanies(){
-  const container=$("#selectedCompanies");
-  if(!selectedCompanies.length){
-    container.className="selected-companies empty";
-    container.innerHTML='<span>No companies selected</span>';
-    return;
+let META = null;
+let DATA = [];
+let charts = {};
+let currentPage = 1;
+let pageSize = 10;
+
+let selectedCompanies = [];
+let companyCounts = {};
+
+function destroyChart(id) {
+  if (charts[id]) {
+    charts[id].destroy();
+    charts[id] = null;
   }
-  container.className="selected-companies";
-  container.innerHTML=selectedCompanies.map((c,i)=>
-    `<div class="company-tag"><span>${c}</span><button onclick="removeCompany(${i})">×</button></div>`
-  ).join("");
 }
 
-function removeCompany(index){
-  selectedCompanies.splice(index,1);
+function shortenStage(stage) {
+  // Keep exact labels for now; change here if you want abbreviations
+  return stage;
+}
+
+/* ------------ Company Picker UI ------------ */
+function renderSelectedCompanies() {
+  const container = $("#selectedCompanies");
+  if (!selectedCompanies.length) {
+    container.className = "selected-companies empty";
+    container.innerHTML = '<span>No companies selected</span>';
+    return;
+  }
+  container.className = "selected-companies";
+  container.innerHTML = selectedCompanies
+    .map(
+      (c, i) =>
+        `<div class="company-tag"><span>${c}</span><button onclick="removeCompany(${i})">×</button></div>`
+    )
+    .join("");
+}
+
+function removeCompany(index) {
+  selectedCompanies.splice(index, 1);
   renderSelectedCompanies();
 }
 
-function updateCompanyCounts(){
-  // Calculate company counts from current DATA
-  companyCounts={};
-  DATA.forEach(d=>{
-    if(d.company){
-      companyCounts[d.company]=(companyCounts[d.company]||0)+1;
+function updateCompanyCounts() {
+  companyCounts = {};
+  DATA.forEach((d) => {
+    if (d.company) {
+      companyCounts[d.company] = (companyCounts[d.company] || 0) + 1;
     }
   });
 }
 
-function renderCompanyDropdown(searchTerm){
-  const dropdown=$("#companyDropdown");
-
-  // Filter companies based on search term
-  let filtered=META.companies.filter(c=>
-    c.toLowerCase().includes(searchTerm.toLowerCase()) && !selectedCompanies.includes(c)
-  );
-
-  // If no search term, show only top 10 companies
-  if(!searchTerm){
-    filtered=filtered.sort((a,b)=>(companyCounts[b]||0)-(companyCounts[a]||0)).slice(0,10);
-  }else{
-    // Sort by count when searching too
-    filtered=filtered.sort((a,b)=>(companyCounts[b]||0)-(companyCounts[a]||0));
+function renderCompanyDropdown(searchTerm) {
+  const dropdown = $("#companyDropdown");
+  if (!META || !META.companies) {
+    dropdown.classList.remove("active");
+    dropdown.innerHTML = "";
+    return;
   }
 
-  if(!filtered.length){
+  let list = META.companies.filter(
+    (c) =>
+      c.toLowerCase().includes((searchTerm || "").toLowerCase()) &&
+      !selectedCompanies.includes(c)
+  );
+
+  // Sort by activity (desc)
+  list = list.sort((a, b) => (companyCounts[b] || 0) - (companyCounts[a] || 0));
+
+  // No search term: show top 10 only
+  if (!searchTerm) list = list.slice(0, 10);
+
+  if (!list.length) {
     dropdown.classList.remove("active");
+    dropdown.innerHTML = "";
     return;
   }
 
   dropdown.classList.add("active");
-  dropdown.innerHTML=filtered.map(c=>
-    `<div class="company-option" onclick="selectCompany('${c.replace(/'/g,"\\'")}')">${c} <span style="color:var(--muted);font-size:11px">(${companyCounts[c]||0})</span></div>`
-  ).join("");
+  dropdown.innerHTML = list
+    .map(
+      (c) =>
+        `<div class="company-option" onclick="selectCompany('${c.replace(/'/g, "\\'")}')">${c} <span style="color:var(--muted);font-size:11px">(${companyCounts[c] || 0})</span></div>`
+    )
+    .join("");
 }
 
-function selectCompany(company){
-  if(!selectedCompanies.includes(company)){
+function selectCompany(company) {
+  if (!selectedCompanies.includes(company)) {
     selectedCompanies.push(company);
     renderSelectedCompanies();
   }
-  $("#companySearch").value="";
+  $("#companySearch").value = "";
   $("#companyDropdown").classList.remove("active");
 }
 
-// -------------------- Fetch --------------------
-async function fetchMeta(){
-  console.log("Fetching META...");
-  const res=await fetch(`${SERVER}/api/meta`);
-  const meta=await res.json();
-  META=meta;
-  console.log("META received:",META);
+/* ------------ Fetchers ------------ */
+async function fetchMeta() {
+  const res = await fetch(`${SERVER}/api/meta`);
+  META = await res.json();
   renderSelectedCompanies();
 }
 
-async function fetchMessages(params={}){
-  console.log("Fetching messages with params:",params);
-  const query=new URLSearchParams(params).toString();
-  const res=await fetch(`${SERVER}/api/messages?${query}`);
-  const data=await res.json();
-  console.log("Messages fetched:",data);
-  DATA=data.items||[];
+async function fetchMessages(params = {}) {
+  const query = new URLSearchParams(params).toString();
+  const res = await fetch(`${SERVER}/api/messages?${query}`);
+  const payload = await res.json();
+  DATA = payload.items || [];
   updateCompanyCounts();
   renderTable();
   return DATA;
 }
 
-// -------------------- Render Table + Pagination --------------------
-function renderTable(){
-  console.log("Rendering table... page:",currentPage);
-  const tbody=document.querySelector("tbody");
-  tbody.innerHTML="";
-  if(!DATA.length){
-    tbody.innerHTML=`<tr><td colspan="5" style="color:#999">No messages</td></tr>`;
+/* ------------ Table & Pagination ------------ */
+function renderTable() {
+  const tbody = document.querySelector("tbody");
+  tbody.innerHTML = "";
+  if (!DATA.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:#999">No messages</td></tr>`;
+    $("#pageInfo").textContent = `Page 0 / 0`;
+    $("#prevPage").disabled = true;
+    $("#nextPage").disabled = true;
     return;
   }
 
-  const start=(currentPage-1)*pageSize;
-  const pageItems=DATA.slice(start,start+pageSize);
-  console.log(`Page items (${pageItems.length}):`,pageItems);
+  const start = (currentPage - 1) * pageSize;
+  const pageItems = DATA.slice(start, start + pageSize);
 
-  for(const m of pageItems){
-    const tr=document.createElement("tr");
-    const t=new Date(m.timestamp).toLocaleString();
-    tr.innerHTML=`<td>${t}</td><td>${m.company}</td><td>${m.stage}</td><td>${m.author}</td><td>${m.text}</td>`;
+  for (const m of pageItems) {
+    const tr = document.createElement("tr");
+    const t = m.timestamp ? new Date(m.timestamp).toLocaleString() : "—";
+    tr.innerHTML = `<td>${t}</td><td>${m.company || ""}</td><td>${m.stage || ""}</td><td>${m.author || ""}</td><td>${m.text || ""}</td>`;
     tbody.appendChild(tr);
   }
 
-  const totalPages=Math.ceil(DATA.length/pageSize);
-  $("#pageInfo").textContent=`Page ${currentPage} / ${totalPages}`;
-  $("#prevPage").disabled=currentPage===1;
-  $("#nextPage").disabled=currentPage===totalPages;
+  const totalPages = Math.ceil(DATA.length / pageSize) || 1;
+  $("#pageInfo").textContent = `Page ${currentPage} / ${totalPages}`;
+  $("#prevPage").disabled = currentPage === 1;
+  $("#nextPage").disabled = currentPage === totalPages;
 }
 
-// -------------------- Pagination Events --------------------
-$("#prevPage").addEventListener("click",()=>{
-  if(currentPage>1){currentPage--;renderTable();}
+$("#prevPage").addEventListener("click", () => {
+  if (currentPage > 1) {
+    currentPage--;
+    renderTable();
+  }
 });
-$("#nextPage").addEventListener("click",()=>{
-  const totalPages=Math.ceil(DATA.length/pageSize);
-  if(currentPage<totalPages){currentPage++;renderTable();}
+$("#nextPage").addEventListener("click", () => {
+  const totalPages = Math.ceil(DATA.length / pageSize) || 1;
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderTable();
+  }
 });
 
-// -------------------- Funnel Example --------------------
-function destroyChart(id){if(charts[id]){charts[id].destroy();charts[id]=null;}}
-function renderFunnel(order,counts){
-  console.log("Rendering Funnel:",order,counts);
+/* ------------ Charts ------------ */
+// 1) Funnel (Chart.js horizontal bar)
+function renderFunnel(order, counts) {
   destroyChart("funnel");
-  const ctx=document.getElementById("funnel");
-  const vals=order.map(s=>counts[s]||0);
-  if(!vals.some(v=>v>0)){console.warn("No funnel data");return;}
-  const shortLabels=order.map(s=>shortenStage(s));
-  charts.funnel=new Chart(ctx,{
-    type:"bar",
-    data:{labels:shortLabels,datasets:[{label:"Stage Counts",data:vals,backgroundColor:"rgba(0,113,227,0.25)",borderColor:"#0071e3",borderWidth:2,borderRadius:8}]},
-    options:{
-      indexAxis:"y",
-      plugins:{legend:{display:false}},
-      scales:{
-        x:{beginAtZero:true,ticks:{font:{size:11,family:"Inter, system-ui, -apple-system"}}},
-        y:{ticks:{font:{size:11,family:"Inter, system-ui, -apple-system"}}}
+  const ctx = document.getElementById("funnel");
+  const vals = order.map((s) => counts[s] || 0);
+  if (!vals.some((v) => v > 0)) return;
+
+  const labels = order.map((s) => shortenStage(s));
+  charts.funnel = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Stage Counts",
+          data: vals,
+          backgroundColor: "rgba(0,113,227,0.25)",
+          borderColor: "#0071e3",
+          borderWidth: 2,
+          borderRadius: 8,
+        },
+      ],
+    },
+    options: {
+      indexAxis: "y",
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, ticks: { font: { size: 11, family: "Inter, system-ui, -apple-system" } } },
+        y: { ticks: { font: { size: 11, family: "Inter, system-ui, -apple-system" } } },
       },
-      animation:{duration:600}
-    }
+      animation: { duration: 500 },
+    },
   });
 }
 
-// -------------------- Heatmap --------------------
-function shortenStage(stage){
-  // Keep the exact stage names without shortening
-  return stage;
-}
+// 2) Heatmap (D3) with Overall→Reject
+function renderHeatmap(sel, companies, transitions, convMat) {
+  const svg = d3.select(sel);
+  svg.selectAll("*").remove();
+  if (!companies.length || !transitions.length) return;
 
-function renderHeatmap(sel,companies,transitions,convMat){
-  console.log("Rendering Heatmap:",companies,transitions,convMat);
-  const svg=d3.select(sel);svg.selectAll("*").remove();
-  if(!companies.length)return;
-  const margin={top:20,right:80,bottom:50,left:100};
-  const W=svg.node().getBoundingClientRect().width,H=svg.node().getBoundingClientRect().height;
-  const w=W-margin.left-margin.right,h=H-margin.top-margin.bottom;
-  const g=svg.append("g").attr("transform",`translate(${margin.left},${margin.top})`);
-  const y=d3.scaleBand().domain(companies).range([0,h]).padding(0.15);
+  const margin = { top: 20, right: 80, bottom: 50, left: 100 };
+  const W = svg.node().getBoundingClientRect().width;
+  const H = svg.node().getBoundingClientRect().height;
+  const w = Math.max(0, W - margin.left - margin.right);
+  const h = Math.max(0, H - margin.top - margin.bottom);
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-  // Shorten transition labels for display
-  const shortTransitions=transitions.map(t=>{
-    const parts=t.split("→");
+  const y = d3.scaleBand().domain(companies).range([0, h]).padding(0.15);
+  const shortTransitions = transitions.map((t) => {
+    if (t === "Overall→Reject") return t;
+    const parts = t.split("→");
     return `${shortenStage(parts[0])}→${shortenStage(parts[1])}`;
   });
+  const x = d3.scaleBand().domain(shortTransitions).range([0, w]).padding(0.15);
+  const color = d3.scaleSequential(d3.interpolateBlues).domain([0, 100]);
 
-  const x=d3.scaleBand().domain(shortTransitions).range([0,w]).padding(0.15);
-  const color=d3.scaleSequential(d3.interpolateBlues).domain([0,100]);
-  g.append("g").attr("transform",`translate(0,${h})`).call(d3.axisBottom(x)).selectAll("text").attr("transform","rotate(25)").style("text-anchor","start").style("font-size","11px").style("font-family","Inter, system-ui, -apple-system");
-  g.append("g").call(d3.axisLeft(y)).selectAll("text").style("font-size","11px").style("font-family","Inter, system-ui, -apple-system");
+  g.append("g")
+    .attr("transform", `translate(0,${h})`)
+    .call(d3.axisBottom(x))
+    .selectAll("text")
+    .attr("transform", "rotate(25)")
+    .style("text-anchor", "start")
+    .style("font-size", "11px")
+    .style("font-family", "Inter, system-ui, -apple-system");
 
-  companies.forEach(c=>transitions.forEach((t,i)=>{
-    const val=convMat[c]?.[t]||0;
-    const shortT=shortTransitions[i];
-    g.append("rect").attr("x",x(shortT)).attr("y",y(c)).attr("width",x.bandwidth()).attr("height",y.bandwidth())
-    .attr("rx",6).attr("fill",color(val)).append("title").text(`${c} ${t}: ${val.toFixed(1)}%`);
-  }));
+  g.append("g")
+    .call(d3.axisLeft(y))
+    .selectAll("text")
+    .style("font-size", "11px")
+    .style("font-family", "Inter, system-ui, -apple-system");
 
-  // Add color scale legend
-  const legendWidth=20,legendHeight=h;
-  const legendX=w+20;
-  const legendScale=d3.scaleLinear().domain([0,100]).range([legendHeight,0]);
-  const legendAxis=d3.axisRight(legendScale).ticks(5).tickFormat(d=>`${d}%`);
+  companies.forEach((c) =>
+    transitions.forEach((t, i) => {
+      const val = convMat[c]?.[t] ?? 0;
+      const shortT = shortTransitions[i];
+      g.append("rect")
+        .attr("x", x(shortT))
+        .attr("y", y(c))
+        .attr("width", x.bandwidth())
+        .attr("height", y.bandwidth())
+        .attr("rx", 6)
+        .attr("fill", color(val))
+        .append("title")
+        .text(`${c} ${t}: ${val.toFixed(1)}%`);
+    })
+  );
 
-  const defs=svg.append("defs");
-  const gradient=defs.append("linearGradient").attr("id","heatmap-gradient").attr("x1","0%").attr("y1","100%").attr("x2","0%").attr("y2","0%");
-  for(let i=0;i<=100;i+=10){
-    gradient.append("stop").attr("offset",`${i}%`).attr("stop-color",color(i));
+  // Legend
+  const legendWidth = 20;
+  const legendHeight = Math.max(40, h);
+  const legendX = w + 20;
+  const legendScale = d3.scaleLinear().domain([0, 100]).range([legendHeight, 0]);
+  const legendAxis = d3.axisRight(legendScale).ticks(5).tickFormat((d) => `${d}%`);
+
+  const defs = svg.append("defs");
+  const gradId = "heatmap-gradient";
+  const gradient = defs.append("linearGradient").attr("id", gradId).attr("x1", "0%").attr("y1", "100%").attr("x2", "0%").attr("y2", "0%");
+  for (let i = 0; i <= 100; i += 10) {
+    gradient.append("stop").attr("offset", `${i}%`).attr("stop-color", color(i));
   }
 
-  g.append("rect").attr("x",legendX).attr("y",0).attr("width",legendWidth).attr("height",legendHeight)
-    .attr("rx",4).style("fill","url(#heatmap-gradient)");
-  g.append("g").attr("transform",`translate(${legendX+legendWidth},0)`).call(legendAxis).selectAll("text").style("font-size","11px").style("font-family","Inter, system-ui, -apple-system");
-  g.append("text").attr("x",legendX+legendWidth/2).attr("y",-5).style("font-size","11px").style("font-weight","600").style("font-family","Inter, system-ui, -apple-system")
-    .attr("text-anchor","middle").text("Conv %");
+  g.append("rect")
+    .attr("x", legendX)
+    .attr("y", 0)
+    .attr("width", legendWidth)
+    .attr("height", legendHeight)
+    .attr("rx", 4)
+    .style("fill", `url(#${gradId})`);
+
+  g.append("g")
+    .attr("transform", `translate(${legendX + legendWidth},0)`)
+    .call(legendAxis)
+    .selectAll("text")
+    .style("font-size", "11px")
+    .style("font-family", "Inter, system-ui, -apple-system");
+
+  g.append("text")
+    .attr("x", legendX + legendWidth / 2)
+    .attr("y", -5)
+    .style("font-size", "11px")
+    .style("font-weight", "600")
+    .style("font-family", "Inter, system-ui, -apple-system")
+    .attr("text-anchor", "middle")
+    .text("Conv %");
 }
 
-// -------------------- Timeline --------------------
-function renderTimeline(sel,stages,stageTimes){
-  console.log("Rendering Timeline:",stages,stageTimes);
-  const svg=d3.select(sel);svg.selectAll("*").remove();
-  if(!stages.length)return;
-  const margin={top:30,right:30,bottom:50,left:100};
-  const W=svg.node().getBoundingClientRect().width,H=svg.node().getBoundingClientRect().height;
-  const w=W-margin.left-margin.right,h=H-margin.top-margin.bottom;
-  const g=svg.append("g").attr("transform",`translate(${margin.left},${margin.top})`);
+// 3) Timeline (Avg days between consecutive stages)
+// 3) Timeline (Avg days between transitions incl. Overall→Reject as HM→Reject)
+function renderTimeline(sel, transitionsForTimeline, stageTimes) {
+  const svg = d3.select(sel);
+  svg.selectAll("*").remove();
+  if (!transitionsForTimeline.length) return;
 
-  // Build transitions from pre-calculated average days
-  const transitions=stages.slice(0,-1).map((s,i)=>{
-    const fromStage=s,toStage=stages[i+1];
-    const key=`${fromStage}→${toStage}`;
-    const avgDays=Math.round(stageTimes[key]||0);
+  const margin = { top: 30, right: 30, bottom: 50, left: 140 };
+  const W = svg.node().getBoundingClientRect().width;
+  const H = svg.node().getBoundingClientRect().height;
+  const w = Math.max(0, W - margin.left - margin.right);
+  const h = Math.max(0, H - margin.top - margin.bottom);
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-    return {
-      from:fromStage,
-      to:toStage,
-      days:avgDays,
-      fullLabel:`${fromStage}→${toStage}`,
-      shortLabel:`${shortenStage(fromStage)}→${shortenStage(toStage)}`
-    };
+  // Build rows for timeline from provided transitions
+  const rows = transitionsForTimeline.map((key) => {
+    const days = Math.round(stageTimes[key] || 0);
+    const label = key === "Overall→Reject" ? key : key.split("→").map(shortenStage).join("→");
+    return { key, days, label };
   });
 
-  const y=d3.scaleBand().domain(transitions.map(t=>t.shortLabel)).range([0,h]).padding(0.2);
-  const x=d3.scaleLinear().domain([0,d3.max(transitions,d=>d.days)+5]).range([0,w]);
-  const color=d3.scaleSequential(d3.interpolateViridis).domain([0,transitions.length-1]);
+  // If everything is zero, do nothing
+  if (!rows.some(r => r.days > 0)) return;
 
-  g.append("g").call(d3.axisLeft(y)).selectAll("text").style("font-size","11px").style("font-family","Inter, system-ui, -apple-system");
-  const xAxis=g.append("g").attr("transform",`translate(0,${h})`).call(d3.axisBottom(x).ticks(5));
-  xAxis.selectAll("text").style("font-size","11px").style("font-family","Inter, system-ui, -apple-system");
-  xAxis.append("text").attr("x",w/2).attr("y",35).attr("fill","currentColor").style("text-anchor","middle").style("font-size","11px").style("font-weight","600").style("font-family","Inter, system-ui, -apple-system").text("Days");
+  const y = d3.scaleBand().domain(rows.map(r => r.label)).range([0, h]).padding(0.2);
+  const x = d3.scaleLinear()
+    .domain([0, Math.max(5, d3.max(rows, r => r.days) || 0) + 5])
+    .range([0, w]);
 
-  transitions.forEach((t,i)=>{
-    g.append("rect").attr("x",0).attr("y",y(t.shortLabel)).attr("width",x(t.days)).attr("height",y.bandwidth())
-      .attr("rx",6).attr("fill",color(i)).append("title").text(`${t.fullLabel}: ${t.days} days`);
-    g.append("text").attr("x",x(t.days)+5).attr("y",y(t.shortLabel)+y.bandwidth()/2+4)
-      .style("font-size","11px").style("font-family","Inter, system-ui, -apple-system").attr("fill","currentColor").text(`${t.days}d`);
+  const color = d3.scaleSequential(d3.interpolateViridis).domain([0, rows.length - 1]);
+
+  g.append("g")
+    .call(d3.axisLeft(y))
+    .selectAll("text")
+    .style("font-size", "11px")
+    .style("font-family", "Inter, system-ui, -apple-system");
+
+  const xAxis = g.append("g").attr("transform", `translate(0,${h})`).call(d3.axisBottom(x).ticks(5));
+  xAxis.selectAll("text").style("font-size", "11px").style("font-family", "Inter, system-ui, -apple-system");
+  xAxis.append("text")
+    .attr("x", w / 2)
+    .attr("y", 35)
+    .attr("fill", "currentColor")
+    .style("text-anchor", "middle")
+    .style("font-size", "11px")
+    .style("font-weight", "600")
+    .style("font-family", "Inter, system-ui, -apple-system")
+    .text("Days");
+
+  rows.forEach((r, i) => {
+    g.append("rect")
+      .attr("x", 0)
+      .attr("y", y(r.label))
+      .attr("width", x(r.days))
+      .attr("height", y.bandwidth())
+      .attr("rx", 6)
+      .attr("fill", color(i))
+      .append("title")
+      .text(`${r.key}: ${r.days} days`);
+
+    g.append("text")
+      .attr("x", x(r.days) + 5)
+      .attr("y", y(r.label) + y.bandwidth() / 2 + 4)
+      .style("font-size", "11px")
+      .style("font-family", "Inter, system-ui, -apple-system")
+      .attr("fill", "currentColor")
+      .text(`${r.days}d`);
   });
 }
 
-// -------------------- Focus Stage (Bar+Line) --------------------
-function renderBarLine(stages,counts){
-  console.log("Rendering BarLine:",stages,counts);
+
+// 4) Bar + Line (Count + Cumulative)
+function renderBarLine(stages, counts) {
   destroyChart("barline");
-  const ctx=document.getElementById("barline");
-  const vals=stages.map(s=>counts[s]||0);
-  if(!vals.some(v=>v>0)){console.warn("No barline data");return;}
+  const ctx = document.getElementById("barline");
+  const vals = stages.map((s) => counts[s] || 0);
+  if (!vals.some((v) => v > 0)) return;
 
-  // Calculate cumulative (line)
-  const cumulative=[];
-  let sum=0;
-  for(const v of vals){sum+=v;cumulative.push(sum);}
+  const cumulative = [];
+  let sum = 0;
+  for (const v of vals) {
+    sum += v;
+    cumulative.push(sum);
+  }
 
-  const shortLabels=stages.map(s=>shortenStage(s));
-  charts.barline=new Chart(ctx,{
-    type:"bar",
-    data:{
-      labels:shortLabels,
-      datasets:[
-        {label:"Count",data:vals,backgroundColor:"rgba(41,151,255,0.3)",borderColor:"#2997ff",borderWidth:2,borderRadius:8,yAxisID:"y"},
-        {label:"Cumulative",type:"line",data:cumulative,borderColor:"#ff9500",borderWidth:3,fill:false,tension:0.3,yAxisID:"y1"}
-      ]
+  const labels = stages.map((s) => shortenStage(s));
+  charts.barline = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Count",
+          data: vals,
+          backgroundColor: "rgba(41,151,255,0.3)",
+          borderColor: "#2997ff",
+          borderWidth: 2,
+          borderRadius: 8,
+          yAxisID: "y",
+        },
+        {
+          label: "Cumulative",
+          type: "line",
+          data: cumulative,
+          borderColor: "#ff9500",
+          borderWidth: 3,
+          fill: false,
+          tension: 0.3,
+          yAxisID: "y1",
+        },
+      ],
     },
-    options:{
-      plugins:{
-        legend:{
-          display:true,
-          position:"top",
-          labels:{font:{size:11,family:"Inter, system-ui, -apple-system"}}
-        }
+    options: {
+      plugins: {
+        legend: {
+          display: true,
+          position: "top",
+          labels: { font: { size: 11, family: "Inter, system-ui, -apple-system" } },
+        },
       },
-      scales:{
-        x:{ticks:{font:{size:11,family:"Inter, system-ui, -apple-system"}}},
-        y:{beginAtZero:true,position:"left",title:{display:true,text:"Count",font:{size:11,family:"Inter, system-ui, -apple-system"}},ticks:{font:{size:11,family:"Inter, system-ui, -apple-system"}}},
-        y1:{beginAtZero:true,position:"right",grid:{drawOnChartArea:false},title:{display:true,text:"Cumulative",font:{size:11,family:"Inter, system-ui, -apple-system"}},ticks:{font:{size:11,family:"Inter, system-ui, -apple-system"}}}
+      scales: {
+        x: { ticks: { font: { size: 11, family: "Inter, system-ui, -apple-system" } } },
+        y: {
+          beginAtZero: true,
+          position: "left",
+          title: { display: true, text: "Count", font: { size: 11, family: "Inter, system-ui, -apple-system" } },
+          ticks: { font: { size: 11, family: "Inter, system-ui, -apple-system" } },
+        },
+        y1: {
+          beginAtZero: true,
+          position: "right",
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: "Cumulative", font: { size: 11, family: "Inter, system-ui, -apple-system" } },
+          ticks: { font: { size: 11, family: "Inter, system-ui, -apple-system" } },
+        },
       },
-      animation:{duration:600}
-    }
+      animation: { duration: 500 },
+    },
   });
 }
 
-// -------------------- Refresh Dashboard --------------------
-async function refresh(){
-  console.log("Refreshing dashboard...");
-  const start=$("#startDate").value;
-  const end=$("#endDate").value;
-  const companies=selectedCompanies.join(",");
-  const params={start,end,companies};
-  const data=await fetchMessages(params);
+/* ------------ Dashboard Refresh ------------ */
+async function refresh() {
+  const start = $("#startDate").value;
+  const end = $("#endDate").value;
+  const companies = selectedCompanies.join(",");
 
-  const stages=META.stages;
-  const counts=Object.fromEntries(stages.map(s=>[s,0]));
-  data.forEach(d=>{if(counts[d.stage]!=null)counts[d.stage]++;});
+  const params = { start, end, companies };
+  const data = await fetchMessages(params);
 
-  // Use selected companies for heatmap, or all if none selected
-  const compsForHeatmap=selectedCompanies.length>0?selectedCompanies:META.companies;
-
-  // Count messages per company to get top 8 by frequency
-  const compCounts={};
-  compsForHeatmap.forEach(c=>compCounts[c]=0);
-  data.forEach(d=>{
-    if(compCounts[d.company]!=null)compCounts[d.company]++;
+  const stages = META.stages || [];
+  // Stage counts
+  const counts = Object.fromEntries(stages.map((s) => [s, 0]));
+  data.forEach((d) => {
+    if (counts[d.stage] != null) counts[d.stage]++;
   });
 
-  // Sort companies by count (descending) and take top 8
-  const top8Companies=Object.entries(compCounts)
-    .sort((a,b)=>b[1]-a[1])
-    .slice(0,8)
-    .map(entry=>entry[0]);
-
-  // Calculate real conversion rates from data (only for top 8 companies)
-  const convMat={};
-  top8Companies.forEach(c=>{
-    convMat[c]={};
-    const compData=data.filter(d=>d.company===c);
-    const compCounts=Object.fromEntries(stages.map(s=>[s,0]));
-    compData.forEach(d=>{if(compCounts[d.stage]!=null)compCounts[d.stage]++;});
-
-    for(let i=0;i<stages.length-1;i++){
-      const from=stages[i],to=stages[i+1];
-      const fromCount=compCounts[from];
-      const toCount=compCounts[to];
-      // Calculate conversion as percentage: if there are applications in "from" stage,
-      // what % made it to "to" stage
-      const conv=fromCount>0?(toCount/fromCount)*100:0;
-      convMat[c][`${from}→${to}`]=conv;
-    }
+  // Companies for heatmap
+  const baseCompanies = selectedCompanies.length ? selectedCompanies : META.companies || [];
+  const compCounts = {};
+  baseCompanies.forEach((c) => (compCounts[c] = 0));
+  data.forEach((d) => {
+    if (compCounts[d.company] != null) compCounts[d.company]++;
   });
+  const top8Companies = Object.entries(compCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([c]) => c);
 
-  // Calculate real average days between stages by tracking individual applications
-  // Group messages by (company, author) to track each person's application journey
-  const applications={};
-  data.forEach(d=>{
-    const key=`${d.company}|${d.author}`;
-    if(!applications[key])applications[key]=[];
-    applications[key].push({stage:d.stage,timestamp:new Date(d.timestamp).getTime()});
-  });
-
-  // For each stage transition, collect time differences across all applications
-  const transitionDays={};
-  stages.slice(0,-1).forEach((s,i)=>{
-    const from=s,to=stages[i+1];
-    transitionDays[`${from}→${to}`]=[];
-  });
-
-  // Process each application's journey
-  Object.values(applications).forEach(msgs=>{
-    // Sort messages by timestamp
-    msgs.sort((a,b)=>a.timestamp-b.timestamp);
-
-    // Track stages we've seen in chronological order
-    const stageMap={};
-    msgs.forEach(m=>{
-      // Keep only the earliest timestamp for each stage
-      if(!stageMap[m.stage]){
-        stageMap[m.stage]=m.timestamp;
-      }
+  // Conversion matrix: stage→next-stage (skip Reject as a “to”) + Overall→Reject
+  const convMat = {};
+  const applications = {}; // key: `${company}|${author}` -> [{stage, ts}]
+  data.forEach((d) => {
+    const key = `${d.company}|${d.author}`;
+    (applications[key] ||= []).push({
+      stage: d.stage,
+      ts: d.timestamp ? new Date(d.timestamp).getTime() : null,
     });
+  });
 
-    // Calculate time between consecutive stages
-    for(let i=0;i<stages.length-1;i++){
-      const from=stages[i],to=stages[i+1];
-      if(stageMap[from]&&stageMap[to]){
-        const days=(stageMap[to]-stageMap[from])/(1000*60*60*24);
-        if(days>=0){
-          transitionDays[`${from}→${to}`].push(days);
-        }
-      }
+  // Stage counts per company for simple ratio calc
+  const perCompanyStageCounts = {};
+  top8Companies.forEach((c) => (perCompanyStageCounts[c] = Object.fromEntries(stages.map((s) => [s, 0]))));
+  data.forEach((d) => {
+    if (perCompanyStageCounts[d.company] && perCompanyStageCounts[d.company][d.stage] != null) {
+      perCompanyStageCounts[d.company][d.stage] += 1;
     }
   });
 
-  // Calculate average for each transition
-  const stageTimes={};
-  Object.keys(transitionDays).forEach(key=>{
-    const days=transitionDays[key];
-    stageTimes[key]=days.length>0?days.reduce((a,b)=>a+b,0)/days.length:0;
+  // Stage→next-stage (no ...→Reject)
+  top8Companies.forEach((c) => {
+    convMat[c] = {};
+    for (let i = 0; i < stages.length - 1; i++) {
+      const from = stages[i];
+      const to = stages[i + 1];
+      if ((to || "").toLowerCase() === "reject") continue;
+      const fromCount = perCompanyStageCounts[c][from] || 0;
+      const toCount = perCompanyStageCounts[c][to] || 0;
+      const pct = fromCount > 0 ? (toCount / fromCount) * 100 : 0;
+      convMat[c][`${from}→${to}`] = pct;
+    }
   });
 
-  const transitions=stages.slice(0,-1).map((s,i)=>`${stages[i]}→${stages[i+1]}`);
-  renderFunnel(stages,counts);
-  renderHeatmap("#heatmap",top8Companies,transitions,convMat);
-  renderTimeline("#timeline",stages,stageTimes);
-  renderBarLine(stages,counts);
+  // Overall→Reject
+  const appsByCompany = {};
+  top8Companies.forEach((c) => (appsByCompany[c] = new Set()));
+  Object.keys(applications).forEach((key) => {
+    const [company] = key.split("|");
+    if (appsByCompany[company]) appsByCompany[company].add(key);
+  });
+  top8Companies.forEach((c) => {
+    const keys = Array.from(appsByCompany[c] || []);
+    if (!keys.length) {
+      convMat[c]["Overall→Reject"] = 0;
+      return;
+    }
+    let rejected = 0;
+    keys.forEach((k) => {
+      const stagesSeen = new Set((applications[k] || []).map((x) => x.stage).filter(Boolean));
+      if (stagesSeen.has("Reject")) rejected += 1;
+    });
+    convMat[c]["Overall→Reject"] = (rejected / keys.length) * 100;
+  });
+
+  // ---- Avg days between consecutive stages (earliest timestamp per stage) ----
+const transitionDays = {};
+stages.slice(0, -1).forEach((s, i) => {
+  const to = stages[i + 1];
+  transitionDays[`${s}→${to}`] = [];
+});
+
+// Build per-application earliest timestamps
+const appEarliest = {};
+Object.entries(applications).forEach(([key, msgs]) => {
+  const stageMap = {};
+  msgs.forEach((m) => {
+    if (!m.stage || !Number.isFinite(m.ts)) return;
+    if (!(m.stage in stageMap) || m.ts < stageMap[m.stage]) {
+      stageMap[m.stage] = m.ts;
+    }
+  });
+  appEarliest[key] = stageMap;
+});
+
+// Fill consecutive stage deltas
+Object.values(appEarliest).forEach((stageMap) => {
+  for (let i = 0; i < stages.length - 1; i++) {
+    const from = stages[i], to = stages[i + 1];
+    if (stageMap[from] != null && stageMap[to] != null) {
+      const days = (stageMap[to] - stageMap[from]) / (1000 * 60 * 60 * 24);
+      if (Number.isFinite(days) && days >= 0) transitionDays[`${from}→${to}`].push(days);
+    }
+  }
+});
+
+// ---- HM→Reject as Overall→Reject ----
+const HM = "HM";
+const REJECT = "Reject";
+const hmToRejectDays = [];
+Object.values(appEarliest).forEach((stageMap) => {
+  if (stageMap[HM] != null && stageMap[REJECT] != null) {
+    const days = (stageMap[REJECT] - stageMap[HM]) / (1000 * 60 * 60 * 24);
+    if (Number.isFinite(days) && days >= 0) hmToRejectDays.push(days);
+  }
+});
+
+const stageTimes = {};
+Object.keys(transitionDays).forEach((k) => {
+  const arr = transitionDays[k];
+  stageTimes[k] = arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+});
+stageTimes["Overall→Reject"] = hmToRejectDays.length
+  ? hmToRejectDays.reduce((a, b) => a + b, 0) / hmToRejectDays.length
+  : 0;
+
+// ---- Transitions for visuals ----
+const transitions = stages
+  .slice(0, -1)
+  .filter((_, i) => (stages[i + 1] || "").toLowerCase() !== "reject")
+  .map((_, i) => `${stages[i]}→${stages[i + 1]}`);
+
+const transitionsWithOverallReject = [...transitions, "Overall→Reject"];
+
+// ---- Render ----
+renderFunnel(stages, counts);
+renderHeatmap("#heatmap", top8Companies, transitionsWithOverallReject, convMat);
+renderTimeline("#timeline", transitionsWithOverallReject, stageTimes);  // <-- updated
+renderBarLine(stages, counts);
+
 }
 
-// -------------------- Init --------------------
-async function initDashboard(){
-  console.log("Initializing dashboard...");
+/* ------------ Init ------------ */
+async function initDashboard() {
+  // Default range: last 3 months
+  const today = new Date();
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(today.getMonth() - 3);
 
-  // Set default date range: 3 months prior to today
-  const today=new Date();
-  const threeMonthsAgo=new Date();
-  threeMonthsAgo.setMonth(today.getMonth()-3);
-
-  // Format dates as YYYY-MM-DD for input[type=date]
-  const formatDate=(date)=>{
-    const year=date.getFullYear();
-    const month=String(date.getMonth()+1).padStart(2,'0');
-    const day=String(date.getDate()).padStart(2,'0');
-    return `${year}-${month}-${day}`;
+  const fmt = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${dd}`;
   };
 
-  $("#startDate").value=formatDate(threeMonthsAgo);
-  $("#endDate").value=formatDate(today);
+  $("#startDate").value = fmt(threeMonthsAgo);
+  $("#endDate").value = fmt(today);
 
   await fetchMeta();
   await fetchMessages();
   await refresh();
 
-  // Event listeners for company search
-  $("#companySearch").addEventListener("input",(e)=>renderCompanyDropdown(e.target.value));
-  $("#companySearch").addEventListener("focus",(e)=>renderCompanyDropdown(e.target.value));
-  $("#applyBtn").addEventListener("click",()=>{currentPage=1;refresh();});
+  // Company search interactions
+  $("#companySearch").addEventListener("input", (e) => renderCompanyDropdown(e.target.value));
+  $("#companySearch").addEventListener("focus", (e) => renderCompanyDropdown(e.target.value));
+  $("#applyBtn").addEventListener("click", () => {
+    currentPage = 1;
+    refresh();
+  });
 
-  // Close dropdown when clicking outside
-  document.addEventListener("click",(e)=>{
-    if(!e.target.closest(".company-search-wrapper")){
+  // Close dropdown on outside click
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".company-search-wrapper")) {
       $("#companyDropdown").classList.remove("active");
     }
   });
 }
 
-window.addEventListener("DOMContentLoaded",initDashboard);
+window.addEventListener("DOMContentLoaded", initDashboard);
+
+// Expose for inline onclick
+window.removeCompany = removeCompany;
+window.selectCompany = selectCompany;
 </script>
+
 </body>
 </html>
