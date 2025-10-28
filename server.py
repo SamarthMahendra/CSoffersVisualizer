@@ -74,7 +74,7 @@ def fill_missing_stages(messages):
             stage = STAGE_ORDER[i]
             if stage not in present_stages:
                 # Add a synthetic message with null timestamp
-                if stage != "Interview" and stage != App:
+                if stage != "Interview" and stage != "App":
                     augmented_messages.append({
                         'company': company,
                         'author': author,
