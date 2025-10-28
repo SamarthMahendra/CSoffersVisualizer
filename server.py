@@ -38,6 +38,57 @@ def parse_date(s):
             continue
     return None
 
+def fill_missing_stages(messages):
+    """
+    Postprocessing: For each (company, author) combination, add missing stages
+    before the earliest actual stage with null timestamp.
+    """
+    if not messages:
+        return messages
+
+    # Group messages by (company, author)
+    grouped = {}
+    for msg in messages:
+        company = msg.get('company', '')
+        author = msg.get('author', '')
+        key = (company, author)
+        if key not in grouped:
+            grouped[key] = []
+        grouped[key].append(msg)
+
+    # Process each group
+    augmented_messages = []
+    for (company, author), msgs in grouped.items():
+        # Find which stages are present
+        present_stages = {msg.get('stage') for msg in msgs if msg.get('stage')}
+
+        # Find the earliest stage index in STAGE_ORDER
+        earliest_idx = len(STAGE_ORDER)
+        for stage in present_stages:
+            if stage in STAGE_ORDER:
+                idx = STAGE_ORDER.index(stage)
+                earliest_idx = min(earliest_idx, idx)
+
+        # Add missing stages before earliest_idx
+        for i in range(earliest_idx):
+            stage = STAGE_ORDER[i]
+            if stage not in present_stages:
+                # Add a synthetic message with null timestamp
+                augmented_messages.append({
+                    'company': company,
+                    'author': author,
+                    'stage': stage,
+                    'timestamp': None,
+                    'text': '[Auto-generated]',
+                    'msg_id': f'auto_{company}_{author}_{stage}',
+                    'spam': False
+                })
+
+        # Add original messages
+        augmented_messages.extend(msgs)
+
+    return augmented_messages
+
 # ---- Routes ----
 @app.route('/')
 def index():
@@ -97,7 +148,10 @@ def api_messages():
     cursor = collection.find(query, {"_id": 0}).sort("timestamp", -1)
     results = list(cursor)
 
-    return jsonify({'items': results, 'total': len(results)})
+    # Apply postprocessing: add missing stages
+    augmented_results = fill_missing_stages(results)
+
+    return jsonify({'items': augmented_results, 'total': len(augmented_results)})
 
 # ---- Entry ----
 if __name__ == '__main__':

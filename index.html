@@ -48,8 +48,9 @@ aside button{margin-top:12px;width:100%;padding:10px;border:none;border-radius:1
 aside button:hover{background:#005bbb}
 .company-search-wrapper{margin-top:4px;position:relative}
 .company-search{width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.3);color:var(--text);font-size:14px}
-.company-dropdown{position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:10px;margin-top:4px;z-index:10;display:none}
+.company-dropdown{position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:rgba(255,255,255,0.98);border:1px solid var(--border);border-radius:10px;margin-top:4px;z-index:10;display:none;backdrop-filter:blur(10px)}
 .company-dropdown.active{display:block}
+@media (prefers-color-scheme:dark){.company-dropdown{background:rgba(18,18,22,0.98)}}
 .company-option{padding:8px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)}
 .company-option:last-child{border-bottom:none}
 .company-option:hover{background:rgba(0,113,227,0.15)}
@@ -128,6 +129,7 @@ const $=s=>document.querySelector(s);
 const $$=s=>Array.from(document.querySelectorAll(s));
 let META=null,DATA=[],charts={},currentPage=1,pageSize=10;
 let selectedCompanies=[];
+let companyCounts={};
 
 // -------------------- Company Search & Selection --------------------
 function renderSelectedCompanies(){
@@ -148,20 +150,40 @@ function removeCompany(index){
   renderSelectedCompanies();
 }
 
+function updateCompanyCounts(){
+  // Calculate company counts from current DATA
+  companyCounts={};
+  DATA.forEach(d=>{
+    if(d.company){
+      companyCounts[d.company]=(companyCounts[d.company]||0)+1;
+    }
+  });
+}
+
 function renderCompanyDropdown(searchTerm){
   const dropdown=$("#companyDropdown");
-  const filtered=META.companies.filter(c=>
+
+  // Filter companies based on search term
+  let filtered=META.companies.filter(c=>
     c.toLowerCase().includes(searchTerm.toLowerCase()) && !selectedCompanies.includes(c)
   );
 
-  if(!searchTerm || !filtered.length){
+  // If no search term, show only top 10 companies
+  if(!searchTerm){
+    filtered=filtered.sort((a,b)=>(companyCounts[b]||0)-(companyCounts[a]||0)).slice(0,10);
+  }else{
+    // Sort by count when searching too
+    filtered=filtered.sort((a,b)=>(companyCounts[b]||0)-(companyCounts[a]||0));
+  }
+
+  if(!filtered.length){
     dropdown.classList.remove("active");
     return;
   }
 
   dropdown.classList.add("active");
   dropdown.innerHTML=filtered.map(c=>
-    `<div class="company-option" onclick="selectCompany('${c.replace(/'/g,"\\'")}')">${c}</div>`
+    `<div class="company-option" onclick="selectCompany('${c.replace(/'/g,"\\'")}')">${c} <span style="color:var(--muted);font-size:11px">(${companyCounts[c]||0})</span></div>`
   ).join("");
 }
 
@@ -191,6 +213,7 @@ async function fetchMessages(params={}){
   const data=await res.json();
   console.log("Messages fetched:",data);
   DATA=data.items||[];
+  updateCompanyCounts();
   renderTable();
   return DATA;
 }
@@ -498,12 +521,30 @@ async function refresh(){
 // -------------------- Init --------------------
 async function initDashboard(){
   console.log("Initializing dashboard...");
+
+  // Set default date range: 3 months prior to today
+  const today=new Date();
+  const threeMonthsAgo=new Date();
+  threeMonthsAgo.setMonth(today.getMonth()-3);
+
+  // Format dates as YYYY-MM-DD for input[type=date]
+  const formatDate=(date)=>{
+    const year=date.getFullYear();
+    const month=String(date.getMonth()+1).padStart(2,'0');
+    const day=String(date.getDate()).padStart(2,'0');
+    return `${year}-${month}-${day}`;
+  };
+
+  $("#startDate").value=formatDate(threeMonthsAgo);
+  $("#endDate").value=formatDate(today);
+
   await fetchMeta();
   await fetchMessages();
   await refresh();
 
   // Event listeners for company search
   $("#companySearch").addEventListener("input",(e)=>renderCompanyDropdown(e.target.value));
+  $("#companySearch").addEventListener("focus",(e)=>renderCompanyDropdown(e.target.value));
   $("#applyBtn").addEventListener("click",()=>{currentPage=1;refresh();});
 
   // Close dropdown when clicking outside
