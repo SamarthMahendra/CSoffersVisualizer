@@ -25,10 +25,12 @@ uri = os.getenv("MONGO_URI", '')
 
 
 
+
 mongo_client = MongoClient(uri)
 db = mongo_client["JobStats"]
 collection = db["interview_processes"]
 sessions_collection = db["active_sessions"]
+feedback_collection = db["feedback"]
 
 # ---- Constants ----
 STAGE_ORDER = [
@@ -761,6 +763,34 @@ def viewers_count():
     })
 
     return jsonify({'count': count})
+
+
+@app.route('/api/feedback', methods=['POST'])
+def submit_feedback():
+    """Save user feedback to database."""
+    data = request.get_json() or {}
+
+    feedback_text = data.get('feedback', '').strip()
+    email = data.get('email', '').strip()
+    rating = data.get('rating')
+
+    if not feedback_text:
+        return jsonify({'error': 'Feedback text is required'}), 400
+
+    feedback_doc = {
+        'feedback': feedback_text,
+        'email': email if email else None,
+        'rating': rating if rating else None,
+        'timestamp': datetime.utcnow(),
+        'session_id': data.get('session_id')
+    }
+
+    result = feedback_collection.insert_one(feedback_doc)
+
+    return jsonify({
+        'success': True,
+        'feedback_id': str(result.inserted_id)
+    })
 
 
 # ---- Entry ----

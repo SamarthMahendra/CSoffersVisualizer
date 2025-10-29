@@ -222,6 +222,254 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
   canvas,svg{height:220px!important}
   .pagination button{padding:6px 12px;font-size:13px;min-height:40px}
 }
+
+/* Feedback Button (Fixed Bottom-Right) */
+.feedback-btn{
+  position:fixed;
+  bottom:24px;
+  right:24px;
+  padding:14px 20px;
+  border:none;
+  border-radius:50px;
+  background:var(--accent);
+  color:white;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.3s;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  box-shadow:0 4px 20px rgba(0,113,227,0.3);
+  z-index:999;
+}
+.feedback-btn:hover{
+  background:#005bbb;
+  transform:translateY(-2px);
+  box-shadow:0 6px 28px rgba(0,113,227,0.4);
+}
+.feedback-btn:active{
+  transform:translateY(0);
+}
+@media(max-width:768px){
+  .feedback-btn{
+    bottom:16px;
+    right:16px;
+    padding:12px 16px;
+    font-size:14px;
+    gap:6px;
+  }
+}
+@media(max-width:400px){
+  .feedback-btn{
+    bottom:12px;
+    right:12px;
+    padding:10px 14px;
+    font-size:13px;
+  }
+}
+
+/* Feedback Modal */
+.feedback-modal{
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  backdrop-filter:blur(8px);
+  z-index:1000;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.feedback-modal.active{
+  display:flex;
+}
+.feedback-modal-content{
+  background:var(--card);
+  backdrop-filter:blur(var(--blur));
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  max-width:500px;
+  width:100%;
+  max-height:90vh;
+  overflow-y:auto;
+}
+.feedback-modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:20px 24px;
+  border-bottom:1px solid var(--border);
+}
+.feedback-modal-header h2{
+  font-size:20px;
+  font-weight:600;
+  margin:0;
+}
+.feedback-close{
+  background:none;
+  border:none;
+  font-size:28px;
+  line-height:1;
+  cursor:pointer;
+  color:var(--muted);
+  padding:0;
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:8px;
+  transition:all 0.2s;
+}
+.feedback-close:hover{
+  background:rgba(0,0,0,0.1);
+  color:var(--text);
+}
+.feedback-modal-body{
+  padding:24px;
+}
+.feedback-modal-body form{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.feedback-modal-body label{
+  font-size:14px;
+  font-weight:500;
+  color:var(--text);
+  margin-bottom:4px;
+}
+.feedback-modal-body label .required{
+  color:#ff3b30;
+}
+.rating-buttons{
+  display:flex;
+  gap:8px;
+  margin-top:8px;
+}
+.rating-btn{
+  flex:1;
+  padding:12px;
+  border:2px solid var(--border);
+  border-radius:12px;
+  background:rgba(255,255,255,0.3);
+  font-size:24px;
+  cursor:pointer;
+  transition:all 0.3s;
+}
+.rating-btn:hover{
+  transform:scale(1.1);
+  border-color:var(--accent);
+}
+.rating-btn.selected{
+  border-color:var(--accent);
+  background:rgba(0,113,227,0.15);
+  transform:scale(1.05);
+}
+.feedback-modal-body textarea,
+.feedback-modal-body input[type="email"]{
+  width:100%;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:rgba(255,255,255,0.3);
+  color:var(--text);
+  font-size:14px;
+  font-family:'Inter',system-ui,-apple-system;
+  resize:vertical;
+  transition:all 0.3s;
+}
+.feedback-modal-body textarea:focus,
+.feedback-modal-body input[type="email"]:focus{
+  outline:none;
+  border-color:var(--accent);
+  background:rgba(255,255,255,0.5);
+}
+.feedback-actions{
+  display:flex;
+  gap:12px;
+  margin-top:8px;
+}
+.feedback-cancel{
+  flex:1;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:rgba(255,255,255,0.3);
+  color:var(--text);
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.3s;
+}
+.feedback-cancel:hover{
+  background:rgba(0,0,0,0.1);
+}
+.feedback-submit{
+  flex:1;
+  padding:12px;
+  border:none;
+  border-radius:12px;
+  background:var(--accent);
+  color:white;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.3s;
+}
+.feedback-submit:hover{
+  background:#005bbb;
+}
+.feedback-submit:disabled{
+  opacity:0.5;
+  cursor:not-allowed;
+}
+.feedback-status{
+  padding:12px;
+  border-radius:12px;
+  font-size:14px;
+  text-align:center;
+  display:none;
+}
+.feedback-status.success{
+  display:block;
+  background:rgba(52,199,89,0.15);
+  color:#34c759;
+  border:1px solid rgba(52,199,89,0.3);
+}
+.feedback-status.error{
+  display:block;
+  background:rgba(255,59,48,0.15);
+  color:#ff3b30;
+  border:1px solid rgba(255,59,48,0.3);
+}
+@media(max-width:768px){
+  .feedback-modal-content{
+    max-width:90%;
+    max-height:85vh;
+  }
+  .feedback-modal-header{
+    padding:16px 20px;
+  }
+  .feedback-modal-header h2{
+    font-size:18px;
+  }
+  .feedback-modal-body{
+    padding:20px;
+  }
+  .rating-buttons{
+    gap:6px;
+  }
+  .rating-btn{
+    padding:10px;
+    font-size:20px;
+  }
+}
 </style>
       <script>
       (function(h,o,u,n,d){
@@ -330,6 +578,58 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
         <span id="pageInfo"></span>
         <button id="nextPage">Next</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Feedback Button (Fixed Bottom-Right) -->
+<button class="feedback-btn" id="feedbackBtn" title="Give us your feedback">
+  💬 Feedback
+</button>
+
+<!-- Feedback Modal -->
+<div class="feedback-modal" id="feedbackModal">
+  <div class="feedback-modal-content">
+    <div class="feedback-modal-header">
+      <h2>Share Your Feedback</h2>
+      <button class="feedback-close" id="feedbackClose">&times;</button>
+    </div>
+    <div class="feedback-modal-body">
+      <form id="feedbackForm">
+        <label for="feedbackRating">How would you rate your experience?</label>
+        <div class="rating-buttons">
+          <button type="button" class="rating-btn" data-rating="1">😞</button>
+          <button type="button" class="rating-btn" data-rating="2">😐</button>
+          <button type="button" class="rating-btn" data-rating="3">🙂</button>
+          <button type="button" class="rating-btn" data-rating="4">😊</button>
+          <button type="button" class="rating-btn" data-rating="5">🤩</button>
+        </div>
+        <input type="hidden" id="feedbackRating" name="rating">
+
+        <label for="feedbackText">Your feedback <span class="required">*</span></label>
+        <textarea
+          id="feedbackText"
+          name="feedback"
+          rows="5"
+          placeholder="Tell us what you think, what we can improve, or any features you'd like to see..."
+          required
+        ></textarea>
+
+        <label for="feedbackEmail">Email (optional)</label>
+        <input
+          type="email"
+          id="feedbackEmail"
+          name="email"
+          placeholder="your@email.com"
+        >
+
+        <div class="feedback-actions">
+          <button type="button" class="feedback-cancel" id="feedbackCancel">Cancel</button>
+          <button type="submit" class="feedback-submit">Send Feedback</button>
+        </div>
+
+        <div class="feedback-status" id="feedbackStatus"></div>
+      </form>
     </div>
   </div>
 </div>
@@ -1157,6 +1457,119 @@ async function initDashboard() {
 
   // Initialize session tracking
   initSessionTracking();
+
+  // Initialize feedback modal
+  initFeedbackModal();
+}
+
+/* ------------ Feedback Modal ------------ */
+function initFeedbackModal() {
+  const modal = $("#feedbackModal");
+  const feedbackBtn = $("#feedbackBtn");
+  const feedbackClose = $("#feedbackClose");
+  const feedbackCancel = $("#feedbackCancel");
+  const feedbackForm = $("#feedbackForm");
+  const feedbackStatus = $("#feedbackStatus");
+  const ratingButtons = $$(".rating-btn");
+  const feedbackRatingInput = $("#feedbackRating");
+
+  // Open modal
+  feedbackBtn.addEventListener("click", () => {
+    modal.classList.add("active");
+    document.body.style.overflow = "hidden";
+  });
+
+  // Close modal
+  const closeModal = () => {
+    modal.classList.remove("active");
+    document.body.style.overflow = "";
+    feedbackForm.reset();
+    feedbackStatus.className = "feedback-status";
+    feedbackStatus.textContent = "";
+    ratingButtons.forEach(btn => btn.classList.remove("selected"));
+    feedbackRatingInput.value = "";
+  };
+
+  feedbackClose.addEventListener("click", closeModal);
+  feedbackCancel.addEventListener("click", closeModal);
+
+  // Close modal when clicking outside
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  // Close modal on Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("active")) {
+      closeModal();
+    }
+  });
+
+  // Rating button selection
+  ratingButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      ratingButtons.forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      feedbackRatingInput.value = btn.getAttribute("data-rating");
+    });
+  });
+
+  // Form submission
+  feedbackForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const feedbackText = $("#feedbackText").value.trim();
+    const email = $("#feedbackEmail").value.trim();
+    const rating = feedbackRatingInput.value;
+
+    if (!feedbackText) {
+      feedbackStatus.className = "feedback-status error";
+      feedbackStatus.textContent = "Please provide feedback before submitting.";
+      return;
+    }
+
+    const submitBtn = feedbackForm.querySelector(".feedback-submit");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Sending...";
+
+    try {
+      const res = await fetch(`${SERVER}/api/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          feedback: feedbackText,
+          email: email || null,
+          rating: rating ? parseInt(rating) : null,
+          session_id: SESSION_ID
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        feedbackStatus.className = "feedback-status success";
+        feedbackStatus.textContent = "Thank you for your feedback! We appreciate it.";
+        feedbackForm.reset();
+        ratingButtons.forEach(btn => btn.classList.remove("selected"));
+
+        // Close modal after 2 seconds
+        setTimeout(() => {
+          closeModal();
+        }, 2000);
+      } else {
+        throw new Error(data.error || "Failed to submit feedback");
+      }
+    } catch (error) {
+      console.error("Feedback submission error:", error);
+      feedbackStatus.className = "feedback-status error";
+      feedbackStatus.textContent = "Failed to submit feedback. Please try again.";
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Send Feedback";
+    }
+  });
 }
 
 window.addEventListener("DOMContentLoaded", initDashboard);
