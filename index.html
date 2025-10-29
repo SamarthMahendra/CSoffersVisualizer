@@ -1,27 +1,6 @@
 <!doctype html>
 <html lang="en">
 <head>
-   <script src="https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js"></script>
-  <script>
-    (function(h,o,u,n,d){
-      h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}};
-      d=o.createElement(u);d.async=1;d.src='https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js';
-      n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n);
-    })(window,document,'script','https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js','DD_RUM');
-
-    window.DD_RUM.onReady(function(){
-      window.DD_RUM.init({
-        clientToken: 'pubff3c239a28fc040fc4dd99ab202f9135',
-        applicationId: '5aca5b04-e27e-415f-a828-456408d700d8',
-        site: 'us5.datadoghq.com',
-        service: 'jobstats.fyi',
-        env: 'prod',
-        sessionSampleRate: 100,
-        sessionReplaySampleRate: 20,
-        defaultPrivacyLevel: 'mask-user-input',
-      });
-    });
-  </script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Interview Journey — Student + Pro Insights</title>
@@ -30,32 +9,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.5/dist/dotlottie-wc.js" type="module"></script>
-  <!-- Datadog RUM SDK -->
-<script src="https://www.datadoghq-browser-agent.com/datadog-rum.js"></script>
-<script>
-  (function(h,o,u,n,d){
-    h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}};
-    d=o.createElement(u);d.async=1;d.src='https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js';
-    n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n);
-  })(window,document,'script','https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js','DD_RUM');
-
-  window.DD_RUM.onReady(function(){
-    window.DD_RUM.init({
-      applicationId: '5aca5b04-e27e-415f-a828-456408d700d8',
-      clientToken: 'pubff3c239a28fc040fc4dd99ab202f9135',
-      site: 'us5.datadoghq.com',
-      service: 'jobstats.fyi',
-      env: 'prod',
-      sessionSampleRate: 100,
-      sessionReplaySampleRate: 20,
-      trackBfcacheViews: true,
-      defaultPrivacyLevel: 'mask-user-input',
-    });
-
-    // Optional: start recording user session replays
-    window.DD_RUM.startSessionReplayRecording();
-  });
-</script>
 
 <style>
 :root {
