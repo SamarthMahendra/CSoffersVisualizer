@@ -16,7 +16,8 @@ CORS(app)
 # ---- MongoDB Setup ----
 
 
-uri = os.getenv("MONGO_URI", '')
+uri = os.getenv("MONGO_URI", 'mongodb+srv://stackoverflow:stackoverflow%40123@cluster0.3kqbc.mongodb.net/myDatabase?retryWrites=true&w=majority&appName=Cluster0')
+
 
 
 
@@ -771,7 +772,7 @@ def submit_feedback():
     data = request.get_json() or {}
 
     feedback_text = data.get('feedback', '').strip()
-    email = data.get('email', '').strip()
+    email = (data.get('email') or '').strip()
     rating = data.get('rating')
 
     if not feedback_text:
