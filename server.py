@@ -26,6 +26,7 @@ uri = os.getenv("MONGO_URI", '')
 
 
 
+
 mongo_client = MongoClient(uri)
 db = mongo_client["JobStats"]
 collection = db["interview_processes"]
@@ -771,7 +772,7 @@ def submit_feedback():
     data = request.get_json() or {}
 
     feedback_text = data.get('feedback', '').strip()
-    email = data.get('email', '').strip()
+    email = (data.get('email') or '').strip()
     rating = data.get('rating')
 
     if not feedback_text:
