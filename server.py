@@ -29,6 +29,7 @@ uri = os.getenv("MONGO_URI", '')
 
 
 
+
 mongo_client = MongoClient(uri)
 db = mongo_client["JobStats"]
 collection = db["interview_processes"]
