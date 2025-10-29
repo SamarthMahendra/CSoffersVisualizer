@@ -4,7 +4,7 @@
 # Schema in MongoDB: [msg_id, text, timestamp, author, company, stage]
 # =============================================
 from flask import Flask, jsonify, request, send_from_directory
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_cors import CORS
 from pymongo import MongoClient
 import os
@@ -16,7 +16,8 @@ CORS(app)
 # ---- MongoDB Setup ----
 
 
-uri = os.getenv("MONGO_URI", '')
+uri = os.getenv("MONGO_URI", 'mongodb+srv://stackoverflow:stackoverflow%40123@cluster0.3kqbc.mongodb.net/myDatabase?retryWrites=true&w=majority&appName=Cluster0')
+
 
 
 
@@ -792,6 +793,116 @@ def submit_feedback():
         'success': True,
         'feedback_id': str(result.inserted_id)
     })
+
+
+@app.route('/api/top-oa-companies')
+def top_oa_companies():
+    """Get top companies sending out OAs this week."""
+    # Get job_types filter from request
+    job_types = [j for j in (request.args.get('job_types') or '').split(',') if j]
+
+    # Get current date and calculate one week ago
+    now = datetime.utcnow()
+    one_week_ago = now - timedelta(days=7)
+
+    # Build the match query
+    match_query = {
+        'stage': 'OA',
+        'timestamp': {
+            '$gte': one_week_ago.isoformat(),
+            '$lte': now.isoformat()
+        },
+        'spam': {'$ne': True}
+    }
+
+    # Apply job type filter
+    if job_types and len(job_types) == 1:
+        if 'new_grad' in job_types:
+            match_query['new_grad'] = True
+        elif 'intern' in job_types:
+            match_query['$or'] = [{'new_grad': False}, {'new_grad': {'$exists': False}}]
+
+    # Query for OA stage entries in the last week
+    pipeline = [
+        {'$match': match_query},
+        {
+            '$group': {
+                '_id': '$company',
+                'count': {'$sum': 1}
+            }
+        },
+        {
+            '$sort': {'count': -1}
+        },
+        {
+            '$limit': 10
+        }
+    ]
+
+    results = list(collection.aggregate(pipeline))
+
+    # Format the results
+    top_companies = [
+        {'company': item['_id'], 'count': item['count']}
+        for item in results
+    ]
+
+    return jsonify({'companies': top_companies})
+
+
+@app.route('/api/top-offer-companies')
+def top_offer_companies():
+    """Get top companies sending out offers this week."""
+    # Get job_types filter from request
+    job_types = [j for j in (request.args.get('job_types') or '').split(',') if j]
+
+    # Get current date and calculate one week ago
+    now = datetime.utcnow()
+    one_week_ago = now - timedelta(days=7)
+
+    # Build the match query
+    match_query = {
+        'stage': 'Offer',
+        'timestamp': {
+            '$gte': one_week_ago.isoformat(),
+            '$lte': now.isoformat()
+        },
+        'spam': {'$ne': True}
+    }
+
+    # Apply job type filter
+    if job_types and len(job_types) == 1:
+        if 'new_grad' in job_types:
+            match_query['new_grad'] = True
+        elif 'intern' in job_types:
+            match_query['$or'] = [{'new_grad': False}, {'new_grad': {'$exists': False}}]
+
+    # Query for Offer stage entries in the last week
+    pipeline = [
+        {'$match': match_query},
+        {
+            '$group': {
+                '_id': '$company',
+                'count': {'$sum': 1}
+            }
+        },
+        {
+            '$sort': {'count': -1}
+        },
+        {
+            '$limit': 10
+        }
+    ]
+
+    results = list(collection.aggregate(pipeline))
+
+    # Format the results
+    top_companies = [
+        {'company': item['_id'], 'count': item['count']}
+        for item in results
+    ]
+
+    return jsonify({'companies': top_companies})
 
 
 # ---- Entry ----
