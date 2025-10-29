@@ -28,6 +28,7 @@ uri = os.getenv("MONGO_URI", '')
 
 
 
+
 mongo_client = MongoClient(uri)
 db = mongo_client["JobStats"]
 collection = db["interview_processes"]
@@ -962,6 +963,194 @@ def top_offer_companies():
     ]
 
     return jsonify({'companies': top_companies})
+
+
+@app.route('/api/hiring-trends')
+def hiring_trends():
+    """Get daily hiring activity (OA + Offer counts) for the past 6 months, grouped by top 5 companies."""
+    # Get filters from request
+    job_types = [j for j in (request.args.get('job_types') or '').split(',') if j]
+    company_filter = request.args.get('company', '').strip()
+
+    # Get current date and calculate 6 months ago
+    now = datetime.utcnow()
+    six_months_ago = now - timedelta(days=180)
+
+    # Build the match query
+    match_query = {
+        'stage': {'$in': ['OA', 'Offer']},
+        'timestamp': {
+            '$gte': six_months_ago.isoformat(),
+            '$lte': now.isoformat()
+        },
+        'spam': {'$ne': True}
+    }
+
+    # Apply job type filter
+    if job_types and len(job_types) == 1:
+        if 'new_grad' in job_types:
+            match_query['new_grad'] = True
+        elif 'intern' in job_types:
+            match_query['$or'] = [{'new_grad': False}, {'new_grad': {'$exists': False}}]
+
+    # If company filter is applied, only get data for that company
+    if company_filter:
+        match_query['company'] = company_filter
+
+        # Aggregate by date for single company
+        pipeline = [
+            {'$match': match_query},
+            {
+                '$addFields': {
+                    'timestamp_date': {
+                        '$dateFromString': {
+                            'dateString': '$timestamp',
+                            'onError': None
+                        }
+                    }
+                }
+            },
+            {'$match': {'timestamp_date': {'$ne': None}}},
+            {
+                '$group': {
+                    '_id': {
+                        '$dateToString': {
+                            'format': '%Y-%m-%d',
+                            'date': '$timestamp_date'
+                        }
+                    },
+                    'count': {'$sum': 1}
+                }
+            },
+            {'$sort': {'_id': 1}}
+        ]
+
+        results = list(collection.aggregate(pipeline))
+
+        # Apply 7-day moving average
+        def apply_moving_avg(data, window=7):
+            if len(data) < window:
+                return data
+            smoothed = []
+            for i in range(len(data)):
+                start = max(0, i - window // 2)
+                end = min(len(data), i + window // 2 + 1)
+                avg = sum(d['count'] for d in data[start:end]) / (end - start)
+                smoothed.append({'date': data[i]['date'], 'count': round(avg, 2)})
+            return smoothed
+
+        daily_data = [{'date': item['_id'], 'count': item['count']} for item in results]
+        smoothed_data = apply_moving_avg(daily_data)
+
+        return jsonify({
+            'companies': {company_filter: smoothed_data}
+        })
+
+    # Helper function for moving average
+    def apply_moving_avg(data, window=7):
+        if len(data) < window:
+            return data
+        smoothed = []
+        for i in range(len(data)):
+            start = max(0, i - window // 2)
+            end = min(len(data), i + window // 2 + 1)
+            avg = sum(d['count'] for d in data[start:end]) / (end - start)
+            smoothed.append({'date': data[i]['date'], 'count': round(avg, 2)})
+        return smoothed
+
+    # Get global average (all companies combined)
+    global_pipeline = [
+        {'$match': match_query},
+        {
+            '$addFields': {
+                'timestamp_date': {
+                    '$dateFromString': {
+                        'dateString': '$timestamp',
+                        'onError': None
+                    }
+                }
+            }
+        },
+        {'$match': {'timestamp_date': {'$ne': None}}},
+        {
+            '$group': {
+                '_id': {
+                    '$dateToString': {
+                        'format': '%Y-%m-%d',
+                        'date': '$timestamp_date'
+                    }
+                },
+                'count': {'$sum': 1}
+            }
+        },
+        {'$sort': {'_id': 1}}
+    ]
+
+    global_results = list(collection.aggregate(global_pipeline))
+    global_daily_data = [{'date': item['_id'], 'count': item['count']} for item in global_results]
+    global_smoothed = apply_moving_avg(global_daily_data)
+
+    # Get top 5 companies by total activity
+    top_companies_pipeline = [
+        {'$match': match_query},
+        {
+            '$group': {
+                '_id': '$company',
+                'total': {'$sum': 1}
+            }
+        },
+        {'$sort': {'total': -1}},
+        {'$limit': 5}
+    ]
+
+    top_companies = list(collection.aggregate(top_companies_pipeline))
+    top_company_names = [item['_id'] for item in top_companies if item['_id']]
+
+    if not top_company_names and not global_smoothed:
+        return jsonify({'companies': {}})
+
+    # Get daily data for each top company
+    company_data = {}
+
+    # Add global average first
+    company_data['Global Average'] = global_smoothed
+
+    for company in top_company_names:
+        company_match = match_query.copy()
+        company_match['company'] = company
+
+        pipeline = [
+            {'$match': company_match},
+            {
+                '$addFields': {
+                    'timestamp_date': {
+                        '$dateFromString': {
+                            'dateString': '$timestamp',
+                            'onError': None
+                        }
+                    }
+                }
+            },
+            {'$match': {'timestamp_date': {'$ne': None}}},
+            {
+                '$group': {
+                    '_id': {
+                        '$dateToString': {
+                            'format': '%Y-%m-%d',
+                            'date': '$timestamp_date'
+                        }
+                    },
+                    'count': {'$sum': 1}
+                }
+            },
+            {'$sort': {'_id': 1}}
+        ]
+
+        results = list(collection.aggregate(pipeline))
+        daily_data = [{'date': item['_id'], 'count': item['count']} for item in results]
+        company_data[company] = apply_moving_avg(daily_data)
+
+    return jsonify({'companies': company_data})
 
 
 # ---- Entry ----

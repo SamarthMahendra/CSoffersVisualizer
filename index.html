@@ -97,6 +97,7 @@ aside button:hover{background:#005bbb}
 .dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px;width:100%;max-width:100%;box-sizing:border-box}
 .card{border-radius:var(--radius);background:var(--card);backdrop-filter:blur(var(--blur));border:1px solid var(--border);padding:15px;box-shadow:var(--shadow);transition:transform 0.2s ease,box-shadow 0.3s;width:100%;max-width:100%;box-sizing:border-box}
 .card:hover{transform:translateY(-2px);box-shadow:0 12px 35px rgba(0,0,0,0.08)}
+.card-full-width{grid-column:1/-1}
 .card h3{font-size:15px;font-weight:600;margin-bottom:8px;color:var(--muted)}
 canvas,svg{width:100%!important;height:280px!important;border-radius:12px;background:rgba(255,255,255,0.2);border:1px solid var(--border)}
 .kpi{display:flex;gap:12px;flex-wrap:wrap}
@@ -1112,6 +1113,7 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
       <div class="card"><h3>4) Focus Stage</h3><canvas id="barline"></canvas></div>
       <div class="card"><h3>5) Top OAs This Week</h3><div id="topOACompanies" class="company-cards-container"></div></div>
       <div class="card"><h3>6) Top Offers This Week</h3><div id="topOfferCompanies" class="company-cards-container"></div></div>
+      <div class="card card-full-width"><h3>7) Hiring Season Trends (Past 6 Months)</h3><canvas id="hiringTrends"></canvas></div>
     </div>
 
     <div class="card" style="margin-top:18px">
@@ -2007,6 +2009,249 @@ async function renderTopOfferCompanies() {
   }
 }
 
+// 7) Hiring Season Trends (Past 6 Months) - Top 5 Companies
+async function renderHiringTrends() {
+  const canvas = $("#hiringTrends");
+  const container = canvas.parentElement;
+
+  // Show loading state
+  container.style.opacity = '0.6';
+
+  try {
+    // Get job type checkbox values
+    const newGradChecked = $("#newGradCheckbox").checked;
+    const internChecked = $("#internCheckbox").checked;
+    const jobTypes = [];
+    if (newGradChecked) jobTypes.push("new_grad");
+    if (internChecked) jobTypes.push("intern");
+
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (jobTypes.length > 0) {
+      params.append('job_types', jobTypes.join(','));
+    }
+
+    // If only one company is selected, pass it as a filter
+    if (selectedCompanies.length === 1) {
+      params.append('company', selectedCompanies[0]);
+    }
+
+    const res = await fetch(`${SERVER}/api/hiring-trends?${params}`);
+    const response = await res.json();
+
+    if (!response.companies || Object.keys(response.companies).length === 0) {
+      container.style.opacity = '1';
+      return;
+    }
+
+    // Destroy existing chart if it exists
+    destroyChart("hiringTrends");
+
+    // Get current text color from CSS
+    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+
+    // Color palette for different companies
+    const colorPalette = [
+      { border: '#0071e3', bg: 'rgba(0, 113, 227, 0.1)' },    // Blue
+      { border: '#ff6b6b', bg: 'rgba(255, 107, 107, 0.1)' },  // Red
+      { border: '#4ecb71', bg: 'rgba(78, 203, 113, 0.1)' },   // Green
+      { border: '#ffa726', bg: 'rgba(255, 167, 38, 0.1)' },   // Orange
+      { border: '#ab47bc', bg: 'rgba(171, 71, 188, 0.1)' }    // Purple
+    ];
+
+    // Global average styling (distinct from individual companies)
+    const globalAverageStyle = {
+      border: '#1a1a1a',
+      bg: 'rgba(26, 26, 26, 0.05)'
+    };
+
+    // Check dark mode
+    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (isDarkMode) {
+      globalAverageStyle.border = '#ffffff';
+      globalAverageStyle.bg = 'rgba(255, 255, 255, 0.05)';
+    }
+
+    // Collect all unique dates from all companies
+    const allDates = new Set();
+    Object.values(response.companies).forEach(companyData => {
+      companyData.forEach(item => allDates.add(item.date));
+    });
+
+    // Sort dates
+    const sortedDates = Array.from(allDates).sort();
+
+    // Create labels from dates
+    const labels = sortedDates.map(dateStr => {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+
+    // Create datasets for each company
+    const datasets = [];
+    const companies = Object.keys(response.companies);
+    let regularCompanyIndex = 0; // Separate counter for non-global average companies
+
+    companies.forEach((company) => {
+      const companyData = response.companies[company];
+
+      // Create a map of date -> count for this company
+      const dataMap = {};
+      companyData.forEach(item => {
+        dataMap[item.date] = item.count;
+      });
+
+      // Build data array aligned with sortedDates
+      const data = sortedDates.map(date => dataMap[date] || null);
+
+      // Special styling for Global Average
+      if (company === 'Global Average') {
+        datasets.push({
+          label: company,
+          data: data,
+          borderColor: globalAverageStyle.border,
+          backgroundColor: globalAverageStyle.bg,
+          borderWidth: 3,
+          borderDash: [10, 5], // Dashed line
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          pointHoverBackgroundColor: globalAverageStyle.border,
+          pointHoverBorderColor: '#fff',
+          pointHoverBorderWidth: 2,
+          spanGaps: true,
+          order: 0 // Draw first (on top)
+        });
+      } else {
+        // Regular company styling
+        const colors = colorPalette[regularCompanyIndex % colorPalette.length];
+        regularCompanyIndex++; // Increment only for regular companies
+
+        datasets.push({
+          label: company,
+          data: data,
+          borderColor: colors.border,
+          backgroundColor: colors.bg,
+          borderWidth: 2.5,
+          fill: selectedCompanies.length === 1, // Fill only if single company
+          tension: 0.4, // Smooth curve with moving average
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: colors.border,
+          pointHoverBorderColor: '#fff',
+          pointHoverBorderWidth: 2,
+          spanGaps: true,
+          order: 1 // Draw after global average
+        });
+      }
+    });
+
+    const ctx = canvas.getContext('2d');
+    charts.hiringTrends = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              font: { size: 11, family: "Inter, system-ui, -apple-system" },
+              color: textColor,
+              padding: 8,
+              usePointStyle: true,
+              pointStyle: 'line',
+              boxWidth: 40,
+              boxHeight: 2
+            }
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleFont: { size: 12, family: "Inter, system-ui, -apple-system" },
+            bodyFont: { size: 11, family: "Inter, system-ui, -apple-system" },
+            padding: 10,
+            cornerRadius: 8,
+            displayColors: true,
+            callbacks: {
+              title: function(context) {
+                const dateIndex = context[0].dataIndex;
+                const dateStr = sortedDates[dateIndex];
+                return new Date(dateStr).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                });
+              },
+              label: function(context) {
+                const company = context.dataset.label;
+                const count = context.parsed.y;
+                if (count === null) return null;
+                return `${company}: ${count.toFixed(1)} ${count === 1 ? 'event' : 'events'}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: {
+              font: { size: 10, family: "Inter, system-ui, -apple-system" },
+              color: textColor,
+              maxRotation: 45,
+              minRotation: 45,
+              autoSkip: true,
+              maxTicksLimit: 15
+            },
+            grid: {
+              color: 'rgba(128, 128, 128, 0.1)',
+              drawBorder: false
+            }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              font: { size: 11, family: "Inter, system-ui, -apple-system" },
+              color: textColor,
+              precision: 0
+            },
+            grid: {
+              color: 'rgba(128, 128, 128, 0.1)',
+              drawBorder: false
+            },
+            title: {
+              display: true,
+              text: 'Daily Activity Count (7-day moving avg)',
+              font: { size: 11, family: "Inter, system-ui, -apple-system", weight: '600' },
+              color: textColor
+            }
+          }
+        },
+        interaction: {
+          mode: 'index',
+          axis: 'x',
+          intersect: false
+        },
+        animation: {
+          duration: 800,
+          easing: 'easeInOutQuart'
+        }
+      }
+    });
+
+    container.style.opacity = '1';
+  } catch (error) {
+    console.error('Failed to fetch hiring trends:', error);
+    container.style.opacity = '1';
+  }
+}
+
 /* ------------ Dashboard Refresh ------------ */
 async function refresh() {
   const start = $("#startDate").value;
@@ -2169,6 +2414,7 @@ renderTimeline("#timeline", transitionsWithOverallReject, stageTimes);  // <-- u
 renderBarLine(stages, counts);
 renderTopOACompanies();
 renderTopOfferCompanies();
+renderHiringTrends();
 
 }
 
