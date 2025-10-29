@@ -603,6 +603,458 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
     font-size:20px;
   }
 }
+
+/* Data Info Button & Data Methodology Modal */
+.data-info-btn{
+  margin-right:8px;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:6px 10px;
+  border-radius:10px;
+  background:rgba(0,113,227,0.08);
+  border:1px solid var(--border);
+  transition:all 0.3s;
+  cursor:pointer;
+  font-family:'Inter',system-ui,-apple-system;
+}
+.data-info-btn:hover{
+  background:rgba(0,113,227,0.15);
+  border-color:var(--accent);
+  transform:translateY(-1px);
+}
+.data-info-icon{
+  font-size:14px;
+  line-height:1;
+  opacity:0.8;
+}
+.data-info-text{
+  font-size:12px;
+  color:var(--muted);
+  font-weight:500;
+  letter-spacing:0.1px;
+  white-space:nowrap;
+}
+.data-modal{
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  backdrop-filter:blur(8px);
+  z-index:1000;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.data-modal.active{
+  display:flex;
+}
+.data-modal-content{
+  background:var(--card);
+  backdrop-filter:blur(var(--blur));
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  max-width:600px;
+  width:100%;
+  max-height:90vh;
+  overflow-y:auto;
+}
+.data-modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:20px 24px;
+  border-bottom:1px solid var(--border);
+  background:rgba(0,113,227,0.05);
+}
+.data-modal-header h2{
+  font-size:20px;
+  font-weight:600;
+  margin:0;
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.data-modal-header .icon{
+  font-size:24px;
+}
+.data-close{
+  background:none;
+  border:none;
+  font-size:28px;
+  line-height:1;
+  cursor:pointer;
+  color:var(--muted);
+  padding:0;
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:8px;
+  transition:all 0.2s;
+}
+.data-close:hover{
+  background:rgba(0,0,0,0.1);
+  color:var(--text);
+}
+.data-modal-body{
+  padding:24px;
+}
+.data-section{
+  margin-bottom:24px;
+}
+.data-section:last-child{
+  margin-bottom:0;
+}
+.data-section h3{
+  font-size:16px;
+  font-weight:600;
+  margin-bottom:12px;
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.data-section h3 .emoji{
+  font-size:18px;
+}
+.data-section p{
+  font-size:14px;
+  line-height:1.6;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+.data-section ul{
+  list-style:none;
+  padding:0;
+  margin:8px 0;
+}
+.data-section li{
+  font-size:14px;
+  line-height:1.6;
+  color:var(--muted);
+  padding-left:20px;
+  position:relative;
+  margin-bottom:6px;
+}
+.data-section li:before{
+  content:"•";
+  position:absolute;
+  left:0;
+  color:var(--accent);
+  font-weight:700;
+  font-size:18px;
+}
+.data-disclaimer{
+  background:rgba(255,149,0,0.1);
+  border:1px solid rgba(255,149,0,0.3);
+  border-radius:12px;
+  padding:16px;
+  margin-top:16px;
+}
+.data-disclaimer p{
+  font-size:13px;
+  color:var(--text);
+  margin:0;
+  font-weight:500;
+}
+.data-sources{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+.data-source-badge{
+  background:rgba(0,113,227,0.1);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:6px 12px;
+  font-size:13px;
+  color:var(--accent);
+  font-weight:600;
+}
+@media(max-width:768px){
+  .data-info-btn{
+    padding:6px 12px;
+    margin-right:8px;
+  }
+  .data-info-icon{
+    font-size:14px;
+  }
+  .data-info-text{
+    font-size:12px;
+  }
+  .data-modal-content{
+    max-width:90%;
+    max-height:85vh;
+  }
+  .data-modal-header{
+    padding:16px 20px;
+  }
+  .data-modal-header h2{
+    font-size:18px;
+  }
+  .data-modal-body{
+    padding:20px;
+  }
+  .data-section h3{
+    font-size:15px;
+  }
+}
+@media(max-width:480px){
+  .data-info-text{
+    display:none;
+  }
+  .data-info-btn{
+    padding:6px 10px;
+  }
+}
+
+/* Submit Button */
+.submit-btn{
+  padding:10px 18px;
+  background:linear-gradient(135deg,#0071e3,#0077ed);
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.3s;
+  box-shadow:0 2px 8px rgba(0,113,227,0.3);
+  font-family:'Inter',system-ui,-apple-system;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.submit-btn:hover{
+  background:linear-gradient(135deg,#0077ed,#0086ff);
+  box-shadow:0 4px 12px rgba(0,113,227,0.4);
+  transform:translateY(-2px);
+}
+.submit-btn-icon{
+  font-size:16px;
+  line-height:1;
+}
+
+/* Submission Modal */
+.submit-modal{
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  backdrop-filter:blur(8px);
+  z-index:1000;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.submit-modal.active{
+  display:flex;
+}
+.submit-modal-content{
+  background:var(--card);
+  backdrop-filter:blur(var(--blur));
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  max-width:500px;
+  width:100%;
+  max-height:90vh;
+  overflow-y:auto;
+}
+.submit-modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:20px 24px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(135deg,rgba(0,113,227,0.1),rgba(0,113,227,0.05));
+}
+.submit-modal-header h2{
+  font-size:20px;
+  font-weight:600;
+  margin:0;
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.submit-modal-header .icon{
+  font-size:24px;
+}
+.submit-close{
+  background:none;
+  border:none;
+  font-size:28px;
+  line-height:1;
+  cursor:pointer;
+  color:var(--muted);
+  padding:0;
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:8px;
+  transition:all 0.2s;
+}
+.submit-close:hover{
+  background:rgba(0,0,0,0.1);
+  color:var(--text);
+}
+.submit-modal-body{
+  padding:24px;
+}
+
+/* Form Styles */
+.form-group{
+  margin-bottom:20px;
+}
+.form-group:last-child{
+  margin-bottom:0;
+}
+.form-label{
+  display:block;
+  font-size:14px;
+  font-weight:600;
+  color:var(--text);
+  margin-bottom:8px;
+}
+.form-label .required{
+  color:#ff3b30;
+  margin-left:2px;
+}
+.form-input,.form-select{
+  width:100%;
+  padding:10px 14px;
+  font-size:14px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',system-ui,-apple-system;
+  transition:all 0.2s;
+  box-sizing:border-box;
+}
+.form-input:focus,.form-select:focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(0,113,227,0.1);
+}
+.form-input::placeholder{
+  color:var(--muted);
+  opacity:0.7;
+}
+.form-help{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:6px;
+  display:block;
+  line-height:1.5;
+}
+.form-help-highlight{
+  background:rgba(255,149,0,0.1);
+  border:1px solid rgba(255,149,0,0.3);
+  border-radius:8px;
+  padding:12px;
+  font-size:13px;
+  color:var(--text);
+  margin-top:12px;
+  line-height:1.5;
+  font-weight:500;
+}
+.form-submit{
+  width:100%;
+  padding:12px 20px;
+  background:linear-gradient(135deg,#0071e3,#0077ed);
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.3s;
+  font-family:'Inter',system-ui,-apple-system;
+  margin-top:24px;
+}
+.form-submit:hover{
+  background:linear-gradient(135deg,#0077ed,#0086ff);
+  transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(0,113,227,0.3);
+}
+.form-submit:disabled{
+  background:var(--muted);
+  cursor:not-allowed;
+  transform:none;
+  box-shadow:none;
+}
+
+/* Success/Error Messages */
+.submit-message{
+  padding:12px 16px;
+  border-radius:10px;
+  font-size:14px;
+  margin-bottom:20px;
+  display:none;
+  align-items:center;
+  gap:8px;
+}
+.submit-message.active{
+  display:flex;
+}
+.submit-message.success{
+  background:rgba(52,199,89,0.15);
+  border:1px solid rgba(52,199,89,0.3);
+  color:#34c759;
+}
+.submit-message.error{
+  background:rgba(255,59,48,0.15);
+  border:1px solid rgba(255,59,48,0.3);
+  color:#ff3b30;
+}
+.submit-message-icon{
+  font-size:18px;
+  line-height:1;
+}
+
+/* Responsive Styles */
+@media(max-width:768px){
+  .submit-btn{
+    padding:8px 16px;
+    font-size:13px;
+  }
+  .submit-modal-content{
+    max-width:90%;
+    max-height:85vh;
+  }
+  .submit-modal-header{
+    padding:16px 20px;
+  }
+  .submit-modal-header h2{
+    font-size:18px;
+  }
+  .submit-modal-body{
+    padding:20px;
+  }
+}
+@media(max-width:480px){
+  .submit-btn-text{
+    display:none;
+  }
+  .submit-btn{
+    padding:8px 12px;
+  }
+}
 </style>
       <script>
       (function(h,o,u,n,d){
@@ -629,6 +1081,14 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
 <header>
   <div class="logo">G2G</div>
   <h1>Grad2Gig Dashboard</h1>
+<!--  <button class="submit-btn" id="submitBtn" title="Submit your interview update">-->
+<!--    <span class="submit-btn-icon">➕</span>-->
+<!--    <span class="submit-btn-text">Submit Update</span>-->
+<!--  </button>-->
+  <button class="data-info-btn" id="dataInfoBtn">
+    <span class="data-info-icon">📊</span>
+    <span class="data-info-text">How we collect data</span>
+  </button>
   <div class="viewer-counter" id="viewerCounter" title="Number of people currently viewing this dashboard">
     <span class="viewer-icon">👁️</span>
     <span class="viewer-count" id="viewerCount">-</span>
@@ -763,6 +1223,139 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
         </div>
 
         <div class="feedback-status" id="feedbackStatus"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Data Methodology Modal -->
+<div class="data-modal" id="dataModal">
+  <div class="data-modal-content">
+    <div class="data-modal-header">
+      <h2><span class="icon">📊</span> About Our Data</h2>
+      <button class="data-close" id="dataClose">&times;</button>
+    </div>
+    <div class="data-modal-body">
+      <div class="data-section">
+        <h3><span class="emoji">🔍</span> Data Sources</h3>
+        <p>Our platform aggregates recruitment data from active CS career communities:</p>
+        <div class="data-sources">
+          <span class="data-source-badge">cscareers.dev</span>
+          <span class="data-source-badge">Grad Process</span>
+          <span class="data-source-badge">Intern Process</span>
+        </div>
+      </div>
+
+      <div class="data-section">
+        <h3><span class="emoji">⏱</span> Data Freshness & Coverage</h3>
+        <ul>
+          <li>Updated daily to reflect the latest submissions</li>
+          <li>Most accurate data from the past 6 months</li>
+          <li>Real-time processing of new entries from source platforms</li>
+        </ul>
+      </div>
+
+      <div class="data-section">
+        <h3><span class="emoji">✅</span> Data Quality & Filtering</h3>
+        <p>We maintain high data quality through multiple validation steps:</p>
+        <ul>
+          <li>Automated spam detection and removal</li>
+          <li>Duplicate entry identification and merging</li>
+          <li>Timeline backfilling when users submit multiple interview rounds</li>
+          <li>Cross-verification of submission patterns</li>
+          <li>Anomaly detection for outlier data points</li>
+        </ul>
+      </div>
+
+      <div class="data-section">
+        <h3><span class="emoji">🧮</span> Processing & Analytics</h3>
+        <p>Our analytics engine applies sophisticated algorithms to extract meaningful insights from raw submissions, including statistical analysis, timeline reconstruction, and conversion rate calculations.</p>
+      </div>
+
+      <div class="data-disclaimer">
+        <p><strong>Important Disclaimer:</strong> All insights and statistics presented on this dashboard are based solely on user-submitted data from our source platforms. They may not represent the complete picture of the job market or any specific company's hiring practices. Use this data as one of many resources in your job search strategy.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Submission Modal -->
+<div class="submit-modal" id="submitModal">
+  <div class="submit-modal-content">
+    <div class="submit-modal-header">
+      <h2><span class="icon">➕</span> Submit Interview Update</h2>
+      <button class="submit-close" id="submitClose">&times;</button>
+    </div>
+    <div class="submit-modal-body">
+      <div class="submit-message" id="submitMessage">
+        <span class="submit-message-icon"></span>
+        <span class="submit-message-text"></span>
+      </div>
+
+      <form id="submitForm">
+        <div class="form-group">
+          <label class="form-label">Username <span class="required">*</span></label>
+          <input
+            type="text"
+            class="form-input"
+            id="submitUsername"
+            placeholder="Enter a username (e.g., user123)"
+            required
+          >
+          <span class="form-help">Choose any username. Use the same username for all your submissions to track your journey across multiple rounds.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Company <span class="required">*</span></label>
+          <input
+            type="text"
+            class="form-input"
+            id="submitCompany"
+            placeholder="Company name"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Position Type <span class="required">*</span></label>
+          <select class="form-select" id="submitPositionType" required>
+            <option value="">Select position type</option>
+            <option value="new_grad">New Grad</option>
+            <option value="intern">Intern</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Interview Stage <span class="required">*</span></label>
+          <select class="form-select" id="submitStage" required>
+            <option value="">Select stage</option>
+            <option value="OA">OA</option>
+            <option value="Phone/R1">Phone/R1</option>
+            <option value="Interview">Interview</option>
+            <option value="Onsite">Onsite</option>
+            <option value="HM">HM</option>
+            <option value="Offer">Offer</option>
+            <option value="Reject">Reject</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Date <span class="required">*</span></label>
+          <input
+            type="date"
+            class="form-input"
+            id="submitDate"
+            required
+            min="2025-10-27"
+          >
+          <span class="form-help">When did this interview stage occur? (Must be after October 27, 2025)</span>
+        </div>
+
+        <div class="form-help-highlight">
+          <strong>Pro Tip:</strong> Use the same username across all your submissions. This helps us track your complete interview journey and provide better insights through timeline backfilling.
+        </div>
+
+        <button type="submit" class="form-submit">Submit Update</button>
       </form>
     </div>
   </div>
@@ -1764,6 +2357,12 @@ async function initDashboard() {
 
   // Initialize feedback modal
   initFeedbackModal();
+
+  // Initialize data methodology modal
+  initDataModal();
+
+  // Initialize submission modal
+  initSubmitModal();
 }
 
 /* ------------ Feedback Modal ------------ */
@@ -1872,6 +2471,123 @@ function initFeedbackModal() {
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = "Send Feedback";
+    }
+  });
+}
+
+/* ------------ Data Methodology Modal ------------ */
+function initDataModal() {
+  const modal = $("#dataModal");
+  const dataInfoBtn = $("#dataInfoBtn");
+  const dataClose = $("#dataClose");
+
+  // Open modal
+  dataInfoBtn.addEventListener("click", () => {
+    modal.classList.add("active");
+    document.body.style.overflow = "hidden";
+  });
+
+  // Close modal
+  const closeModal = () => {
+    modal.classList.remove("active");
+    document.body.style.overflow = "";
+  };
+
+  dataClose.addEventListener("click", closeModal);
+
+  // Close modal when clicking outside
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  // Close modal on Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("active")) {
+      closeModal();
+    }
+  });
+}
+
+/* ------------ Submission Modal ------------ */
+function initSubmitModal() {
+  const modal = $("#submitModal");
+  const submitBtn = $("#submitBtn");
+  const submitClose = $("#submitClose");
+  const submitForm = $("#submitForm");
+  const submitMessage = $("#submitMessage");
+
+  // Open modal
+  submitBtn.addEventListener("click", () => {
+    modal.classList.add("active");
+    document.body.style.overflow = "hidden";
+  });
+
+  // Close modal function
+  const closeModal = () => {
+    modal.classList.remove("active");
+    document.body.style.overflow = "";
+    submitForm.reset();
+    submitMessage.classList.remove("active", "success", "error");
+  };
+
+  // Close handlers
+  submitClose.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("active")) {
+      closeModal();
+    }
+  });
+
+  // Form submission
+  submitForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const formData = {
+      username: $("#submitUsername").value.trim(),
+      company: $("#submitCompany").value.trim(),
+      position_type: $("#submitPositionType").value,
+      stage: $("#submitStage").value,
+      date: $("#submitDate").value
+    };
+
+    const submitButton = submitForm.querySelector(".form-submit");
+    submitButton.disabled = true;
+    submitButton.textContent = "Submitting...";
+
+    try {
+      const res = await fetch(`${SERVER}/api/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        submitMessage.className = "submit-message active success";
+        submitMessage.querySelector(".submit-message-icon").textContent = "✅";
+        submitMessage.querySelector(".submit-message-text").textContent = "Interview update submitted successfully!";
+        submitForm.reset();
+
+        setTimeout(() => {
+          closeModal();
+        }, 2000);
+      } else {
+        throw new Error(data.error || "Failed to submit");
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      submitMessage.className = "submit-message active error";
+      submitMessage.querySelector(".submit-message-icon").textContent = "❌";
+      submitMessage.querySelector(".submit-message-text").textContent = error.message || "Failed to submit. Please try again.";
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Submit Update";
     }
   });
 }

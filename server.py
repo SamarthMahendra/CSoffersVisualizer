@@ -16,7 +16,7 @@ CORS(app)
 # ---- MongoDB Setup ----
 
 
-uri = os.getenv("MONGO_URI", '')
+uri = os.getenv("MONGO_URI", 'mongodb+srv://stackoverflow:stackoverflow%40123@cluster0.3kqbc.mongodb.net/myDatabase?retryWrites=true&w=majority&appName=Cluster0')
 
 
 
@@ -793,6 +793,65 @@ def submit_feedback():
         'success': True,
         'feedback_id': str(result.inserted_id)
     })
+
+
+@app.route('/api/submit', methods=['POST'])
+def submit_data():
+    """Accept new user submissions for interview process updates."""
+    data = request.get_json() or {}
+
+    # Extract fields
+    username = (data.get('username') or '').strip()
+    company = (data.get('company') or '').strip()
+    stage = (data.get('stage') or '').strip()
+    position_type = (data.get('position_type') or '').strip()
+    submission_date = data.get('date')
+
+    # Validate required fields
+    if not all([username, company, stage, position_type, submission_date]):
+        return jsonify({'error': 'All fields are required'}), 400
+
+    # Validate stage
+    if stage not in STAGE_ORDER:
+        return jsonify({'error': 'Invalid stage'}), 400
+
+    # Validate position type
+    if position_type not in ['new_grad', 'intern']:
+        return jsonify({'error': 'Invalid position type'}), 400
+
+    # Validate date (must be after Oct 7, 2025)
+    try:
+        submit_dt = datetime.fromisoformat(submission_date)
+        cutoff_date = datetime(2025, 10, 27)
+        if submit_dt < cutoff_date:
+            return jsonify({'error': 'Date must be after October 27, 2025'}), 400
+        # Convert date to ISO format datetime string with time (noon UTC)
+        timestamp_str = datetime.combine(submit_dt.date(), datetime.min.time().replace(hour=12)).isoformat()
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Invalid date format'}), 400
+
+    # Create submission document
+    submission_doc = {
+        'msg_id': f'submission_{username}_{company}_{stage}_{int(datetime.utcnow().timestamp())}',
+        'text': f'{stage} update for {company} (submitted via dashboard)',
+        'timestamp': timestamp_str,
+        'author': username,
+        'company': company,
+        'stage': stage,
+        'new_grad': position_type == 'new_grad',
+        'spam': False,
+        'submitted_at': datetime.utcnow()
+    }
+
+    # Insert into database
+    try:
+        result = collection.insert_one(submission_doc)
+        return jsonify({
+            'success': True,
+            'submission_id': str(result.inserted_id)
+        })
+    except Exception as e:
+        return jsonify({'error': f'Database error: {str(e)}'}), 500
 
 
 @app.route('/api/top-oa-companies')
