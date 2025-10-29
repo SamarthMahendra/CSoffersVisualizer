@@ -16,7 +16,7 @@ CORS(app)
 # ---- MongoDB Setup ----
 
 
-uri = os.getenv("MONGO_URI", 'mongodb+srv://stackoverflow:stackoverflow%40123@cluster0.3kqbc.mongodb.net/myDatabase?retryWrites=true&w=majority&appName=Cluster0')
+uri = os.getenv("MONGO_URI", '')
 
 
 
