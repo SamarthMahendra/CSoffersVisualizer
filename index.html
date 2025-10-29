@@ -155,6 +155,13 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
 .pagination{display:flex;justify-content:center;gap:10px;margin-top:12px}
 .pagination button{padding:6px 12px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:13px;cursor:pointer}
 .pagination button[disabled]{opacity:0.5;cursor:not-allowed}
+.company-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.company-list-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;background:rgba(0,113,227,0.08);border:1px solid var(--border);transition:all 0.2s}
+.company-list-item:hover{background:rgba(0,113,227,0.15);transform:translateX(2px)}
+.company-name{font-size:14px;font-weight:500;color:var(--text);flex:1}
+.company-count{font-size:18px;font-weight:700;color:var(--accent);padding:4px 12px;border-radius:8px;background:rgba(0,113,227,0.12);min-width:40px;text-align:center}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
+.loading-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
 .metrics-banner{max-width:1400px;margin:18px auto 0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
 .metric-card{border-radius:var(--radius);background:var(--card);backdrop-filter:blur(var(--blur));border:1px solid var(--border);padding:15px;box-shadow:var(--shadow);text-align:center;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1),box-shadow 0.3s cubic-bezier(0.4,0,0.2,1),border-color 0.3s;position:relative;overflow:hidden}
 .metric-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 20px 40px rgba(0,113,227,0.15);border-color:var(--accent)}
@@ -565,6 +572,8 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
       <div class="card"><h3>2) Conversion Heatmap</h3><svg id="heatmap"></svg></div>
       <div class="card"><h3>3) Avg Days Between Stages</h3><svg id="timeline"></svg></div>
       <div class="card"><h3>4) Focus Stage</h3><canvas id="barline"></canvas></div>
+      <div class="card"><h3>5) Top OAs This Week</h3><div id="topOACompanies"></div></div>
+      <div class="card"><h3>6) Top Offers This Week</h3><div id="topOfferCompanies"></div></div>
     </div>
 
     <div class="card" style="margin-top:18px">
@@ -1163,6 +1172,92 @@ function renderBarLine(stages, counts) {
   });
 }
 
+// 5) Top Companies Sending OAs This Week
+async function renderTopOACompanies() {
+  const container = $("#topOACompanies");
+  container.innerHTML = '<div class="loading-state">Loading...</div>';
+
+  try {
+    // Get job type checkbox values
+    const newGradChecked = $("#newGradCheckbox").checked;
+    const internChecked = $("#internCheckbox").checked;
+    const jobTypes = [];
+    if (newGradChecked) jobTypes.push("new_grad");
+    if (internChecked) jobTypes.push("intern");
+
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (jobTypes.length > 0) {
+      params.append('job_types', jobTypes.join(','));
+    }
+
+    const res = await fetch(`${SERVER}/api/top-oa-companies?${params}`);
+    const data = await res.json();
+
+    if (!data.companies || data.companies.length === 0) {
+      container.innerHTML = '<div class="empty-state">No OA data available for this week</div>';
+      return;
+    }
+
+    const listHTML = data.companies
+      .map(item => `
+        <li class="company-list-item">
+          <span class="company-name">${item.company}</span>
+          <span class="company-count">${item.count}</span>
+        </li>
+      `)
+      .join('');
+
+    container.innerHTML = `<ul class="company-list">${listHTML}</ul>`;
+  } catch (error) {
+    console.error('Failed to fetch top OA companies:', error);
+    container.innerHTML = '<div class="empty-state">Failed to load data</div>';
+  }
+}
+
+// 6) Top Companies Sending Offers This Week
+async function renderTopOfferCompanies() {
+  const container = $("#topOfferCompanies");
+  container.innerHTML = '<div class="loading-state">Loading...</div>';
+
+  try {
+    // Get job type checkbox values
+    const newGradChecked = $("#newGradCheckbox").checked;
+    const internChecked = $("#internCheckbox").checked;
+    const jobTypes = [];
+    if (newGradChecked) jobTypes.push("new_grad");
+    if (internChecked) jobTypes.push("intern");
+
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (jobTypes.length > 0) {
+      params.append('job_types', jobTypes.join(','));
+    }
+
+    const res = await fetch(`${SERVER}/api/top-offer-companies?${params}`);
+    const data = await res.json();
+
+    if (!data.companies || data.companies.length === 0) {
+      container.innerHTML = '<div class="empty-state">No offer data available for this week</div>';
+      return;
+    }
+
+    const listHTML = data.companies
+      .map(item => `
+        <li class="company-list-item">
+          <span class="company-name">${item.company}</span>
+          <span class="company-count">${item.count}</span>
+        </li>
+      `)
+      .join('');
+
+    container.innerHTML = `<ul class="company-list">${listHTML}</ul>`;
+  } catch (error) {
+    console.error('Failed to fetch top offer companies:', error);
+    container.innerHTML = '<div class="empty-state">Failed to load data</div>';
+  }
+}
+
 /* ------------ Dashboard Refresh ------------ */
 async function refresh() {
   const start = $("#startDate").value;
@@ -1323,6 +1418,8 @@ renderFunnel(stages, counts);
 renderHeatmap("#heatmap", top8Companies, transitionsWithOverallReject, convMat);
 renderTimeline("#timeline", transitionsWithOverallReject, stageTimes);  // <-- updated
 renderBarLine(stages, counts);
+renderTopOACompanies();
+renderTopOfferCompanies();
 
 }
 
@@ -1411,6 +1508,10 @@ async function initDashboard() {
   await fetchMessages();
   updateCompanyPlaceholder();
   await refresh();
+
+  // Load the weekly widgets
+  renderTopOACompanies();
+  renderTopOfferCompanies();
 
   // Date preset buttons
   $$(".date-preset-btn").forEach(btn => {
