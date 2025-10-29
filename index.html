@@ -230,6 +230,132 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
   .pagination button{padding:6px 12px;font-size:13px;min-height:40px}
 }
 
+/* Company Cards Visualization */
+.company-cards-container{
+  width:100%;
+  height:280px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:8px;
+  background:rgba(255,255,255,0.2);
+  border-radius:12px;
+  border:1px solid var(--border);
+}
+.company-card-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 14px;
+  border-radius:10px;
+  background:linear-gradient(135deg, rgba(0,113,227,0.05), rgba(0,113,227,0.15));
+  border:1px solid var(--border);
+  cursor:pointer;
+  transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+  position:relative;
+  overflow:hidden;
+}
+.company-card-item::before{
+  content:'';
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:0%;
+  background:linear-gradient(90deg, rgba(0,113,227,0.2), rgba(41,151,255,0.15));
+  transition:width 0.4s ease-out;
+  z-index:0;
+  border-radius:10px 0 0 10px;
+}
+.company-card-item:hover{
+  transform:translateX(4px) scale(1.02);
+  box-shadow:0 6px 20px rgba(0,113,227,0.15);
+  border-color:var(--accent);
+  background:linear-gradient(135deg, rgba(0,113,227,0.1), rgba(0,113,227,0.2));
+}
+.company-card-item:hover::before{
+  width:100%;
+}
+.company-card-item:active{
+  transform:translateX(2px) scale(1.01);
+}
+.company-card-content{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex:1;
+  z-index:1;
+  position:relative;
+}
+.company-rank{
+  font-size:18px;
+  font-weight:700;
+  color:var(--muted);
+  min-width:28px;
+  text-align:center;
+  opacity:0.6;
+}
+.company-card-name{
+  font-size:15px;
+  font-weight:600;
+  color:var(--text);
+  flex:1;
+}
+.company-card-count{
+  font-size:20px;
+  font-weight:700;
+  color:var(--accent);
+  padding:6px 14px;
+  border-radius:8px;
+  background:rgba(0,113,227,0.12);
+  min-width:50px;
+  text-align:center;
+  z-index:1;
+  position:relative;
+  border:1px solid rgba(0,113,227,0.2);
+}
+.company-card-item:hover .company-card-count{
+  background:rgba(0,113,227,0.2);
+  border-color:var(--accent);
+  transform:scale(1.05);
+}
+.company-cards-container::-webkit-scrollbar{
+  width:8px;
+}
+.company-cards-container::-webkit-scrollbar-track{
+  background:rgba(0,0,0,0.05);
+  border-radius:4px;
+}
+.company-cards-container::-webkit-scrollbar-thumb{
+  background:var(--accent);
+  border-radius:4px;
+}
+.company-cards-container::-webkit-scrollbar-thumb:hover{
+  background:#005bbb;
+}
+@media(max-width:768px){
+  .company-cards-container{
+    height:240px;
+    gap:8px;
+    padding:6px;
+  }
+  .company-card-item{
+    padding:10px 12px;
+  }
+  .company-rank{
+    font-size:16px;
+    min-width:24px;
+  }
+  .company-card-name{
+    font-size:14px;
+  }
+  .company-card-count{
+    font-size:18px;
+    padding:5px 12px;
+  }
+}
+
 /* Feedback Button (Fixed Bottom-Right) */
 .feedback-btn{
   position:fixed;
@@ -572,8 +698,8 @@ tbody tr:hover{background:rgba(255,255,255,0.3)}
       <div class="card"><h3>2) Conversion Heatmap</h3><svg id="heatmap"></svg></div>
       <div class="card"><h3>3) Avg Days Between Stages</h3><svg id="timeline"></svg></div>
       <div class="card"><h3>4) Focus Stage</h3><canvas id="barline"></canvas></div>
-      <div class="card"><h3>5) Top OAs This Week</h3><div id="topOACompanies"></div></div>
-      <div class="card"><h3>6) Top Offers This Week</h3><div id="topOfferCompanies"></div></div>
+      <div class="card"><h3>5) Top OAs This Week</h3><div id="topOACompanies" class="company-cards-container"></div></div>
+      <div class="card"><h3>6) Top Offers This Week</h3><div id="topOfferCompanies" class="company-cards-container"></div></div>
     </div>
 
     <div class="card" style="margin-top:18px">
@@ -1172,6 +1298,49 @@ function renderBarLine(stages, counts) {
   });
 }
 
+// Helper function to render company cards
+function renderCompanyCards(sel, companies) {
+  const container = document.querySelector(sel);
+  container.innerHTML = '';
+
+  if (!companies || companies.length === 0) {
+    container.innerHTML = '<div class="empty-state">No data available</div>';
+    return;
+  }
+
+  // Create card for each company
+  companies.forEach((company, index) => {
+    const card = document.createElement('div');
+    card.className = 'company-card-item';
+    card.setAttribute('data-company', company.company);
+
+    // Calculate bar width percentage (relative to max)
+    const maxCount = Math.max(...companies.map(c => c.count));
+    const widthPercent = (company.count / maxCount) * 100;
+    card.style.setProperty('--bar-width', `${widthPercent}%`);
+
+    card.innerHTML = `
+      <div class="company-card-content">
+        <div class="company-rank">#${index + 1}</div>
+        <div class="company-card-name">${company.company}</div>
+      </div>
+      <div class="company-card-count">${company.count}</div>
+    `;
+
+    // Add click event to add company as filter
+    card.addEventListener('click', () => {
+      if (!selectedCompanies.includes(company.company)) {
+        selectedCompanies.push(company.company);
+        renderSelectedCompanies();
+        currentPage = 1;
+        refresh();
+      }
+    });
+
+    container.appendChild(card);
+  });
+}
+
 // 5) Top Companies Sending OAs This Week
 async function renderTopOACompanies() {
   const container = $("#topOACompanies");
@@ -1199,16 +1368,7 @@ async function renderTopOACompanies() {
       return;
     }
 
-    const listHTML = data.companies
-      .map(item => `
-        <li class="company-list-item">
-          <span class="company-name">${item.company}</span>
-          <span class="company-count">${item.count}</span>
-        </li>
-      `)
-      .join('');
-
-    container.innerHTML = `<ul class="company-list">${listHTML}</ul>`;
+    renderCompanyCards("#topOACompanies", data.companies);
   } catch (error) {
     console.error('Failed to fetch top OA companies:', error);
     container.innerHTML = '<div class="empty-state">Failed to load data</div>';
@@ -1242,16 +1402,7 @@ async function renderTopOfferCompanies() {
       return;
     }
 
-    const listHTML = data.companies
-      .map(item => `
-        <li class="company-list-item">
-          <span class="company-name">${item.company}</span>
-          <span class="company-count">${item.count}</span>
-        </li>
-      `)
-      .join('');
-
-    container.innerHTML = `<ul class="company-list">${listHTML}</ul>`;
+    renderCompanyCards("#topOfferCompanies", data.companies);
   } catch (error) {
     console.error('Failed to fetch top offer companies:', error);
     container.innerHTML = '<div class="empty-state">Failed to load data</div>';
