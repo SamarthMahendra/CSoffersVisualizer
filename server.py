@@ -15,7 +15,8 @@ CORS(app)
 
 # ---- MongoDB Setup ----
 
-uri = os.getenv("MONGO_URI", '')
+uri = os.getenv("MONGO_URI", 'mongodb+srv://stackoverflow:stackoverflow%40123@cluster0.3kqbc.mongodb.net/myDatabase?retryWrites=true&w=majority&appName=Cluster0')
+
 
 
 
@@ -195,7 +196,9 @@ def api_messages():
         if start:
             query['timestamp']['$gte'] = start.isoformat()
         if end:
-            query['timestamp']['$lte'] = end.isoformat()
+            # Make end date inclusive by adding 1 day and using $lt
+            end_inclusive = end + timedelta(days=1)
+            query['timestamp']['$lt'] = end_inclusive.isoformat()
 
     # Query MongoDB
     cursor = collection.find(query, {"_id": 0}).sort("timestamp", -1)
@@ -232,7 +235,9 @@ def api_funnel():
         if start:
             query['timestamp']['$gte'] = start.isoformat()
         if end:
-            query['timestamp']['$lte'] = end.isoformat()
+            # Make end date inclusive by adding 1 day and using $lt
+            end_inclusive = end + timedelta(days=1)
+            query['timestamp']['$lt'] = end_inclusive.isoformat()
 
     cursor = collection.find(query, {"stage": 1, "_id": 0})
     results = list(cursor)
@@ -268,7 +273,9 @@ def api_heatmap():
         if start:
             query['timestamp']['$gte'] = start.isoformat()
         if end:
-            query['timestamp']['$lte'] = end.isoformat()
+            # Make end date inclusive by adding 1 day and using $lt
+            end_inclusive = end + timedelta(days=1)
+            query['timestamp']['$lt'] = end_inclusive.isoformat()
 
     cursor = collection.find(query, {"company": 1, "author": 1, "stage": 1, "timestamp": 1, "_id": 0})
     results = list(cursor)
@@ -390,7 +397,9 @@ def api_timeline():
         if start:
             query['timestamp']['$gte'] = start.isoformat()
         if end:
-            query['timestamp']['$lte'] = end.isoformat()
+            # Make end date inclusive by adding 1 day and using $lt
+            end_inclusive = end + timedelta(days=1)
+            query['timestamp']['$lt'] = end_inclusive.isoformat()
 
     cursor = collection.find(query, {"company": 1, "author": 1, "stage": 1, "timestamp": 1, "_id": 0})
     results = list(cursor)
@@ -498,7 +507,9 @@ def api_companies_search():
         if start:
             query['timestamp']['$gte'] = start.isoformat()
         if end:
-            query['timestamp']['$lte'] = end.isoformat()
+            # Make end date inclusive by adding 1 day and using $lt
+            end_inclusive = end + timedelta(days=1)
+            query['timestamp']['$lt'] = end_inclusive.isoformat()
 
     cursor = collection.find(query, {"company": 1, "_id": 0})
     results = list(cursor)
@@ -547,7 +558,9 @@ def api_dashboard():
         if start:
             query['timestamp']['$gte'] = start.isoformat()
         if end:
-            query['timestamp']['$lte'] = end.isoformat()
+            # Make end date inclusive by adding 1 day and using $lt
+            end_inclusive = end + timedelta(days=1)
+            query['timestamp']['$lt'] = end_inclusive.isoformat()
 
     # Fetch all data once
     cursor = collection.find(query, {"company": 1, "author": 1, "stage": 1, "timestamp": 1, "_id": 0})
@@ -1166,5 +1179,5 @@ def hiring_trends():
 
 # ---- Entry ----
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8070))
+    port = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=port, debug=False)
