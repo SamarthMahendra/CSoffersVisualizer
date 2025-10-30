@@ -15,8 +15,8 @@ CORS(app)
 
 # ---- MongoDB Setup ----
 
-
 uri = os.getenv("MONGO_URI", '')
+
 
 
 
@@ -1156,5 +1156,5 @@ def hiring_trends():
 
 # ---- Entry ----
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 8080))
+    port = int(os.environ.get('PORT', 8070))
     app.run(host='0.0.0.0', port=port, debug=False)
