@@ -1,0 +1,11 @@
+# robots.txt for www.jobstats.fyi
+
+# Allow all search engines to crawl the site
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://www.jobstats.fyi/sitemap.xml
+
+# Crawl delay (optional - helps prevent overloading server)
+# Crawl-delay: 1
