@@ -1,0 +1,2883 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Interview Journey — Student + Pro Insights</title>
+
+<!-- SEO Meta Tags -->
+<meta name="description" content="Explore real-time insights into CS grad interview processes from students and professionals. Track interview stages, success rates, company trends, and hiring patterns for new grad and internship positions.">
+<meta name="keywords" content="CS interviews, computer science grad jobs, tech interviews, new grad hiring, internship process, interview statistics, tech recruiting, software engineer interviews, hiring trends, interview funnel">
+<meta name="author" content="CS Grad Visualizer">
+<meta name="robots" content="index, follow">
+<meta name="googlebot" content="index, follow">
+<meta name="language" content="English">
+<meta name="revisit-after" content="7 days">
+
+<!-- Canonical URL -->
+<link rel="canonical" href="https://www.jobstats.fyi/">
+
+<!-- Open Graph Meta Tags for Social Media -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.jobstats.fyi/">
+<meta property="og:title" content="Interview Journey — Student + Pro Insights">
+<meta property="og:description" content="Explore real-time insights into CS grad interview processes from students and professionals. Track interview stages, success rates, and company hiring trends.">
+<meta property="og:site_name" content="CS Grad Visualizer">
+<meta property="og:locale" content="en_US">
+
+<!-- Twitter Card Meta Tags -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://www.jobstats.fyi/">
+<meta name="twitter:title" content="Interview Journey — Student + Pro Insights">
+<meta name="twitter:description" content="Explore real-time insights into CS grad interview processes from students and professionals. Track interview stages, success rates, and company hiring trends.">
+
+<!-- DNS Prefetch & Preconnect for Performance -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+<link rel="dns-prefetch" href="https://unpkg.com">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.5/dist/dotlottie-wc.js" type="module"></script>
+
+<style>
+:root {
+  --text: #111;
+  --muted: #555;
+  --bg: #f8f9fb;
+  --card: rgba(255,255,255,0.7);
+  --border: rgba(0,0,0,0.08);
+  --accent: #0071e3;
+  --radius: 18px;
+  --blur: 16px;
+  --shadow: 0 8px 30px rgba(0,0,0,0.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #f2f2f2;
+    --muted: #9ea5ad;
+    --bg: #0c0d10;
+    --card: rgba(18,18,22,0.55);
+    --border: rgba(255,255,255,0.1);
+    --accent: #2997ff;
+    --shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{overflow-x:hidden;max-width:100vw}
+body{font-family:'Inter',system-ui,-apple-system;background:var(--bg);color:var(--text);line-height:1.6;font-size:15px;padding-bottom:100px}
+header{position:sticky;top:0;z-index:100;backdrop-filter:blur(var(--blur));background:rgba(255,255,255,0.6);border-bottom:1px solid var(--border);padding:18px 24px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
+@media (prefers-color-scheme:dark){header{background:rgba(18,18,22,0.55)}}
+.logo{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),#a0d0ff);color:white;font-weight:700;font-size:18px}
+h1{font-size:20px;font-weight:600;letter-spacing:-0.3px}
+.viewer-counter{margin-left:auto;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:12px;background:rgba(0,113,227,0.1);border:1px solid var(--border);transition:all 0.3s;cursor:help}
+.viewer-counter:hover{background:rgba(0,113,227,0.15);border-color:var(--accent);transform:translateY(-1px)}
+.viewer-icon{font-size:18px;line-height:1;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+.viewer-count{font-size:18px;font-weight:700;color:var(--accent);min-width:20px;text-align:center;transition:transform 0.2s}
+.viewer-count.updated{animation:pop 0.3s ease-out}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.viewer-label{font-size:12px;color:var(--muted);font-weight:500;letter-spacing:0.3px}
+@media(max-width:768px){
+  .viewer-counter{padding:6px 10px;gap:4px}
+  .viewer-icon{font-size:16px}
+  .viewer-count{font-size:16px}
+  .viewer-label{font-size:11px}
+}
+.main{display:grid;grid-template-columns:280px 1fr;gap:18px;max-width:1400px;margin:30px auto;padding:0 24px;width:100%;box-sizing:border-box}
+@media(max-width:980px){.main{grid-template-columns:1fr;gap:20px}}
+@media(max-width:768px){
+  header{padding:12px 16px;gap:8px;width:100%;box-sizing:border-box}
+  .logo{width:36px;height:36px;font-size:16px}
+  h1{font-size:17px}
+  .main{margin:20px auto;padding:0 16px;gap:16px;width:100%;max-width:100vw}
+}
+aside{border-radius:var(--radius);background:var(--card);backdrop-filter:blur(var(--blur));border:1px solid var(--border);padding:20px 18px;box-shadow:var(--shadow);width:100%;max-width:100%;box-sizing:border-box}
+aside h2{font-size:14px;font-weight:600;margin-bottom:10px}
+aside label{font-size:13px;color:var(--muted);display:block;margin-top:10px}
+aside input,aside select{width:100%;max-width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.3);color:var(--text);font-size:14px;margin-top:4px;box-sizing:border-box}
+aside button{margin-top:12px;width:100%;max-width:100%;padding:10px;border:none;border-radius:10px;background:var(--accent);color:white;font-weight:600;font-size:14px;cursor:pointer;transition:background 0.3s;box-sizing:border-box}
+aside button:hover{background:#005bbb}
+@media(max-width:768px){
+  aside{padding:16px;border-radius:14px;width:100%;max-width:100%}
+  aside h2{font-size:15px;margin-bottom:12px}
+  aside label{font-size:14px;margin-top:12px}
+  aside input,aside select{padding:10px 12px;font-size:16px;border-radius:12px;max-width:100%}
+  aside button{padding:12px;font-size:15px;margin-top:16px;border-radius:12px;max-width:100%}
+}
+.company-search-wrapper{margin-top:4px;position:relative;width:100%;max-width:100%}
+.company-search{width:100%;max-width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(255,255,255,0.3);color:var(--text);font-size:14px;box-sizing:border-box}
+.company-dropdown{position:absolute;top:100%;left:0;right:0;max-height:200px;overflow-y:auto;background:rgba(255,255,255,0.98);border:1px solid var(--border);border-radius:10px;margin-top:4px;z-index:10;display:none;backdrop-filter:blur(10px);max-width:100%}
+.company-dropdown.active{display:block}
+@media (prefers-color-scheme:dark){.company-dropdown{background:rgba(18,18,22,0.98)}}
+.company-option{padding:8px 10px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border)}
+.company-option:last-child{border-bottom:none}
+.company-option:hover{background:rgba(0,113,227,0.15)}
+@media(max-width:768px){
+  .company-search{padding:10px 12px;font-size:16px}
+  .company-dropdown{max-height:250px;border-radius:12px}
+  .company-option{padding:12px 14px;font-size:14px}
+}
+.selected-companies{margin-top:10px;min-height:40px;border:1px solid var(--border);border-radius:10px;padding:8px;background:rgba(255,255,255,0.2);display:flex;flex-wrap:wrap;gap:6px;align-items:center;width:100%;max-width:100%;box-sizing:border-box}
+.selected-companies.empty{justify-content:center;align-items:center}
+.selected-companies.empty span{color:var(--muted);font-size:12px}
+.company-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:6px;background:var(--accent);color:white;font-size:12px;}
+.company-tag button{background:none;border:none;color:white;cursor:pointer;padding:0 2px;font-size:14px;font-weight:700;flex-shrink:0}
+.dashboard-wrapper{width:100%;max-width:100%;box-sizing:border-box;overflow:hidden}
+.dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px;width:100%;max-width:100%;box-sizing:border-box}
+.card{border-radius:var(--radius);background:var(--card);backdrop-filter:blur(var(--blur));border:1px solid var(--border);padding:15px;box-shadow:var(--shadow);transition:transform 0.2s ease,box-shadow 0.3s;width:100%;max-width:100%;box-sizing:border-box}
+.card:hover{transform:translateY(-2px);box-shadow:0 12px 35px rgba(0,0,0,0.08)}
+.card-full-width{grid-column:1/-1}
+.card h3{font-size:15px;font-weight:600;margin-bottom:8px;color:var(--muted)}
+canvas,svg{width:100%!important;height:280px!important;border-radius:12px;background:rgba(255,255,255,0.2);border:1px solid var(--border)}
+.kpi{display:flex;gap:12px;flex-wrap:wrap}
+.kpi .stat{border-radius:12px;padding:6px 10px;background:rgba(0,0,0,0.05);font-size:13px;font-weight:500;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border)}
+thead{font-weight:600;color:var(--muted);background:rgba(255,255,255,0.2)}
+tbody tr:hover{background:rgba(255,255,255,0.3)}
+.pagination{display:flex;justify-content:center;gap:10px;margin-top:12px}
+.pagination button{padding:6px 12px;border:none;border-radius:8px;background:var(--accent);color:#fff;font-size:13px;cursor:pointer}
+.pagination button[disabled]{opacity:0.5;cursor:not-allowed}
+.company-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.company-list-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:10px;background:rgba(0,113,227,0.08);border:1px solid var(--border);transition:all 0.2s}
+.company-list-item:hover{background:rgba(0,113,227,0.15);transform:translateX(2px)}
+.company-name{font-size:14px;font-weight:500;color:var(--text);flex:1}
+.company-count{font-size:18px;font-weight:700;color:var(--accent);padding:4px 12px;border-radius:8px;background:rgba(0,113,227,0.12);min-width:40px;text-align:center}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
+.loading-state{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
+.metrics-banner{max-width:1400px;margin:18px auto 0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.metric-card{border-radius:var(--radius);background:var(--card);backdrop-filter:blur(var(--blur));border:1px solid var(--border);padding:15px;box-shadow:var(--shadow);text-align:center;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1),box-shadow 0.3s cubic-bezier(0.4,0,0.2,1),border-color 0.3s;position:relative;overflow:hidden}
+.metric-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 20px 40px rgba(0,113,227,0.15);border-color:var(--accent)}
+.metric-card::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:radial-gradient(circle at 50% 0%,rgba(0,113,227,0.1),transparent 70%);opacity:0;transition:opacity 0.3s;pointer-events:none}
+.metric-card:hover::before{opacity:1}
+.metric-icon{width:48px;height:48px;margin-bottom:12px;opacity:0.85;transition:transform 0.3s,opacity 0.3s;object-fit:contain;border-radius:8px}
+.metric-lottie{display:inline-block}
+.metric-card:hover .metric-icon{transform:scale(1.1);opacity:1}
+.metric-value{font-size:32px;font-weight:700;color:var(--accent);margin-bottom:8px;line-height:1.2;transition:color 0.3s}
+.metric-label{font-size:13px;color:var(--muted);font-weight:500;letter-spacing:0.3px}
+@media(max-width:768px){
+  .metrics-banner{margin:16px auto 0 auto;padding:0 12px;grid-template-columns:repeat(2,1fr);gap:10px;max-width:100%}
+  .metric-card{padding:14px 12px;border-radius:12px}
+  .metric-card:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(0,113,227,0.12)}
+  .metric-value{font-size:22px;margin-bottom:6px}
+  .metric-label{font-size:10px;line-height:1.3}
+}
+@media(max-width:400px){
+  .metrics-banner{padding:0 10px;gap:8px}
+  .metric-card{padding:12px 10px}
+  .metric-value{font-size:20px}
+  .metric-label{font-size:9px}
+}
+.skeleton{background:linear-gradient(90deg,rgba(0,0,0,0.04) 25%,rgba(0,0,0,0.08) 50%,rgba(0,0,0,0.04) 75%);background-size:200% 100%;animation:skeleton-loading 1.5s infinite;border-radius:8px}
+@keyframes skeleton-loading{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skeleton-text{height:16px;margin:8px 0;width:100%}
+.skeleton-title{height:24px;margin:10px 0;width:60%}
+.loading-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.9);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:10;border-radius:var(--radius)}
+@media(prefers-color-scheme:dark){.loading-overlay{background:rgba(18,18,22,0.9)}}
+.spinner{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.date-presets{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.date-preset-btn{padding:6px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,0.3);color:var(--text);font-size:12px;cursor:pointer;transition:all 0.2s;font-weight:500}
+.date-preset-btn:hover{background:var(--accent);color:white;border-color:var(--accent)}
+.date-preset-btn.active{background:var(--accent);color:white;border-color:var(--accent)}
+.job-type-checkboxes{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.checkbox-wrapper{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 8px;border-radius:8px;transition:background 0.2s}
+.checkbox-wrapper:hover{background:rgba(0,113,227,0.05)}
+.checkbox-wrapper input[type="checkbox"]{width:18px;height:18px;cursor:pointer;accent-color:var(--accent)}
+.checkbox-wrapper label{font-size:13px;color:var(--text);cursor:pointer;margin:0;user-select:none}
+@media(max-width:768px){
+  .date-presets{gap:8px;margin-top:10px}
+  .date-preset-btn{padding:8px 14px;font-size:13px;border-radius:10px;min-height:44px}
+  .selected-companies{min-height:48px;padding:10px;border-radius:12px}
+  .selected-companies.empty span{font-size:13px}
+  .company-tag{padding:6px 10px;font-size:13px;border-radius:8px;min-height:32px}
+  .company-tag button{font-size:16px;padding:0 4px;min-width:20px;min-height:32px}
+  .dashboard{grid-template-columns:1fr;gap:16px;max-width:100%}
+  .card{padding:16px;border-radius:14px;max-width:100%;overflow:hidden}
+  .card:hover{transform:none;box-shadow:var(--shadow)}
+  .card h3{font-size:14px;margin-bottom:12px}
+  canvas,svg{height:240px!important;border-radius:10px;max-width:100%}
+  table{font-size:12px;display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+  th,td{padding:10px 8px;white-space:nowrap}
+  .pagination{flex-wrap:wrap;gap:8px;margin-top:16px}
+  .pagination button{padding:8px 16px;font-size:14px;border-radius:10px;min-height:44px}
+  .pagination span{font-size:13px;padding:8px;min-height:44px;display:flex;align-items:center}
+  body{font-size:16px;padding-bottom:60px}
+}
+@media(max-width:400px){
+  .main{padding:0 12px}
+  header{padding:10px 12px}
+  .date-preset-btn{padding:6px 10px;font-size:12px;min-height:40px}
+  .card{padding:12px}
+  canvas,svg{height:220px!important}
+  .pagination button{padding:6px 12px;font-size:13px;min-height:40px}
+}
+
+/* Company Cards Visualization */
+.company-cards-container{
+  width:100%;
+  height:280px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:8px;
+  background:rgba(255,255,255,0.2);
+  border-radius:12px;
+  border:1px solid var(--border);
+}
+.company-card-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 14px;
+  border-radius:10px;
+  background:linear-gradient(135deg, rgba(0,113,227,0.05), rgba(0,113,227,0.15));
+  border:1px solid var(--border);
+  cursor:pointer;
+  transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+  position:relative;
+  overflow:hidden;
+}
+.company-card-item::before{
+  content:'';
+  position:absolute;
+  left:0;
+  top:0;
+  bottom:0;
+  width:0%;
+  background:linear-gradient(90deg, rgba(0,113,227,0.2), rgba(41,151,255,0.15));
+  transition:width 0.4s ease-out;
+  z-index:0;
+  border-radius:10px 0 0 10px;
+}
+.company-card-item:hover{
+  transform:translateX(4px) scale(1.02);
+  box-shadow:0 6px 20px rgba(0,113,227,0.15);
+  border-color:var(--accent);
+  background:linear-gradient(135deg, rgba(0,113,227,0.1), rgba(0,113,227,0.2));
+}
+.company-card-item:hover::before{
+  width:100%;
+}
+.company-card-item:active{
+  transform:translateX(2px) scale(1.01);
+}
+.company-card-content{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex:1;
+  z-index:1;
+  position:relative;
+}
+.company-rank{
+  font-size:18px;
+  font-weight:700;
+  color:var(--muted);
+  min-width:28px;
+  text-align:center;
+  opacity:0.6;
+}
+.company-card-name{
+  font-size:15px;
+  font-weight:600;
+  color:var(--text);
+  flex:1;
+}
+.company-card-count{
+  font-size:20px;
+  font-weight:700;
+  color:var(--accent);
+  padding:6px 14px;
+  border-radius:8px;
+  background:rgba(0,113,227,0.12);
+  min-width:50px;
+  text-align:center;
+  z-index:1;
+  position:relative;
+  border:1px solid rgba(0,113,227,0.2);
+}
+.company-card-item:hover .company-card-count{
+  background:rgba(0,113,227,0.2);
+  border-color:var(--accent);
+  transform:scale(1.05);
+}
+.company-cards-container::-webkit-scrollbar{
+  width:8px;
+}
+.company-cards-container::-webkit-scrollbar-track{
+  background:rgba(0,0,0,0.05);
+  border-radius:4px;
+}
+.company-cards-container::-webkit-scrollbar-thumb{
+  background:var(--accent);
+  border-radius:4px;
+}
+.company-cards-container::-webkit-scrollbar-thumb:hover{
+  background:#005bbb;
+}
+@media(max-width:768px){
+  .company-cards-container{
+    height:240px;
+    gap:8px;
+    padding:6px;
+  }
+  .company-card-item{
+    padding:10px 12px;
+  }
+  .company-rank{
+    font-size:16px;
+    min-width:24px;
+  }
+  .company-card-name{
+    font-size:14px;
+  }
+  .company-card-count{
+    font-size:18px;
+    padding:5px 12px;
+  }
+}
+
+/* Feedback Button (Fixed Bottom-Right) */
+.feedback-btn{
+  position:fixed;
+  bottom:24px;
+  right:24px;
+  padding:14px 20px;
+  border:none;
+  border-radius:50px;
+  background:var(--accent);
+  color:white;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.3s;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  box-shadow:0 4px 20px rgba(0,113,227,0.3);
+  z-index:999;
+}
+.feedback-btn:hover{
+  background:#005bbb;
+  transform:translateY(-2px);
+  box-shadow:0 6px 28px rgba(0,113,227,0.4);
+}
+.feedback-btn:active{
+  transform:translateY(0);
+}
+@media(max-width:768px){
+  .feedback-btn{
+    bottom:16px;
+    right:16px;
+    padding:12px 16px;
+    font-size:14px;
+    gap:6px;
+  }
+}
+@media(max-width:400px){
+  .feedback-btn{
+    bottom:12px;
+    right:12px;
+    padding:10px 14px;
+    font-size:13px;
+  }
+}
+
+/* Feedback Modal */
+.feedback-modal{
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  backdrop-filter:blur(8px);
+  z-index:1000;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.feedback-modal.active{
+  display:flex;
+}
+.feedback-modal-content{
+  background:var(--card);
+  backdrop-filter:blur(var(--blur));
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  max-width:500px;
+  width:100%;
+  max-height:90vh;
+  overflow-y:auto;
+}
+.feedback-modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:20px 24px;
+  border-bottom:1px solid var(--border);
+}
+.feedback-modal-header h2{
+  font-size:20px;
+  font-weight:600;
+  margin:0;
+}
+.feedback-close{
+  background:none;
+  border:none;
+  font-size:28px;
+  line-height:1;
+  cursor:pointer;
+  color:var(--muted);
+  padding:0;
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:8px;
+  transition:all 0.2s;
+}
+.feedback-close:hover{
+  background:rgba(0,0,0,0.1);
+  color:var(--text);
+}
+.feedback-modal-body{
+  padding:24px;
+}
+.feedback-modal-body form{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.feedback-modal-body label{
+  font-size:14px;
+  font-weight:500;
+  color:var(--text);
+  margin-bottom:4px;
+}
+.feedback-modal-body label .required{
+  color:#ff3b30;
+}
+.rating-buttons{
+  display:flex;
+  gap:8px;
+  margin-top:8px;
+}
+.rating-btn{
+  flex:1;
+  padding:12px;
+  border:2px solid var(--border);
+  border-radius:12px;
+  background:rgba(255,255,255,0.3);
+  font-size:24px;
+  cursor:pointer;
+  transition:all 0.3s;
+}
+.rating-btn:hover{
+  transform:scale(1.1);
+  border-color:var(--accent);
+}
+.rating-btn.selected{
+  border-color:var(--accent);
+  background:rgba(0,113,227,0.15);
+  transform:scale(1.05);
+}
+.feedback-modal-body textarea,
+.feedback-modal-body input[type="email"]{
+  width:100%;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:rgba(255,255,255,0.3);
+  color:var(--text);
+  font-size:14px;
+  font-family:'Inter',system-ui,-apple-system;
+  resize:vertical;
+  transition:all 0.3s;
+}
+.feedback-modal-body textarea:focus,
+.feedback-modal-body input[type="email"]:focus{
+  outline:none;
+  border-color:var(--accent);
+  background:rgba(255,255,255,0.5);
+}
+.feedback-actions{
+  display:flex;
+  gap:12px;
+  margin-top:8px;
+}
+.feedback-cancel{
+  flex:1;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:rgba(255,255,255,0.3);
+  color:var(--text);
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.3s;
+}
+.feedback-cancel:hover{
+  background:rgba(0,0,0,0.1);
+}
+.feedback-submit{
+  flex:1;
+  padding:12px;
+  border:none;
+  border-radius:12px;
+  background:var(--accent);
+  color:white;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.3s;
+}
+.feedback-submit:hover{
+  background:#005bbb;
+}
+.feedback-submit:disabled{
+  opacity:0.5;
+  cursor:not-allowed;
+}
+.feedback-status{
+  padding:12px;
+  border-radius:12px;
+  font-size:14px;
+  text-align:center;
+  display:none;
+}
+.feedback-status.success{
+  display:block;
+  background:rgba(52,199,89,0.15);
+  color:#34c759;
+  border:1px solid rgba(52,199,89,0.3);
+}
+.feedback-status.error{
+  display:block;
+  background:rgba(255,59,48,0.15);
+  color:#ff3b30;
+  border:1px solid rgba(255,59,48,0.3);
+}
+@media(max-width:768px){
+  .feedback-modal-content{
+    max-width:90%;
+    max-height:85vh;
+  }
+  .feedback-modal-header{
+    padding:16px 20px;
+  }
+  .feedback-modal-header h2{
+    font-size:18px;
+  }
+  .feedback-modal-body{
+    padding:20px;
+  }
+  .rating-buttons{
+    gap:6px;
+  }
+  .rating-btn{
+    padding:10px;
+    font-size:20px;
+  }
+}
+
+/* Data Info Button & Data Methodology Modal */
+.data-info-btn{
+  margin-right:8px;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:6px 10px;
+  border-radius:10px;
+  background:rgba(0,113,227,0.08);
+  border:1px solid var(--border);
+  transition:all 0.3s;
+  cursor:pointer;
+  font-family:'Inter',system-ui,-apple-system;
+}
+.data-info-btn:hover{
+  background:rgba(0,113,227,0.15);
+  border-color:var(--accent);
+  transform:translateY(-1px);
+}
+.data-info-icon{
+  font-size:14px;
+  line-height:1;
+  opacity:0.8;
+}
+.data-info-text{
+  font-size:12px;
+  color:var(--muted);
+  font-weight:500;
+  letter-spacing:0.1px;
+  white-space:nowrap;
+}
+.data-modal{
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  backdrop-filter:blur(8px);
+  z-index:1000;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.data-modal.active{
+  display:flex;
+}
+.data-modal-content{
+  background:var(--card);
+  backdrop-filter:blur(var(--blur));
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  max-width:600px;
+  width:100%;
+  max-height:90vh;
+  overflow-y:auto;
+}
+.data-modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:20px 24px;
+  border-bottom:1px solid var(--border);
+  background:rgba(0,113,227,0.05);
+}
+.data-modal-header h2{
+  font-size:20px;
+  font-weight:600;
+  margin:0;
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.data-modal-header .icon{
+  font-size:24px;
+}
+.data-close{
+  background:none;
+  border:none;
+  font-size:28px;
+  line-height:1;
+  cursor:pointer;
+  color:var(--muted);
+  padding:0;
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:8px;
+  transition:all 0.2s;
+}
+.data-close:hover{
+  background:rgba(0,0,0,0.1);
+  color:var(--text);
+}
+.data-modal-body{
+  padding:24px;
+}
+.data-section{
+  margin-bottom:24px;
+}
+.data-section:last-child{
+  margin-bottom:0;
+}
+.data-section h3{
+  font-size:16px;
+  font-weight:600;
+  margin-bottom:12px;
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.data-section h3 .emoji{
+  font-size:18px;
+}
+.data-section p{
+  font-size:14px;
+  line-height:1.6;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+.data-section ul{
+  list-style:none;
+  padding:0;
+  margin:8px 0;
+}
+.data-section li{
+  font-size:14px;
+  line-height:1.6;
+  color:var(--muted);
+  padding-left:20px;
+  position:relative;
+  margin-bottom:6px;
+}
+.data-section li:before{
+  content:"•";
+  position:absolute;
+  left:0;
+  color:var(--accent);
+  font-weight:700;
+  font-size:18px;
+}
+.data-disclaimer{
+  background:rgba(255,149,0,0.1);
+  border:1px solid rgba(255,149,0,0.3);
+  border-radius:12px;
+  padding:16px;
+  margin-top:16px;
+}
+.data-disclaimer p{
+  font-size:13px;
+  color:var(--text);
+  margin:0;
+  font-weight:500;
+}
+.data-sources{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:8px;
+}
+.data-source-badge{
+  background:rgba(0,113,227,0.1);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:6px 12px;
+  font-size:13px;
+  color:var(--accent);
+  font-weight:600;
+}
+@media(max-width:768px){
+  .data-info-btn{
+    padding:6px 12px;
+    margin-right:8px;
+  }
+  .data-info-icon{
+    font-size:14px;
+  }
+  .data-info-text{
+    font-size:12px;
+  }
+  .data-modal-content{
+    max-width:90%;
+    max-height:85vh;
+  }
+  .data-modal-header{
+    padding:16px 20px;
+  }
+  .data-modal-header h2{
+    font-size:18px;
+  }
+  .data-modal-body{
+    padding:20px;
+  }
+  .data-section h3{
+    font-size:15px;
+  }
+}
+@media(max-width:480px){
+  .data-info-text{
+    display:none;
+  }
+  .data-info-btn{
+    padding:6px 10px;
+  }
+}
+
+/* Submit Button */
+.submit-btn{
+  padding:10px 18px;
+  background:linear-gradient(135deg,#0071e3,#0077ed);
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.3s;
+  box-shadow:0 2px 8px rgba(0,113,227,0.3);
+  font-family:'Inter',system-ui,-apple-system;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.submit-btn:hover{
+  background:linear-gradient(135deg,#0077ed,#0086ff);
+  box-shadow:0 4px 12px rgba(0,113,227,0.4);
+  transform:translateY(-2px);
+}
+.submit-btn-icon{
+  font-size:16px;
+  line-height:1;
+}
+
+/* Submission Modal */
+.submit-modal{
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.5);
+  backdrop-filter:blur(8px);
+  z-index:1000;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.submit-modal.active{
+  display:flex;
+}
+.submit-modal-content{
+  background:var(--card);
+  backdrop-filter:blur(var(--blur));
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  max-width:500px;
+  width:100%;
+  max-height:90vh;
+  overflow-y:auto;
+}
+.submit-modal-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:20px 24px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(135deg,rgba(0,113,227,0.1),rgba(0,113,227,0.05));
+}
+.submit-modal-header h2{
+  font-size:20px;
+  font-weight:600;
+  margin:0;
+  color:var(--text);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.submit-modal-header .icon{
+  font-size:24px;
+}
+.submit-close{
+  background:none;
+  border:none;
+  font-size:28px;
+  line-height:1;
+  cursor:pointer;
+  color:var(--muted);
+  padding:0;
+  width:32px;
+  height:32px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:8px;
+  transition:all 0.2s;
+}
+.submit-close:hover{
+  background:rgba(0,0,0,0.1);
+  color:var(--text);
+}
+.submit-modal-body{
+  padding:24px;
+}
+
+/* Form Styles */
+.form-group{
+  margin-bottom:20px;
+}
+.form-group:last-child{
+  margin-bottom:0;
+}
+.form-label{
+  display:block;
+  font-size:14px;
+  font-weight:600;
+  color:var(--text);
+  margin-bottom:8px;
+}
+.form-label .required{
+  color:#ff3b30;
+  margin-left:2px;
+}
+.form-input,.form-select{
+  width:100%;
+  padding:10px 14px;
+  font-size:14px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',system-ui,-apple-system;
+  transition:all 0.2s;
+  box-sizing:border-box;
+}
+.form-input:focus,.form-select:focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(0,113,227,0.1);
+}
+.form-input::placeholder{
+  color:var(--muted);
+  opacity:0.7;
+}
+.form-help{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:6px;
+  display:block;
+  line-height:1.5;
+}
+.form-help-highlight{
+  background:rgba(255,149,0,0.1);
+  border:1px solid rgba(255,149,0,0.3);
+  border-radius:8px;
+  padding:12px;
+  font-size:13px;
+  color:var(--text);
+  margin-top:12px;
+  line-height:1.5;
+  font-weight:500;
+}
+.form-submit{
+  width:100%;
+  padding:12px 20px;
+  background:linear-gradient(135deg,#0071e3,#0077ed);
+  color:#fff;
+  border:none;
+  border-radius:10px;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.3s;
+  font-family:'Inter',system-ui,-apple-system;
+  margin-top:24px;
+}
+.form-submit:hover{
+  background:linear-gradient(135deg,#0077ed,#0086ff);
+  transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(0,113,227,0.3);
+}
+.form-submit:disabled{
+  background:var(--muted);
+  cursor:not-allowed;
+  transform:none;
+  box-shadow:none;
+}
+
+/* Success/Error Messages */
+.submit-message{
+  padding:12px 16px;
+  border-radius:10px;
+  font-size:14px;
+  margin-bottom:20px;
+  display:none;
+  align-items:center;
+  gap:8px;
+}
+.submit-message.active{
+  display:flex;
+}
+.submit-message.success{
+  background:rgba(52,199,89,0.15);
+  border:1px solid rgba(52,199,89,0.3);
+  color:#34c759;
+}
+.submit-message.error{
+  background:rgba(255,59,48,0.15);
+  border:1px solid rgba(255,59,48,0.3);
+  color:#ff3b30;
+}
+.submit-message-icon{
+  font-size:18px;
+  line-height:1;
+}
+
+/* Responsive Styles */
+@media(max-width:768px){
+  .submit-btn{
+    padding:8px 16px;
+    font-size:13px;
+  }
+  .submit-modal-content{
+    max-width:90%;
+    max-height:85vh;
+  }
+  .submit-modal-header{
+    padding:16px 20px;
+  }
+  .submit-modal-header h2{
+    font-size:18px;
+  }
+  .submit-modal-body{
+    padding:20px;
+  }
+}
+@media(max-width:480px){
+  .submit-btn-text{
+    display:none;
+  }
+  .submit-btn{
+    padding:8px 12px;
+  }
+}
+</style>
+      <script>
+      (function(h,o,u,n,d){
+        h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}};
+        d=o.createElement(u);d.async=1;d.src='https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js';
+        n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n);
+      })(window,document,'script','https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js','DD_RUM');
+      window.DD_RUM.onReady(function(){
+        window.DD_RUM.init({
+          clientToken: 'pubff3c239a28fc040fc4dd99ab202f9135',
+          applicationId: '5aca5b04-e27e-415f-a828-456408d700d8',
+          site: 'us5.datadoghq.com',
+          service: 'jobstats.fyi',
+          env: 'prod',
+          sessionSampleRate: 100,
+          sessionReplaySampleRate: 20,
+          defaultPrivacyLevel: 'mask-user-input',
+        });
+      });
+    </script>
+
+<!-- Structured Data (Schema.org JSON-LD) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "CS Grad Visualizer - Interview Journey Dashboard",
+  "applicationCategory": "BusinessApplication",
+  "applicationSubCategory": "Data Analytics",
+  "description": "Explore real-time insights into CS grad interview processes from students and professionals. Track interview stages, success rates, company trends, and hiring patterns for new grad and internship positions.",
+  "url": "https://www.jobstats.fyi/",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "browserRequirements": "Requires JavaScript. Requires HTML5.",
+  "inLanguage": "en-US",
+  "provider": {
+    "@type": "Organization",
+    "name": "CS Grad Visualizer",
+    "url": "https://www.jobstats.fyi/"
+  },
+  "audience": {
+    "@type": "Audience",
+    "audienceType": "Computer Science Students, Software Engineers, Job Seekers"
+  },
+  "keywords": "CS interviews, computer science grad jobs, tech interviews, new grad hiring, internship process, interview statistics, tech recruiting, software engineer interviews, hiring trends, interview funnel"
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "CS Grad Visualizer",
+  "url": "https://www.jobstats.fyi/",
+  "description": "Real-time dashboard for CS grad interview processes and hiring trends",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://www.jobstats.fyi/?company={search_term_string}"
+    },
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+</head>
+
+<body>
+<header>
+  <div class="logo">G2G</div>
+  <h1>Grad2Gig Dashboard</h1>
+<!--  <button class="submit-btn" id="submitBtn" title="Submit your interview update">-->
+<!--    <span class="submit-btn-icon">➕</span>-->
+<!--    <span class="submit-btn-text">Submit Update</span>-->
+<!--  </button>-->
+  <button class="data-info-btn" id="dataInfoBtn">
+    <span class="data-info-icon">📊</span>
+    <span class="data-info-text">How we collect data</span>
+  </button>
+  <div class="viewer-counter" id="viewerCounter" title="Number of people currently viewing this dashboard">
+    <span class="viewer-icon">👁️</span>
+    <span class="viewer-count" id="viewerCount">-</span>
+    <span class="viewer-label">viewing now</span>
+  </div>
+</header>
+
+<div class="metrics-banner">
+  <div class="metric-card">
+    <div class="metric-value" id="totalCompanies">-</div>
+    <div class="metric-label">Total Companies</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value" id="totalCandidates">-</div>
+    <div class="metric-label">Total Candidates (from 147k pool)</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value" id="totalSubmissions">-</div>
+    <div class="metric-label">Total Submissions</div>
+  </div>
+  <div class="metric-card">
+    <div class="metric-value" id="lastUpdated">-</div>
+    <div class="metric-label">Last Updated</div>
+  </div>
+</div>
+
+<div class="main">
+  <aside>
+    <h2>Filters</h2>
+    <label>Date Range</label>
+    <div class="date-presets">
+      <button class="date-preset-btn" data-days="7">Last 7d</button>
+      <button class="date-preset-btn" data-days="30">Last 30d</button>
+      <button class="date-preset-btn active" data-days="90">Last 3m</button>
+      <button class="date-preset-btn" data-days="180">Last 6m</button>
+    </div>
+    <label style="margin-top:12px">Start Date</label>
+    <input type="date" id="startDate">
+    <label>End Date</label>
+    <input type="date" id="endDate">
+    <label>Company</label>
+    <div class="company-search-wrapper">
+      <input type="text" class="company-search" id="companySearch" placeholder="Search companies...">
+      <div class="company-dropdown" id="companyDropdown"></div>
+    </div>
+    <div class="selected-companies empty" id="selectedCompanies">
+      <span>No companies selected</span>
+    </div>
+    <label style="margin-top:12px">Job Type</label>
+    <div class="job-type-checkboxes">
+      <div class="checkbox-wrapper">
+        <input type="checkbox" id="newGradCheckbox" checked>
+        <label for="newGradCheckbox">New Grad</label>
+      </div>
+      <div class="checkbox-wrapper">
+        <input type="checkbox" id="internCheckbox" checked>
+        <label for="internCheckbox">Intern</label>
+      </div>
+    </div>
+    <button id="applyBtn">Apply</button>
+  </aside>
+
+  <div class="dashboard-wrapper">
+    <div class="dashboard">
+      <div class="card"><h3>1) The Journey — Funnel</h3><canvas id="funnel"></canvas></div>
+      <div class="card"><h3>2) Conversion Heatmap</h3><svg id="heatmap"></svg></div>
+      <div class="card"><h3>3) Avg Days Between Stages</h3><svg id="timeline"></svg></div>
+      <div class="card"><h3>4) Focus Stage</h3><canvas id="barline"></canvas></div>
+      <div class="card"><h3>5) Top OAs This Week</h3><div id="topOACompanies" class="company-cards-container"></div></div>
+      <div class="card"><h3>6) Top Offers This Week</h3><div id="topOfferCompanies" class="company-cards-container"></div></div>
+      <div class="card card-full-width"><h3>7) Hiring Season Trends (Past 6 Months)</h3><canvas id="hiringTrends"></canvas></div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h3>Messages</h3>
+      <table>
+        <thead><tr><th>Time</th><th>Company</th><th>Stage</th><th>Author</th><th>Text</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="pagination">
+        <button id="prevPage">Prev</button>
+        <span id="pageInfo"></span>
+        <button id="nextPage">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Feedback Button (Fixed Bottom-Right) -->
+<button class="feedback-btn" id="feedbackBtn" title="Give us your feedback">
+  💬 Feedback
+</button>
+
+<!-- Feedback Modal -->
+<div class="feedback-modal" id="feedbackModal">
+  <div class="feedback-modal-content">
+    <div class="feedback-modal-header">
+      <h2>Share Your Feedback</h2>
+      <button class="feedback-close" id="feedbackClose">&times;</button>
+    </div>
+    <div class="feedback-modal-body">
+      <form id="feedbackForm">
+        <label for="feedbackRating">How would you rate your experience?</label>
+        <div class="rating-buttons">
+          <button type="button" class="rating-btn" data-rating="1">😞</button>
+          <button type="button" class="rating-btn" data-rating="2">😐</button>
+          <button type="button" class="rating-btn" data-rating="3">🙂</button>
+          <button type="button" class="rating-btn" data-rating="4">😊</button>
+          <button type="button" class="rating-btn" data-rating="5">🤩</button>
+        </div>
+        <input type="hidden" id="feedbackRating" name="rating">
+
+        <label for="feedbackText">Your feedback <span class="required">*</span></label>
+        <textarea
+          id="feedbackText"
+          name="feedback"
+          rows="5"
+          placeholder="Tell us what you think, what we can improve, or any features you'd like to see..."
+          required
+        ></textarea>
+
+        <label for="feedbackEmail">Email (optional)</label>
+        <input
+          type="email"
+          id="feedbackEmail"
+          name="email"
+          placeholder="your@email.com"
+        >
+
+        <div class="feedback-actions">
+          <button type="button" class="feedback-cancel" id="feedbackCancel">Cancel</button>
+          <button type="submit" class="feedback-submit">Send Feedback</button>
+        </div>
+
+        <div class="feedback-status" id="feedbackStatus"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Data Methodology Modal -->
+<div class="data-modal" id="dataModal">
+  <div class="data-modal-content">
+    <div class="data-modal-header">
+      <h2><span class="icon">📊</span> About Our Data</h2>
+      <button class="data-close" id="dataClose">&times;</button>
+    </div>
+    <div class="data-modal-body">
+      <div class="data-section">
+        <h3><span class="emoji">🔍</span> Data Sources</h3>
+        <p>Our platform aggregates recruitment data from active CS career communities:</p>
+        <div class="data-sources">
+          <span class="data-source-badge">cscareers.dev</span>
+          <span class="data-source-badge">Grad Process</span>
+          <span class="data-source-badge">Intern Process</span>
+        </div>
+      </div>
+
+      <div class="data-section">
+        <h3><span class="emoji">⏱</span> Data Freshness & Coverage</h3>
+        <ul>
+          <li>Updated daily to reflect the latest submissions</li>
+          <li>Most accurate data from the past 6 months</li>
+          <li>Real-time processing of new entries from source platforms</li>
+        </ul>
+      </div>
+
+      <div class="data-section">
+        <h3><span class="emoji">✅</span> Data Quality & Filtering</h3>
+        <p>We maintain high data quality through multiple validation steps:</p>
+        <ul>
+          <li>Automated spam detection and removal</li>
+          <li>Duplicate entry identification and merging</li>
+          <li>Timeline backfilling when users submit multiple interview rounds</li>
+          <li>Cross-verification of submission patterns</li>
+          <li>Anomaly detection for outlier data points</li>
+        </ul>
+      </div>
+
+      <div class="data-section">
+        <h3><span class="emoji">🧮</span> Processing & Analytics</h3>
+        <p>Our analytics engine applies sophisticated algorithms to extract meaningful insights from raw submissions, including statistical analysis, timeline reconstruction, and conversion rate calculations.</p>
+      </div>
+
+      <div class="data-disclaimer">
+        <p><strong>Important Disclaimer:</strong> All insights and statistics presented on this dashboard are based solely on user-submitted data from our source platforms. They may not represent the complete picture of the job market or any specific company's hiring practices. Use this data as one of many resources in your job search strategy.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Submission Modal -->
+<div class="submit-modal" id="submitModal">
+  <div class="submit-modal-content">
+    <div class="submit-modal-header">
+      <h2><span class="icon">➕</span> Submit Interview Update</h2>
+      <button class="submit-close" id="submitClose">&times;</button>
+    </div>
+    <div class="submit-modal-body">
+      <div class="submit-message" id="submitMessage">
+        <span class="submit-message-icon"></span>
+        <span class="submit-message-text"></span>
+      </div>
+
+      <form id="submitForm">
+        <div class="form-group">
+          <label class="form-label">Username <span class="required">*</span></label>
+          <input
+            type="text"
+            class="form-input"
+            id="submitUsername"
+            placeholder="Enter a username (e.g., user123)"
+            required
+          >
+          <span class="form-help">Choose any username. Use the same username for all your submissions to track your journey across multiple rounds.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Company <span class="required">*</span></label>
+          <input
+            type="text"
+            class="form-input"
+            id="submitCompany"
+            placeholder="Company name"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Position Type <span class="required">*</span></label>
+          <select class="form-select" id="submitPositionType" required>
+            <option value="">Select position type</option>
+            <option value="new_grad">New Grad</option>
+            <option value="intern">Intern</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Interview Stage <span class="required">*</span></label>
+          <select class="form-select" id="submitStage" required>
+            <option value="">Select stage</option>
+            <option value="OA">OA</option>
+            <option value="Phone/R1">Phone/R1</option>
+            <option value="Interview">Interview</option>
+            <option value="Onsite">Onsite</option>
+            <option value="HM">HM</option>
+            <option value="Offer">Offer</option>
+            <option value="Reject">Reject</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Date <span class="required">*</span></label>
+          <input
+            type="date"
+            class="form-input"
+            id="submitDate"
+            required
+            min="2025-10-27"
+          >
+          <span class="form-help">When did this interview stage occur? (Must be after October 27, 2025)</span>
+        </div>
+
+        <div class="form-help-highlight">
+          <strong>Pro Tip:</strong> Use the same username across all your submissions. This helps us track your complete interview journey and provide better insights through timeline backfilling.
+        </div>
+
+        <button type="submit" class="form-submit">Submit Update</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ------------ Globals & Helpers ------------ */
+const SERVER = window.location.origin;
+const $  = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+let META = null;
+let DATA = [];
+let charts = {};
+let currentPage = 1;
+let pageSize = 10;
+
+let selectedCompanies = [];
+let companyCounts = {};
+
+function destroyChart(id) {
+  if (charts[id]) {
+    charts[id].destroy();
+    charts[id] = null;
+  }
+}
+
+function shortenStage(stage) {
+  // Keep exact labels for now; change here if you want abbreviations
+  return stage;
+}
+
+function updateCompanyPlaceholder() {
+  const input = $("#companySearch");
+  // Unique companies in the *current filtered* dataset
+  const uniqueFromData = new Set(DATA.filter(d => d.company).map(d => d.company));
+  // Fallback to META if nothing is loaded yet
+  const total = uniqueFromData.size || (META?.companies?.length || 0);
+  input.placeholder = `Search companies (${total} total)…`;
+}
+
+/* ------------ Company Picker UI ------------ */
+function renderSelectedCompanies() {
+  const container = $("#selectedCompanies");
+  if (!selectedCompanies.length) {
+    container.className = "selected-companies empty";
+    container.innerHTML = '<span>No companies selected</span>';
+    return;
+  }
+  container.className = "selected-companies";
+  container.innerHTML = selectedCompanies
+    .map(
+      (c, i) =>
+        `<div class="company-tag"><span>${c}</span><button onclick="removeCompany(${i})">×</button></div>`
+    )
+    .join("");
+}
+
+function removeCompany(index) {
+  selectedCompanies.splice(index, 1);
+  renderSelectedCompanies();
+
+  // If no companies selected, auto-reset the table & charts to "all"
+  if (selectedCompanies.length === 0) {
+    currentPage = 1;
+    refresh();
+  }
+}
+
+function updateCompanyCounts() {
+  companyCounts = {};
+  DATA.forEach((d) => {
+    if (d.company) {
+      companyCounts[d.company] = (companyCounts[d.company] || 0) + 1;
+    }
+  });
+}
+
+function renderCompanyDropdown(searchTerm) {
+  const dropdown = $("#companyDropdown");
+  if (!META || !META.companies) {
+    dropdown.classList.remove("active");
+    dropdown.innerHTML = "";
+    return;
+  }
+
+  let list = META.companies.filter(
+    (c) =>
+      c.toLowerCase().includes((searchTerm || "").toLowerCase()) &&
+      !selectedCompanies.includes(c)
+  );
+
+  // Sort by activity (desc)
+  list = list.sort((a, b) => (companyCounts[b] || 0) - (companyCounts[a] || 0));
+
+  // No search term: show top 10 only
+  if (!searchTerm) list = list.slice(0, 10);
+
+  if (!list.length) {
+    dropdown.classList.remove("active");
+    dropdown.innerHTML = "";
+    return;
+  }
+
+  dropdown.classList.add("active");
+  dropdown.innerHTML = list
+    .map(
+      (c) =>
+        `<div class="company-option" onclick="selectCompany('${c.replace(/'/g, "\\'")}')">${c} <span style="color:var(--muted);font-size:11px">(${companyCounts[c] || 0})</span></div>`
+    )
+    .join("");
+}
+
+function selectCompany(company) {
+  if (!selectedCompanies.includes(company)) {
+    selectedCompanies.push(company);
+    renderSelectedCompanies();
+  }
+  $("#companySearch").value = "";
+  $("#companyDropdown").classList.remove("active");
+}
+
+/* ------------ Metrics Display ------------ */
+function formatMetricWithPlus(value, roundTo) {
+  // Round down to nearest multiple of roundTo
+  const rounded = Math.floor(value / roundTo) * roundTo;
+  return `${rounded.toLocaleString()}+`;
+}
+
+// Animated counter with easing
+function animateCounter(element, targetValue, duration = 1500, usePlus = false) {
+  const startTime = performance.now();
+  const startValue = 0;
+
+  // Easing function (easeOutCubic) - starts fast, ends slow
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function updateCounter(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Apply easing
+    const easedProgress = easeOutCubic(progress);
+    const currentValue = Math.floor(startValue + (targetValue - startValue) * easedProgress);
+
+    // Format with commas and optional "+"
+    element.textContent = currentValue.toLocaleString() + (usePlus ? '+' : '');
+
+    // Continue animation if not finished
+    if (progress < 1) {
+      requestAnimationFrame(updateCounter);
+    } else {
+      // Ensure final value is exact
+      element.textContent = targetValue.toLocaleString() + (usePlus ? '+' : '');
+    }
+  }
+
+  requestAnimationFrame(updateCounter);
+}
+
+function updateMetrics() {
+  if (!META) return;
+
+  // Total Companies - round to nearest 10
+  const totalCompanies = META.companies?.length || 0;
+  const roundedCompanies = Math.floor(totalCompanies / 10) * 10;
+  animateCounter($("#totalCompanies"), roundedCompanies, 1500, true);
+
+  // Total Candidates - round to nearest 100
+  const authorCount = META.author_count || 0;
+  const roundedCandidates = Math.floor(authorCount / 100) * 100;
+  animateCounter($("#totalCandidates"), roundedCandidates, 1800, true);
+
+  // Total Submissions - round to nearest 1000
+  const submissionCount = META.submission_count || 0;
+  const roundedSubmissions = Math.floor(submissionCount / 1000) * 1000;
+  animateCounter($("#totalSubmissions"), roundedSubmissions, 2000, true);
+
+  // Last Updated (no animation, just fade in)
+  const lastUpdatedEl = $("#lastUpdated");
+  if (META.max_timestamp) {
+    const lastUpdated = new Date(META.max_timestamp);
+    const formatted = lastUpdated.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    lastUpdatedEl.style.opacity = '0';
+    lastUpdatedEl.textContent = formatted;
+
+    // Fade in after a delay
+    setTimeout(() => {
+      lastUpdatedEl.style.transition = 'opacity 0.6s ease';
+      lastUpdatedEl.style.opacity = '1';
+    }, 500);
+  } else {
+    lastUpdatedEl.textContent = "N/A";
+  }
+}
+
+/* ------------ Fetchers ------------ */
+async function fetchMeta() {
+  const res = await fetch(`${SERVER}/api/meta`);
+  META = await res.json();
+  updateMetrics();
+  renderSelectedCompanies();
+}
+
+async function fetchMessages(params = {}) {
+  const query = new URLSearchParams(params).toString();
+  const res = await fetch(`${SERVER}/api/messages?${query}`);
+  const payload = await res.json();
+  DATA = payload.items || [];
+  updateCompanyCounts();
+  updateCompanyPlaceholder();
+  renderTable();
+  return DATA;
+}
+
+/* ------------ Table & Pagination ------------ */
+function renderTable() {
+  const tbody = document.querySelector("tbody");
+  tbody.innerHTML = "";
+  if (!DATA.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:#999">No messages</td></tr>`;
+    $("#pageInfo").textContent = `Page 0 / 0`;
+    $("#prevPage").disabled = true;
+    $("#nextPage").disabled = true;
+    return;
+  }
+
+  const start = (currentPage - 1) * pageSize;
+  const pageItems = DATA.slice(start, start + pageSize);
+
+  for (const m of pageItems) {
+    const tr = document.createElement("tr");
+    const t = m.timestamp ? new Date(m.timestamp).toLocaleString() : "—";
+    tr.innerHTML = `<td>${t}</td><td>${m.company || ""}</td><td>${m.stage || ""}</td><td>${m.author || ""}</td><td>${m.text || ""}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  const totalPages = Math.ceil(DATA.length / pageSize) || 1;
+  $("#pageInfo").textContent = `Page ${currentPage} / ${totalPages}`;
+  $("#prevPage").disabled = currentPage === 1;
+  $("#nextPage").disabled = currentPage === totalPages;
+}
+
+$("#prevPage").addEventListener("click", () => {
+  if (currentPage > 1) {
+    currentPage--;
+    renderTable();
+  }
+});
+$("#nextPage").addEventListener("click", () => {
+  const totalPages = Math.ceil(DATA.length / pageSize) || 1;
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderTable();
+  }
+});
+
+/* ------------ Charts ------------ */
+// 1) Funnel (Chart.js horizontal bar)
+function renderFunnel(order, counts) {
+  destroyChart("funnel");
+  const ctx = document.getElementById("funnel");
+  const vals = order.map((s) => counts[s] || 0);
+  if (!vals.some((v) => v > 0)) return;
+
+  // Get current text color from CSS
+  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+
+  const labels = order.map((s) => shortenStage(s));
+  charts.funnel = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Stage Counts",
+          data: vals,
+          backgroundColor: "rgba(0,113,227,0.25)",
+          borderColor: "#0071e3",
+          borderWidth: 2,
+          borderRadius: 8,
+        },
+      ],
+    },
+    options: {
+      indexAxis: "y",
+      plugins: { legend: { display: false } },
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: {
+            font: { size: 11, family: "Inter, system-ui, -apple-system" },
+            color: textColor
+          },
+          grid: {
+            color: 'rgba(128, 128, 128, 0.1)'
+          }
+        },
+        y: {
+          ticks: {
+            font: { size: 11, family: "Inter, system-ui, -apple-system" },
+            color: textColor
+          },
+          grid: {
+            color: 'rgba(128, 128, 128, 0.1)'
+          }
+        },
+      },
+      animation: { duration: 500 },
+    },
+  });
+}
+
+// 2) Heatmap (D3) with Overall→Reject
+function renderHeatmap(sel, companies, transitions, convMat) {
+  const svg = d3.select(sel);
+  svg.selectAll("*").remove();
+  if (!companies.length || !transitions.length) return;
+
+  const margin = { top: 20, right: 80, bottom: 50, left: 100 };
+  const W = svg.node().getBoundingClientRect().width;
+  const H = svg.node().getBoundingClientRect().height;
+  const w = Math.max(0, W - margin.left - margin.right);
+  const h = Math.max(0, H - margin.top - margin.bottom);
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+  const y = d3.scaleBand().domain(companies).range([0, h]).padding(0.15);
+  const shortTransitions = transitions.map((t) => {
+    if (t === "Overall→Reject") return t;
+    const parts = t.split("→");
+    return `${shortenStage(parts[0])}→${shortenStage(parts[1])}`;
+  });
+  const x = d3.scaleBand().domain(shortTransitions).range([0, w]).padding(0.15);
+  const color = d3.scaleSequential(d3.interpolateBlues).domain([0, 100]);
+
+  g.append("g")
+    .attr("transform", `translate(0,${h})`)
+    .call(d3.axisBottom(x))
+    .selectAll("text")
+    .attr("transform", "rotate(25)")
+    .style("text-anchor", "start")
+    .style("font-size", "11px")
+    .style("font-family", "Inter, system-ui, -apple-system");
+
+  g.append("g")
+    .call(d3.axisLeft(y))
+    .selectAll("text")
+    .style("font-size", "11px")
+    .style("font-family", "Inter, system-ui, -apple-system")
+    .style("text-anchor", "end")
+    .attr("writing-mode", "horizontal-tb");
+
+  companies.forEach((c) =>
+    transitions.forEach((t, i) => {
+      const val = convMat[c]?.[t] ?? 0;
+      const shortT = shortTransitions[i];
+      g.append("rect")
+        .attr("x", x(shortT))
+        .attr("y", y(c))
+        .attr("width", x.bandwidth())
+        .attr("height", y.bandwidth())
+        .attr("rx", 6)
+        .attr("fill", color(val))
+        .append("title")
+        .text(`${c} ${t}: ${val.toFixed(1)}%`);
+    })
+  );
+
+  // Legend
+  const legendWidth = 20;
+  const legendHeight = Math.max(40, h);
+  const legendX = w + 20;
+  const legendScale = d3.scaleLinear().domain([0, 100]).range([legendHeight, 0]);
+  const legendAxis = d3.axisRight(legendScale).ticks(5).tickFormat((d) => `${d}%`);
+
+  const defs = svg.append("defs");
+  const gradId = "heatmap-gradient";
+  const gradient = defs.append("linearGradient").attr("id", gradId).attr("x1", "0%").attr("y1", "100%").attr("x2", "0%").attr("y2", "0%");
+  for (let i = 0; i <= 100; i += 10) {
+    gradient.append("stop").attr("offset", `${i}%`).attr("stop-color", color(i));
+  }
+
+  g.append("rect")
+    .attr("x", legendX)
+    .attr("y", 0)
+    .attr("width", legendWidth)
+    .attr("height", legendHeight)
+    .attr("rx", 4)
+    .style("fill", `url(#${gradId})`);
+
+  g.append("g")
+    .attr("transform", `translate(${legendX + legendWidth},0)`)
+    .call(legendAxis)
+    .selectAll("text")
+    .style("font-size", "11px")
+    .style("font-family", "Inter, system-ui, -apple-system");
+
+  g.append("text")
+    .attr("x", legendX + legendWidth / 2)
+    .attr("y", -5)
+    .style("font-size", "11px")
+    .style("font-weight", "600")
+    .style("font-family", "Inter, system-ui, -apple-system")
+    .attr("text-anchor", "middle")
+    .text("Conv %");
+}
+
+// 3) Timeline (Avg days between consecutive stages)
+// 3) Timeline (Avg days between transitions incl. Overall→Reject as HM→Reject)
+function renderTimeline(sel, transitionsForTimeline, stageTimes) {
+  const svg = d3.select(sel);
+  svg.selectAll("*").remove();
+  if (!transitionsForTimeline.length) return;
+
+  const margin = { top: 30, right: 30, bottom: 50, left: 140 };
+  const W = svg.node().getBoundingClientRect().width;
+  const H = svg.node().getBoundingClientRect().height;
+  const w = Math.max(0, W - margin.left - margin.right);
+  const h = Math.max(0, H - margin.top - margin.bottom);
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+  // Build rows for timeline from provided transitions
+  const rows = transitionsForTimeline.map((key) => {
+    const days = Math.round(stageTimes[key] || 0);
+    const label = key === "Overall→Reject" ? key : key.split("→").map(shortenStage).join("→");
+    return { key, days, label };
+  });
+
+  // If everything is zero, do nothing
+  if (!rows.some(r => r.days > 0)) return;
+
+  const y = d3.scaleBand().domain(rows.map(r => r.label)).range([0, h]).padding(0.2);
+  const x = d3.scaleLinear()
+    .domain([0, Math.max(5, d3.max(rows, r => r.days) || 0) + 5])
+    .range([0, w]);
+
+  const color = d3.scaleSequential(d3.interpolateViridis).domain([0, rows.length - 1]);
+
+  g.append("g")
+    .call(d3.axisLeft(y))
+    .selectAll("text")
+    .style("font-size", "11px")
+    .style("font-family", "Inter, system-ui, -apple-system");
+
+  const xAxis = g.append("g").attr("transform", `translate(0,${h})`).call(d3.axisBottom(x).ticks(5));
+  xAxis.selectAll("text").style("font-size", "11px").style("font-family", "Inter, system-ui, -apple-system");
+  xAxis.append("text")
+    .attr("x", w / 2)
+    .attr("y", 35)
+    .attr("fill", "currentColor")
+    .style("text-anchor", "middle")
+    .style("font-size", "11px")
+    .style("font-weight", "600")
+    .style("font-family", "Inter, system-ui, -apple-system")
+    .text("Days");
+
+  rows.forEach((r, i) => {
+    g.append("rect")
+      .attr("x", 0)
+      .attr("y", y(r.label))
+      .attr("width", x(r.days))
+      .attr("height", y.bandwidth())
+      .attr("rx", 6)
+      .attr("fill", color(i))
+      .append("title")
+      .text(`${r.key}: ${r.days} days`);
+
+    g.append("text")
+      .attr("x", x(r.days) + 5)
+      .attr("y", y(r.label) + y.bandwidth() / 2 + 4)
+      .style("font-size", "11px")
+      .style("font-family", "Inter, system-ui, -apple-system")
+      .attr("fill", "currentColor")
+      .text(`${r.days}d`);
+  });
+}
+
+
+// 4) Bar + Line (Count + Cumulative)
+function renderBarLine(stages, counts) {
+  destroyChart("barline");
+  const ctx = document.getElementById("barline");
+  const vals = stages.map((s) => counts[s] || 0);
+  if (!vals.some((v) => v > 0)) return;
+
+  const cumulative = [];
+  let sum = 0;
+  for (const v of vals) {
+    sum += v;
+    cumulative.push(sum);
+  }
+
+  // Get current text color from CSS
+  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+
+  const labels = stages.map((s) => shortenStage(s));
+  charts.barline = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Count",
+          data: vals,
+          backgroundColor: "rgba(41,151,255,0.3)",
+          borderColor: "#2997ff",
+          borderWidth: 2,
+          borderRadius: 8,
+          yAxisID: "y",
+        },
+        {
+          label: "Cumulative",
+          type: "line",
+          data: cumulative,
+          borderColor: "#ff9500",
+          borderWidth: 3,
+          fill: false,
+          tension: 0.3,
+          yAxisID: "y1",
+        },
+      ],
+    },
+    options: {
+      plugins: {
+        legend: {
+          display: true,
+          position: "top",
+          labels: {
+            font: { size: 11, family: "Inter, system-ui, -apple-system" },
+            color: textColor
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: {
+            font: { size: 11, family: "Inter, system-ui, -apple-system" },
+            color: textColor
+          },
+          grid: {
+            color: 'rgba(128, 128, 128, 0.1)'
+          }
+        },
+        y: {
+          beginAtZero: true,
+          position: "left",
+          title: {
+            display: true,
+            text: "Count",
+            font: { size: 11, family: "Inter, system-ui, -apple-system" },
+            color: textColor
+          },
+          ticks: {
+            font: { size: 11, family: "Inter, system-ui, -apple-system" },
+            color: textColor
+          },
+          grid: {
+            color: 'rgba(128, 128, 128, 0.1)'
+          }
+        },
+        y1: {
+          beginAtZero: true,
+          position: "right",
+          grid: { drawOnChartArea: false },
+          title: {
+            display: true,
+            text: "Cumulative",
+            font: { size: 11, family: "Inter, system-ui, -apple-system" },
+            color: textColor
+          },
+          ticks: {
+            font: { size: 11, family: "Inter, system-ui, -apple-system" },
+            color: textColor
+          },
+        },
+      },
+      animation: { duration: 500 },
+    },
+  });
+}
+
+// Helper function to render company cards
+function renderCompanyCards(sel, companies) {
+  const container = document.querySelector(sel);
+  container.innerHTML = '';
+
+  if (!companies || companies.length === 0) {
+    container.innerHTML = '<div class="empty-state">No data available</div>';
+    return;
+  }
+
+  // Create card for each company
+  companies.forEach((company, index) => {
+    const card = document.createElement('div');
+    card.className = 'company-card-item';
+    card.setAttribute('data-company', company.company);
+
+    // Calculate bar width percentage (relative to max)
+    const maxCount = Math.max(...companies.map(c => c.count));
+    const widthPercent = (company.count / maxCount) * 100;
+    card.style.setProperty('--bar-width', `${widthPercent}%`);
+
+    card.innerHTML = `
+      <div class="company-card-content">
+        <div class="company-rank">#${index + 1}</div>
+        <div class="company-card-name">${company.company}</div>
+      </div>
+      <div class="company-card-count">${company.count}</div>
+    `;
+
+    // Add click event to add company as filter
+    card.addEventListener('click', () => {
+      if (!selectedCompanies.includes(company.company)) {
+        selectedCompanies.push(company.company);
+        renderSelectedCompanies();
+        currentPage = 1;
+        refresh();
+      }
+    });
+
+    container.appendChild(card);
+  });
+}
+
+// 5) Top Companies Sending OAs This Week
+async function renderTopOACompanies() {
+  const container = $("#topOACompanies");
+  container.innerHTML = '<div class="loading-state">Loading...</div>';
+
+  try {
+    // Get job type checkbox values
+    const newGradChecked = $("#newGradCheckbox").checked;
+    const internChecked = $("#internCheckbox").checked;
+    const jobTypes = [];
+    if (newGradChecked) jobTypes.push("new_grad");
+    if (internChecked) jobTypes.push("intern");
+
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (jobTypes.length > 0) {
+      params.append('job_types', jobTypes.join(','));
+    }
+
+    const res = await fetch(`${SERVER}/api/top-oa-companies?${params}`);
+    const data = await res.json();
+
+    if (!data.companies || data.companies.length === 0) {
+      container.innerHTML = '<div class="empty-state">No OA data available for this week</div>';
+      return;
+    }
+
+    renderCompanyCards("#topOACompanies", data.companies);
+  } catch (error) {
+    console.error('Failed to fetch top OA companies:', error);
+    container.innerHTML = '<div class="empty-state">Failed to load data</div>';
+  }
+}
+
+// 6) Top Companies Sending Offers This Week
+async function renderTopOfferCompanies() {
+  const container = $("#topOfferCompanies");
+  container.innerHTML = '<div class="loading-state">Loading...</div>';
+
+  try {
+    // Get job type checkbox values
+    const newGradChecked = $("#newGradCheckbox").checked;
+    const internChecked = $("#internCheckbox").checked;
+    const jobTypes = [];
+    if (newGradChecked) jobTypes.push("new_grad");
+    if (internChecked) jobTypes.push("intern");
+
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (jobTypes.length > 0) {
+      params.append('job_types', jobTypes.join(','));
+    }
+
+    const res = await fetch(`${SERVER}/api/top-offer-companies?${params}`);
+    const data = await res.json();
+
+    if (!data.companies || data.companies.length === 0) {
+      container.innerHTML = '<div class="empty-state">No offer data available for this week</div>';
+      return;
+    }
+
+    renderCompanyCards("#topOfferCompanies", data.companies);
+  } catch (error) {
+    console.error('Failed to fetch top offer companies:', error);
+    container.innerHTML = '<div class="empty-state">Failed to load data</div>';
+  }
+}
+
+// 7) Hiring Season Trends (Past 6 Months) - Top 5 Companies
+async function renderHiringTrends() {
+  const canvas = $("#hiringTrends");
+  const container = canvas.parentElement;
+
+  // Show loading state
+  container.style.opacity = '0.6';
+
+  try {
+    // Get job type checkbox values
+    const newGradChecked = $("#newGradCheckbox").checked;
+    const internChecked = $("#internCheckbox").checked;
+    const jobTypes = [];
+    if (newGradChecked) jobTypes.push("new_grad");
+    if (internChecked) jobTypes.push("intern");
+
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (jobTypes.length > 0) {
+      params.append('job_types', jobTypes.join(','));
+    }
+
+    // If only one company is selected, pass it as a filter
+    if (selectedCompanies.length === 1) {
+      params.append('company', selectedCompanies[0]);
+    }
+
+    const res = await fetch(`${SERVER}/api/hiring-trends?${params}`);
+    const response = await res.json();
+
+    if (!response.companies || Object.keys(response.companies).length === 0) {
+      container.style.opacity = '1';
+      return;
+    }
+
+    // Destroy existing chart if it exists
+    destroyChart("hiringTrends");
+
+    // Get current text color from CSS
+    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+
+    // Color palette for different companies
+    const colorPalette = [
+      { border: '#0071e3', bg: 'rgba(0, 113, 227, 0.1)' },    // Blue
+      { border: '#ff6b6b', bg: 'rgba(255, 107, 107, 0.1)' },  // Red
+      { border: '#4ecb71', bg: 'rgba(78, 203, 113, 0.1)' },   // Green
+      { border: '#ffa726', bg: 'rgba(255, 167, 38, 0.1)' },   // Orange
+      { border: '#ab47bc', bg: 'rgba(171, 71, 188, 0.1)' }    // Purple
+    ];
+
+    // Global average styling (distinct from individual companies)
+    const globalAverageStyle = {
+      border: '#000000',
+      bg: 'rgba(0, 0, 0, 0.05)'
+    };
+
+    // Check dark mode
+    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (isDarkMode) {
+      globalAverageStyle.border = '#ffffff';
+      globalAverageStyle.bg = 'rgba(255, 255, 255, 0.05)';
+    }
+
+    // Collect all unique dates from all companies
+    const allDates = new Set();
+    Object.values(response.companies).forEach(companyData => {
+      companyData.forEach(item => allDates.add(item.date));
+    });
+
+    // Sort dates
+    const sortedDates = Array.from(allDates).sort();
+
+    // Create labels from dates
+    const labels = sortedDates.map(dateStr => {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+
+    // Create datasets for each company
+    const datasets = [];
+    const companies = Object.keys(response.companies);
+    let regularCompanyIndex = 0; // Separate counter for non-global average companies
+
+    companies.forEach((company) => {
+      const companyData = response.companies[company];
+
+      // Create a map of date -> count for this company
+      const dataMap = {};
+      companyData.forEach(item => {
+        dataMap[item.date] = item.count;
+      });
+
+      // Build data array aligned with sortedDates
+      const data = sortedDates.map(date => dataMap[date] || null);
+
+      // Special styling for Global Average
+      if (company === 'Global Average') {
+        datasets.push({
+          label: company,
+          data: data,
+          borderColor: globalAverageStyle.border,
+          backgroundColor: globalAverageStyle.bg,
+          borderWidth: 3,
+          borderDash: [10, 5], // Dashed line
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          pointHoverBackgroundColor: globalAverageStyle.border,
+          pointHoverBorderColor: '#fff',
+          pointHoverBorderWidth: 2,
+          spanGaps: true,
+          order: 0 // Draw first (on top)
+        });
+      } else {
+        // Regular company styling
+        const colors = colorPalette[regularCompanyIndex % colorPalette.length];
+        regularCompanyIndex++; // Increment only for regular companies
+
+        datasets.push({
+          label: company,
+          data: data,
+          borderColor: colors.border,
+          backgroundColor: colors.bg,
+          borderWidth: 2.5,
+          fill: selectedCompanies.length === 1, // Fill only if single company
+          tension: 0.4, // Smooth curve with moving average
+          pointRadius: 0,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: colors.border,
+          pointHoverBorderColor: '#fff',
+          pointHoverBorderWidth: 2,
+          spanGaps: true,
+          order: 1 // Draw after global average
+        });
+      }
+    });
+
+    const ctx = canvas.getContext('2d');
+    charts.hiringTrends = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              font: { size: 11, family: "Inter, system-ui, -apple-system" },
+              color: textColor,
+              padding: 8,
+              usePointStyle: true,
+              pointStyle: 'line',
+              boxWidth: 40,
+              boxHeight: 2
+            }
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            titleFont: { size: 12, family: "Inter, system-ui, -apple-system" },
+            bodyFont: { size: 11, family: "Inter, system-ui, -apple-system" },
+            padding: 10,
+            cornerRadius: 8,
+            displayColors: true,
+            callbacks: {
+              title: function(context) {
+                const dateIndex = context[0].dataIndex;
+                const dateStr = sortedDates[dateIndex];
+                return new Date(dateStr).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                });
+              },
+              label: function(context) {
+                const company = context.dataset.label;
+                const count = context.parsed.y;
+                if (count === null) return null;
+                return `${company}: ${count.toFixed(1)} ${count === 1 ? 'event' : 'events'}`;
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: {
+              font: { size: 10, family: "Inter, system-ui, -apple-system" },
+              color: textColor,
+              maxRotation: 45,
+              minRotation: 45,
+              autoSkip: true,
+              maxTicksLimit: 15
+            },
+            grid: {
+              color: 'rgba(128, 128, 128, 0.1)',
+              drawBorder: false
+            }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              font: { size: 11, family: "Inter, system-ui, -apple-system" },
+              color: textColor,
+              precision: 0
+            },
+            grid: {
+              color: 'rgba(128, 128, 128, 0.1)',
+              drawBorder: false
+            },
+            title: {
+              display: true,
+              text: 'Daily Activity Count (7-day moving avg)',
+              font: { size: 11, family: "Inter, system-ui, -apple-system", weight: '600' },
+              color: textColor
+            }
+          }
+        },
+        interaction: {
+          mode: 'index',
+          axis: 'x',
+          intersect: false
+        },
+        animation: {
+          duration: 800,
+          easing: 'easeInOutQuart'
+        }
+      }
+    });
+
+    container.style.opacity = '1';
+  } catch (error) {
+    console.error('Failed to fetch hiring trends:', error);
+    container.style.opacity = '1';
+  }
+}
+
+/* ------------ Dashboard Refresh ------------ */
+async function refresh() {
+  const start = $("#startDate").value;
+  const end = $("#endDate").value;
+  const companies = selectedCompanies.join(",");
+
+  // Get job type checkbox values
+  const newGradChecked = $("#newGradCheckbox").checked;
+  const internChecked = $("#internCheckbox").checked;
+  const jobTypes = [];
+  if (newGradChecked) jobTypes.push("new_grad");
+  if (internChecked) jobTypes.push("intern");
+
+  const params = { start, end };
+  if (selectedCompanies.length) {
+    params.companies = selectedCompanies.join(",");
+  }
+  if (jobTypes.length > 0) {
+    params.job_types = jobTypes.join(",");
+  }
+  const data = await fetchMessages(params);
+
+  const stages = META.stages || [];
+  // Stage counts
+  const counts = Object.fromEntries(stages.map((s) => [s, 0]));
+  data.forEach((d) => {
+    if (counts[d.stage] != null) counts[d.stage]++;
+  });
+
+  // Companies for heatmap
+  const baseCompanies = selectedCompanies.length ? selectedCompanies : META.companies || [];
+  const compCounts = {};
+  baseCompanies.forEach((c) => (compCounts[c] = 0));
+  data.forEach((d) => {
+    if (compCounts[d.company] != null) compCounts[d.company]++;
+  });
+  const top8Companies = Object.entries(compCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([c]) => c);
+
+  // Conversion matrix: stage→next-stage (skip Reject as a “to”) + Overall→Reject
+  const convMat = {};
+  const applications = {}; // key: `${company}|${author}` -> [{stage, ts}]
+  data.forEach((d) => {
+    const key = `${d.company}|${d.author}`;
+    (applications[key] ||= []).push({
+      stage: d.stage,
+      ts: d.timestamp ? new Date(d.timestamp).getTime() : null,
+    });
+  });
+
+  // Stage counts per company for simple ratio calc
+  const perCompanyStageCounts = {};
+  top8Companies.forEach((c) => (perCompanyStageCounts[c] = Object.fromEntries(stages.map((s) => [s, 0]))));
+  data.forEach((d) => {
+    if (perCompanyStageCounts[d.company] && perCompanyStageCounts[d.company][d.stage] != null) {
+      perCompanyStageCounts[d.company][d.stage] += 1;
+    }
+  });
+
+  // Stage→next-stage (no ...→Reject)
+  top8Companies.forEach((c) => {
+    convMat[c] = {};
+    for (let i = 0; i < stages.length - 1; i++) {
+      const from = stages[i];
+      const to = stages[i + 1];
+      if ((to || "").toLowerCase() === "reject") continue;
+      const fromCount = perCompanyStageCounts[c][from] || 0;
+      const toCount = perCompanyStageCounts[c][to] || 0;
+      const pct = fromCount > 0 ? (toCount / fromCount) * 100 : 0;
+      convMat[c][`${from}→${to}`] = pct;
+    }
+  });
+
+  // Overall→Reject
+  const appsByCompany = {};
+  top8Companies.forEach((c) => (appsByCompany[c] = new Set()));
+  Object.keys(applications).forEach((key) => {
+    const [company] = key.split("|");
+    if (appsByCompany[company]) appsByCompany[company].add(key);
+  });
+  top8Companies.forEach((c) => {
+    const keys = Array.from(appsByCompany[c] || []);
+    if (!keys.length) {
+      convMat[c]["Overall→Reject"] = 0;
+      return;
+    }
+    let rejected = 0;
+    keys.forEach((k) => {
+      const stagesSeen = new Set((applications[k] || []).map((x) => x.stage).filter(Boolean));
+      if (stagesSeen.has("Reject")) rejected += 1;
+    });
+    convMat[c]["Overall→Reject"] = (rejected / keys.length) * 100;
+  });
+
+  // ---- Avg days between consecutive stages (earliest timestamp per stage) ----
+const transitionDays = {};
+stages.slice(0, -1).forEach((s, i) => {
+  const to = stages[i + 1];
+  transitionDays[`${s}→${to}`] = [];
+});
+
+// Build per-application earliest timestamps
+const appEarliest = {};
+Object.entries(applications).forEach(([key, msgs]) => {
+  const stageMap = {};
+  msgs.forEach((m) => {
+    if (!m.stage || !Number.isFinite(m.ts)) return;
+    if (!(m.stage in stageMap) || m.ts < stageMap[m.stage]) {
+      stageMap[m.stage] = m.ts;
+    }
+  });
+  appEarliest[key] = stageMap;
+});
+
+// Fill consecutive stage deltas
+Object.values(appEarliest).forEach((stageMap) => {
+  for (let i = 0; i < stages.length - 1; i++) {
+    const from = stages[i], to = stages[i + 1];
+    if (stageMap[from] != null && stageMap[to] != null) {
+      const days = (stageMap[to] - stageMap[from]) / (1000 * 60 * 60 * 24);
+      if (Number.isFinite(days) && days >= 0) transitionDays[`${from}→${to}`].push(days);
+    }
+  }
+});
+
+// ---- HM→Reject as Overall→Reject ----
+const HM = "HM";
+const REJECT = "Reject";
+const hmToRejectDays = [];
+Object.values(appEarliest).forEach((stageMap) => {
+  if (stageMap[HM] != null && stageMap[REJECT] != null) {
+    const days = (stageMap[REJECT] - stageMap[HM]) / (1000 * 60 * 60 * 24);
+    if (Number.isFinite(days) && days >= 0) hmToRejectDays.push(days);
+  }
+});
+
+const stageTimes = {};
+Object.keys(transitionDays).forEach((k) => {
+  const arr = transitionDays[k];
+  stageTimes[k] = arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+});
+stageTimes["Overall→Reject"] = hmToRejectDays.length
+  ? hmToRejectDays.reduce((a, b) => a + b, 0) / hmToRejectDays.length
+  : 0;
+
+// ---- Transitions for visuals ----
+const transitions = stages
+  .slice(0, -1)
+  .filter((_, i) => (stages[i + 1] || "").toLowerCase() !== "reject")
+  .map((_, i) => `${stages[i]}→${stages[i + 1]}`);
+
+const transitionsWithOverallReject = [...transitions, "Overall→Reject"];
+
+// ---- Render ----
+renderFunnel(stages, counts);
+renderHeatmap("#heatmap", top8Companies, transitionsWithOverallReject, convMat);
+renderTimeline("#timeline", transitionsWithOverallReject, stageTimes);  // <-- updated
+renderBarLine(stages, counts);
+renderTopOACompanies();
+renderTopOfferCompanies();
+renderHiringTrends();
+
+}
+
+/* ------------ Session Tracking & Viewer Count ------------ */
+let SESSION_ID = null;
+
+function generateSessionId() {
+  // Generate a unique session ID (or retrieve from localStorage)
+  let sessionId = localStorage.getItem('viewer_session_id');
+  if (!sessionId) {
+    sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    localStorage.setItem('viewer_session_id', sessionId);
+  }
+  return sessionId;
+}
+
+async function startSession() {
+  SESSION_ID = generateSessionId();
+  try {
+    await fetch(`${SERVER}/api/session/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: SESSION_ID })
+    });
+  } catch (error) {
+    console.error('Failed to start session:', error);
+  }
+}
+
+async function sendHeartbeat() {
+  if (!SESSION_ID) return;
+  try {
+    await fetch(`${SERVER}/api/session/heartbeat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: SESSION_ID })
+    });
+  } catch (error) {
+    console.error('Failed to send heartbeat:', error);
+  }
+}
+
+async function updateViewerCount() {
+  try {
+    const res = await fetch(`${SERVER}/api/viewers/count`);
+    const data = await res.json();
+    $("#viewerCount").textContent = data.count || 0;
+  } catch (error) {
+    console.error('Failed to fetch viewer count:', error);
+    $("#viewerCount").textContent = '-';
+  }
+}
+
+function initSessionTracking() {
+  // Start session
+  startSession();
+
+  // Update viewer count immediately
+  updateViewerCount();
+
+  // Send heartbeat every 30 seconds
+  setInterval(sendHeartbeat, 30000);
+
+  // Update viewer count every 30 seconds
+  setInterval(updateViewerCount, 30000);
+}
+
+/* ------------ Init ------------ */
+async function initDashboard() {
+  // Default range: last 3 months
+  const today = new Date();
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(today.getMonth() - 3);
+
+  const fmt = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${dd}`;
+  };
+
+  $("#startDate").value = fmt(threeMonthsAgo);
+  $("#endDate").value = fmt(today);
+
+  await fetchMeta();
+  await fetchMessages();
+  updateCompanyPlaceholder();
+  await refresh();
+
+  // Load the weekly widgets
+  renderTopOACompanies();
+  renderTopOfferCompanies();
+
+  // Date preset buttons
+  $$(".date-preset-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const days = parseInt(btn.getAttribute("data-days"));
+      const today = new Date();
+      const pastDate = new Date();
+      pastDate.setDate(today.getDate() - days);
+
+      const fmt = (d) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${dd}`;
+      };
+
+      $("#startDate").value = fmt(pastDate);
+      $("#endDate").value = fmt(today);
+
+      // Update active state
+      $$(".date-preset-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      // Auto-refresh
+      currentPage = 1;
+      refresh();
+    });
+  });
+
+  // Company search interactions
+  $("#companySearch").addEventListener("input", (e) => renderCompanyDropdown(e.target.value));
+  $("#companySearch").addEventListener("focus", (e) => renderCompanyDropdown(e.target.value));
+  $("#applyBtn").addEventListener("click", () => {
+    currentPage = 1;
+    refresh();
+  });
+
+  // Close dropdown on outside click
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".company-search-wrapper")) {
+      $("#companyDropdown").classList.remove("active");
+    }
+  });
+
+  // Initialize session tracking
+  initSessionTracking();
+
+  // Initialize feedback modal
+  initFeedbackModal();
+
+  // Initialize data methodology modal
+  initDataModal();
+
+  // Initialize submission modal
+  initSubmitModal();
+}
+
+/* ------------ Feedback Modal ------------ */
+function initFeedbackModal() {
+  const modal = $("#feedbackModal");
+  const feedbackBtn = $("#feedbackBtn");
+  const feedbackClose = $("#feedbackClose");
+  const feedbackCancel = $("#feedbackCancel");
+  const feedbackForm = $("#feedbackForm");
+  const feedbackStatus = $("#feedbackStatus");
+  const ratingButtons = $$(".rating-btn");
+  const feedbackRatingInput = $("#feedbackRating");
+
+  // Open modal
+  feedbackBtn.addEventListener("click", () => {
+    modal.classList.add("active");
+    document.body.style.overflow = "hidden";
+  });
+
+  // Close modal
+  const closeModal = () => {
+    modal.classList.remove("active");
+    document.body.style.overflow = "";
+    feedbackForm.reset();
+    feedbackStatus.className = "feedback-status";
+    feedbackStatus.textContent = "";
+    ratingButtons.forEach(btn => btn.classList.remove("selected"));
+    feedbackRatingInput.value = "";
+  };
+
+  feedbackClose.addEventListener("click", closeModal);
+  feedbackCancel.addEventListener("click", closeModal);
+
+  // Close modal when clicking outside
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  // Close modal on Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("active")) {
+      closeModal();
+    }
+  });
+
+  // Rating button selection
+  ratingButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      ratingButtons.forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      feedbackRatingInput.value = btn.getAttribute("data-rating");
+    });
+  });
+
+  // Form submission
+  feedbackForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const feedbackText = $("#feedbackText").value.trim();
+    const email = $("#feedbackEmail").value.trim();
+    const rating = feedbackRatingInput.value;
+
+    if (!feedbackText) {
+      feedbackStatus.className = "feedback-status error";
+      feedbackStatus.textContent = "Please provide feedback before submitting.";
+      return;
+    }
+
+    const submitBtn = feedbackForm.querySelector(".feedback-submit");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Sending...";
+
+    try {
+      const res = await fetch(`${SERVER}/api/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          feedback: feedbackText,
+          email: email || null,
+          rating: rating ? parseInt(rating) : null,
+          session_id: SESSION_ID
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        feedbackStatus.className = "feedback-status success";
+        feedbackStatus.textContent = "Thank you for your feedback! We appreciate it.";
+        feedbackForm.reset();
+        ratingButtons.forEach(btn => btn.classList.remove("selected"));
+
+        // Close modal after 2 seconds
+        setTimeout(() => {
+          closeModal();
+        }, 2000);
+      } else {
+        throw new Error(data.error || "Failed to submit feedback");
+      }
+    } catch (error) {
+      console.error("Feedback submission error:", error);
+      feedbackStatus.className = "feedback-status error";
+      feedbackStatus.textContent = "Failed to submit feedback. Please try again.";
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Send Feedback";
+    }
+  });
+}
+
+/* ------------ Data Methodology Modal ------------ */
+function initDataModal() {
+  const modal = $("#dataModal");
+  const dataInfoBtn = $("#dataInfoBtn");
+  const dataClose = $("#dataClose");
+
+  // Open modal
+  dataInfoBtn.addEventListener("click", () => {
+    modal.classList.add("active");
+    document.body.style.overflow = "hidden";
+  });
+
+  // Close modal
+  const closeModal = () => {
+    modal.classList.remove("active");
+    document.body.style.overflow = "";
+  };
+
+  dataClose.addEventListener("click", closeModal);
+
+  // Close modal when clicking outside
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  // Close modal on Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("active")) {
+      closeModal();
+    }
+  });
+}
+
+/* ------------ Submission Modal ------------ */
+function initSubmitModal() {
+  const modal = $("#submitModal");
+  const submitBtn = $("#submitBtn");
+  const submitClose = $("#submitClose");
+  const submitForm = $("#submitForm");
+  const submitMessage = $("#submitMessage");
+
+  // Open modal
+  submitBtn.addEventListener("click", () => {
+    modal.classList.add("active");
+    document.body.style.overflow = "hidden";
+  });
+
+  // Close modal function
+  const closeModal = () => {
+    modal.classList.remove("active");
+    document.body.style.overflow = "";
+    submitForm.reset();
+    submitMessage.classList.remove("active", "success", "error");
+  };
+
+  // Close handlers
+  submitClose.addEventListener("click", closeModal);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("active")) {
+      closeModal();
+    }
+  });
+
+  // Form submission
+  submitForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const formData = {
+      username: $("#submitUsername").value.trim(),
+      company: $("#submitCompany").value.trim(),
+      position_type: $("#submitPositionType").value,
+      stage: $("#submitStage").value,
+      date: $("#submitDate").value
+    };
+
+    const submitButton = submitForm.querySelector(".form-submit");
+    submitButton.disabled = true;
+    submitButton.textContent = "Submitting...";
+
+    try {
+      const res = await fetch(`${SERVER}/api/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        submitMessage.className = "submit-message active success";
+        submitMessage.querySelector(".submit-message-icon").textContent = "✅";
+        submitMessage.querySelector(".submit-message-text").textContent = "Interview update submitted successfully!";
+        submitForm.reset();
+
+        setTimeout(() => {
+          closeModal();
+        }, 2000);
+      } else {
+        throw new Error(data.error || "Failed to submit");
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      submitMessage.className = "submit-message active error";
+      submitMessage.querySelector(".submit-message-icon").textContent = "❌";
+      submitMessage.querySelector(".submit-message-text").textContent = error.message || "Failed to submit. Please try again.";
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Submit Update";
+    }
+  });
+}
+
+window.addEventListener("DOMContentLoaded", initDashboard);
+
+// Expose for inline onclick
+window.removeCompany = removeCompany;
+window.selectCompany = selectCompany;
+</script>
+
+</body>
+</html>

@@ -118,6 +118,10 @@ def fill_missing_stages(messages):
 def index():
     return send_from_directory('.', 'index.html')
 
+@app.route('/beta')
+def index2():
+    return send_from_directory('.', 'index2.html')
+
 
 @app.route('/sitemap.xml')
 def sitemap():
