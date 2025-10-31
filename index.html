@@ -978,7 +978,23 @@ tbody tr:hover {
   d=o.createElement(u);d.async=1;d.src='https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js';
   n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n);
 })(window,document,'script','https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js','DD_RUM');
+
 window.DD_RUM.onReady(function(){
+
+  // ---------- 1️⃣ Generate Anonymous Visitor ID ----------
+  let visitorId = localStorage.getItem("visitor_id");
+  if (!visitorId) {
+    visitorId = "anon_" + Math.random().toString(36).substring(2, 10) + "_" + Date.now();
+    localStorage.setItem("visitor_id", visitorId);
+  }
+
+  // ---------- 2️⃣ Track Returning Visitors ----------
+  const lastVisit = localStorage.getItem("last_visit");
+  const now = Date.now();
+  const isReturning = lastVisit ? (now - parseInt(lastVisit)) > 24 * 60 * 60 * 1000 : false;
+  localStorage.setItem("last_visit", now);
+
+  // ---------- 3️⃣ Initialize Datadog RUM ----------
   window.DD_RUM.init({
     clientToken: 'pubff3c239a28fc040fc4dd99ab202f9135',
     applicationId: '5aca5b04-e27e-415f-a828-456408d700d8',
@@ -989,8 +1005,25 @@ window.DD_RUM.onReady(function(){
     sessionReplaySampleRate: 20,
     defaultPrivacyLevel: 'mask-user-input',
   });
+
+  // ---------- 4️⃣ Attach Global Context ----------
+  window.DD_RUM.setGlobalContextProperty('visitor_id', visitorId);
+  window.DD_RUM.setGlobalContextProperty('is_returning', isReturning);
+  window.DD_RUM.setGlobalContextProperty('theme',
+    window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  );
+  window.DD_RUM.setGlobalContextProperty('device_type',
+    /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop'
+  );
+
+  // ---------- 5️⃣ Optional: Add Page Custom Events ----------
+  window.DD_RUM.addAction("page_loaded", {
+    visitor_id: visitorId,
+    timestamp: new Date().toISOString()
+  });
 });
 </script>
+
 </head>
 <body>
 <div class="app-shell">
