@@ -239,11 +239,12 @@ body {
 /* ===== MAIN LAYOUT ===== */
 .main-shell {
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr);
+  grid-template-columns: 260px minmax(0, 1fr);
   gap: 20px;
-  padding: 18px 20px 90px 20px;
-  max-width: 1480px;
+  padding: 18px 16px 90px 16px;
   width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden; /* Prevent horizontal scroll */
   margin: 0 auto;
 }
 
@@ -490,13 +491,15 @@ body {
   pointer-events:none;
 }
 
-/* dashboard grid */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
   gap: 24px;
-  align-items: stretch; /* 🔥 makes cards in each row equal height */
+  align-items: stretch;
   justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Force exactly 2 cards per row on desktop */
@@ -948,7 +951,29 @@ tbody tr:hover {
   }
 }
 
+canvas {
+  width: 100% !important;
+  height: auto !important; /* 👈 Keeps natural proportion */
+  aspect-ratio: 16 / 9;   /* optional but clean */
+}
 
+
+/* Default: desktop / laptop view */
+.card-full canvas {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 3 / 1;
+  max-height: 340px !important;
+  border-radius: 12px;
+}
+
+/* 📱 Mobile optimization */
+@media (max-width: 768px) {
+  .card-full canvas {
+    aspect-ratio: 1.6 / 1;  /* increase vertical space */
+    max-height: 420px !important;  /* allow taller height */
+  }
+}
 
 /* small screens */
 @media (max-width: 720px) {
@@ -1811,6 +1836,7 @@ function renderBarLine(stages, counts) {
   }
 
   const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+  const gridColor = 'rgba(148,163,184,0.15)';
   const labels = stages.map((s) => shortenStage(s));
 
   charts.barline = new Chart(ctx, {
@@ -1821,63 +1847,80 @@ function renderBarLine(stages, counts) {
         {
           label: "Count",
           data: vals,
-          backgroundColor: "rgba(41,151,255,0.3)",
-          borderColor: "#2997ff",
-          borderWidth: 2,
-          borderRadius: 8,
+          backgroundColor: "rgba(41,151,255,0.8)",
+          borderRadius: 10,
+          barPercentage: 0.8,
+          categoryPercentage: 0.7,
           yAxisID: "y",
         },
         {
           label: "Cumulative",
           type: "line",
           data: cumulative,
-          borderColor: "#ff9500",
+          borderColor: "#f2994a",
           borderWidth: 3,
           fill: false,
-          tension: 0.3,
+          tension: 0.35,
+          pointBackgroundColor: "#f2994a",
+          pointRadius: 5,
+          pointHoverRadius: 6,
           yAxisID: "y1",
         },
       ],
     },
     options: {
+      maintainAspectRatio: true,
+      responsive: true,
       plugins: {
         legend: {
           display: true,
           position: "top",
           labels: {
-            color: textColor
+            color: textColor,
+            font: { size: 13, weight: 500 },
+            boxWidth: 16,
           },
+        },
+        tooltip: {
+          backgroundColor: "rgba(15,23,42,0.9)",
+          titleFont: { size: 13, weight: 600 },
+          bodyFont: { size: 12 },
+          padding: 10,
+          borderColor: "rgba(255,255,255,0.08)",
+          borderWidth: 1,
         },
       },
       scales: {
         x: {
-          ticks: { color: textColor }
+          ticks: { color: textColor, font: { size: 12.5, weight: 500 } },
+          grid: { color: gridColor, drawBorder: false },
         },
         y: {
           beginAtZero: true,
-          ticks: { color: textColor },
-          title: {
-            display: true,
-            text: "Count",
-            color: textColor
-          }
+          ticks: {
+            color: textColor,
+            stepSize: 2000,
+            font: { size: 12.5, weight: 500 },
+          },
+          grid: { color: gridColor, drawBorder: false },
+          title: { display: true, text: "Count", color: textColor, font: { weight: 600 } },
         },
         y1: {
           beginAtZero: true,
           position: "right",
           grid: { drawOnChartArea: false },
-          ticks: { color: textColor },
-          title: {
-            display: true,
-            text: "Cumulative",
-            color: textColor
-          }
+          ticks: {
+            color: textColor,
+            font: { size: 12.5, weight: 500 },
+          },
+          title: { display: true, text: "Cumulative", color: textColor, font: { weight: 600 } },
         },
       },
-      animation: { duration: 500 },
+      animation: { duration: 700, easing: "easeOutQuart" },
     },
   });
 }
+
 
 function renderCompanyCards(sel, companies) {
   const container = document.querySelector(sel);
