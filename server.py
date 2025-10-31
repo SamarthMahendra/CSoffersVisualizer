@@ -15,7 +15,7 @@ CORS(app)
 
 # ---- MongoDB Setup ----
 
-uri = os.getenv("MONGO_URI", 'mongodb+srv://stackoverflow:stackoverflow%40123@cluster0.3kqbc.mongodb.net/myDatabase?retryWrites=true&w=majority&appName=Cluster0')
+uri = os.getenv("MONGO_URI", '')
 
 
 
@@ -39,7 +39,7 @@ feedback_collection = db["feedback"]
 
 # ---- Constants ----
 STAGE_ORDER = [
-    "OA", "Phone/R1", "Interview", "Onsite", "HM", "Offer", "Reject"
+    "OA", "Phone/R1", "Onsite", "HM", "Offer", "Reject"
 ]
 
 # ---- Helpers ----
