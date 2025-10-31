@@ -864,6 +864,92 @@ tbody tr:hover {
   color: #b91c1c;
 }
 
+/* ===== Share Popup Styles (Light + Dark Mode) ===== */
+.share-popup {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 320px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.15);
+  color: #111;
+  font-family: 'Inter', sans-serif;
+  padding: 20px;
+  z-index: 9999;
+  animation: fadeIn 0.6s ease;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.share-popup.hidden {
+  display: none;
+}
+
+.popup-content h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.popup-content p {
+  font-size: 14px;
+  opacity: 0.85;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.popup-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.share-btn {
+  background: #0071e3;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.share-btn:hover {
+  background: #2997ff;
+}
+
+.dismiss-btn {
+  background: transparent;
+  color: #555;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 🌙 Auto Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .share-popup {
+    background: rgba(30, 30, 30, 0.8);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+
+  .dismiss-btn {
+    color: #aaa;
+  }
+}
+
+
+
 /* small screens */
 @media (max-width: 720px) {
   .metrics-banner {
@@ -2461,5 +2547,50 @@ window.addEventListener("DOMContentLoaded", initDashboard);
 window.removeCompany = removeCompany;
 window.selectCompany = selectCompany;
 </script>
+<script>
+  function showSharePopup() {
+    document.getElementById("share-popup").classList.remove("hidden");
+  }
+
+  function dismissPopup() {
+    document.getElementById("share-popup").classList.add("hidden");
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText("https://jobstats.fyi");
+    alert("Copied! Thanks for helping others 💙");
+    dismissPopup();
+  }
+
+  function shareLinkedIn() {
+    const url = encodeURIComponent("https://jobstats.fyi");
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, "_blank");
+    dismissPopup();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const shownRecently = localStorage.getItem("popupShownTime");
+    const now = Date.now();
+
+    if ((!shownRecently || now - shownRecently > 7 * 24 * 60 * 60 * 1000) && Math.random() < 0.3) {
+      setTimeout(() => {
+        showSharePopup();
+        localStorage.setItem("popupShownTime", now);
+      }, 10000); // show after 90s
+    }
+  });
+</script>
+<!-- ===== Share Popup ===== -->
+<div id="share-popup" class="share-popup hidden">
+  <div class="popup-content">
+    <h3>💙 Did JobStats help you?</h3>
+    <p>Share it with your friends and help more students track interview trends.</p>
+    <div class="popup-buttons">
+      <button class="share-btn" onclick="copyLink()">🔗 Copy Link</button>
+      <button class="share-btn" onclick="shareLinkedIn()">💼 Share on LinkedIn</button>
+      <button class="dismiss-btn" onclick="dismissPopup()">Maybe Later</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
