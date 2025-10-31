@@ -2064,22 +2064,29 @@ async function refresh() {
     });
   });
 
-  const perCompanyStageCounts = {};
-  top8Companies.forEach((c) => (perCompanyStageCounts[c] = Object.fromEntries(stages.map((s) => [s, 0]))));
-  data.forEach((d) => {
-    if (perCompanyStageCounts[d.company] && perCompanyStageCounts[d.company][d.stage] != null) {
-      perCompanyStageCounts[d.company][d.stage] += 1;
-    }
+  // Track user journeys per company (key: company|author -> set of stages)
+  const userStages = {};
+  Object.entries(applications).forEach(([key, msgs]) => {
+    const stagesSeen = new Set(msgs.map(m => m.stage).filter(Boolean));
+    userStages[key] = stagesSeen;
   });
 
   top8Companies.forEach((c) => {
     convMat[c] = {};
+    // Get all users for this company
+    const companyUsers = Object.keys(userStages).filter(k => k.startsWith(`${c}|`));
+
     for (let i = 0; i < stages.length - 1; i++) {
       const from = stages[i];
       const to = stages[i + 1];
       if ((to || "").toLowerCase() === "reject") continue;
-      const fromCount = perCompanyStageCounts[c][from] || 0;
-      const toCount = perCompanyStageCounts[c][to] || 0;
+
+      // Count users who had from_stage
+      const fromCount = companyUsers.filter(k => userStages[k].has(from)).length;
+
+      // Count users who had BOTH from_stage AND to_stage (actual progression)
+      const toCount = companyUsers.filter(k => userStages[k].has(from) && userStages[k].has(to)).length;
+
       const pct = fromCount > 0 ? (toCount / fromCount) * 100 : 0;
       convMat[c][`${from}→${to}`] = pct;
     }

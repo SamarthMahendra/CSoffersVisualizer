@@ -25,12 +25,6 @@ uri = os.getenv("MONGO_URI", '')
 
 
 
-
-
-
-
-
-
 mongo_client = MongoClient(uri)
 db = mongo_client["JobStats"]
 collection = db["interview_processes"]
@@ -321,20 +315,18 @@ def api_heatmap():
 
         applications[key].append({'stage': stage, 'timestamp': ts})
 
-    # Calculate stage counts per company
-    per_company_stage_counts = {}
-    for company in top_company_names:
-        per_company_stage_counts[company] = {stage: 0 for stage in STAGE_ORDER}
-
-    for doc in results:
-        company = doc.get('company')
-        stage = doc.get('stage')
-        if company in per_company_stage_counts and stage in per_company_stage_counts[company]:
-            per_company_stage_counts[company][stage] += 1
+    # Track user journeys per company (key: company|author -> set of stages)
+    user_stages = {}
+    for key, msgs in applications.items():
+        stages_seen = {msg['stage'] for msg in msgs if msg.get('stage')}
+        user_stages[key] = stages_seen
 
     # Calculate stage-to-stage conversions (skip ...→Reject)
     for company in top_company_names:
         conv_matrix[company] = {}
+        # Get all users for this company
+        company_users = [k for k in user_stages.keys() if k.startswith(f"{company}|")]
+
         for i in range(len(STAGE_ORDER) - 1):
             from_stage = STAGE_ORDER[i]
             to_stage = STAGE_ORDER[i + 1]
@@ -342,8 +334,12 @@ def api_heatmap():
             if to_stage.lower() == "reject":
                 continue
 
-            from_count = per_company_stage_counts[company][from_stage]
-            to_count = per_company_stage_counts[company][to_stage]
+            # Count users who had from_stage
+            from_count = sum(1 for k in company_users if from_stage in user_stages[k])
+
+            # Count users who had BOTH from_stage AND to_stage (actual progression)
+            to_count = sum(1 for k in company_users
+                          if from_stage in user_stages[k] and to_stage in user_stages[k])
 
             pct = (to_count / from_count * 100) if from_count > 0 else 0
             conv_matrix[company][f"{from_stage}→{to_stage}"] = round(pct, 1)
@@ -614,19 +610,18 @@ def api_dashboard():
         applications[key].append({'stage': stage, 'timestamp': ts})
 
     # ===== HEATMAP CONVERSION MATRIX =====
-    per_company_stage_counts = {}
-    for company in top_company_names:
-        per_company_stage_counts[company] = {stage: 0 for stage in STAGE_ORDER}
-
-    for doc in results:
-        company = doc.get('company')
-        stage = doc.get('stage')
-        if company in per_company_stage_counts and stage in per_company_stage_counts[company]:
-            per_company_stage_counts[company][stage] += 1
+    # Track user journeys per company (key: company|author -> set of stages)
+    user_stages = {}
+    for key, msgs in applications.items():
+        stages_seen = {msg['stage'] for msg in msgs if msg.get('stage')}
+        user_stages[key] = stages_seen
 
     conv_matrix = {}
     for company in top_company_names:
         conv_matrix[company] = {}
+        # Get all users for this company
+        company_users = [k for k in user_stages.keys() if k.startswith(f"{company}|")]
+
         for i in range(len(STAGE_ORDER) - 1):
             from_stage = STAGE_ORDER[i]
             to_stage = STAGE_ORDER[i + 1]
@@ -634,8 +629,12 @@ def api_dashboard():
             if to_stage.lower() == "reject":
                 continue
 
-            from_count = per_company_stage_counts[company][from_stage]
-            to_count = per_company_stage_counts[company][to_stage]
+            # Count users who had from_stage
+            from_count = sum(1 for k in company_users if from_stage in user_stages[k])
+
+            # Count users who had BOTH from_stage AND to_stage (actual progression)
+            to_count = sum(1 for k in company_users
+                          if from_stage in user_stages[k] and to_stage in user_stages[k])
 
             pct = (to_count / from_count * 100) if from_count > 0 else 0
             conv_matrix[company][f"{from_stage}→{to_stage}"] = round(pct, 1)
