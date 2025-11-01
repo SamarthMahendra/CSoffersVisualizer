@@ -1017,7 +1017,11 @@ window.DD_RUM.onReady(function(){
   const lastVisit = localStorage.getItem("last_visit");
   const now = Date.now();
   const isReturning = lastVisit ? (now - parseInt(lastVisit)) > 24 * 60 * 60 * 1000 : false;
-  localStorage.setItem("last_visit", now);
+
+  // Only update if first visit OR if they're returning after 24h
+  if (!lastVisit || isReturning) {
+    localStorage.setItem("last_visit", now);
+  }
 
   // ---------- 3️⃣ Initialize Datadog RUM ----------
   window.DD_RUM.init({
