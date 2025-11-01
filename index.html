@@ -1441,6 +1441,7 @@ let pageSize = 10;
 let selectedCompanies = [];
 let companyCounts = {};
 let SESSION_ID = null;
+let FILTERED_DATA = [];
 
 function destroyChart(id) {
   if (charts[id]) {
@@ -1597,15 +1598,17 @@ async function fetchMessages(params = {}) {
   applyLocalSearch();
   updateCompanyCounts();
   updateCompanyPlaceholder();
-  renderTable();
+  renderTablePaginated();
   return DATA;
 }
 
 /* ------------ Table & Pagination ------------ */
-function renderTable() {
+function renderTablePaginated() {
   const tbody = document.querySelector("tbody");
   tbody.innerHTML = "";
-  if (!DATA.length) {
+
+  const source = FILTERED_DATA.length ? FILTERED_DATA : DATA;
+  if (!source.length) {
     tbody.innerHTML = `<tr><td colspan="5" style="color:var(--muted);text-align:center;">No messages</td></tr>`;
     $("#pageInfo").textContent = `Page 0 / 0`;
     $("#prevPage").disabled = true;
@@ -1614,7 +1617,7 @@ function renderTable() {
   }
 
   const start = (currentPage - 1) * pageSize;
-  const pageItems = DATA.slice(start, start + pageSize);
+  const pageItems = source.slice(start, start + pageSize);
 
   for (const m of pageItems) {
     const tr = document.createElement("tr");
@@ -1623,11 +1626,12 @@ function renderTable() {
     tbody.appendChild(tr);
   }
 
-  const totalPages = Math.ceil(DATA.length / pageSize) || 1;
+  const totalPages = Math.ceil(source.length / pageSize) || 1;
   $("#pageInfo").textContent = `Page ${currentPage} / ${totalPages}`;
   $("#prevPage").disabled = currentPage === 1;
   $("#nextPage").disabled = currentPage === totalPages;
 }
+
 function applyLocalSearch() {
   const c = $("#searchCompany").value.trim().toLowerCase();
   const a = $("#searchAuthor").value.trim().toLowerCase();
@@ -1638,7 +1642,9 @@ function applyLocalSearch() {
   if (a) filtered = filtered.filter(m => (m.author || "").toLowerCase().includes(a));
   if (s) filtered = filtered.filter(m => (m.stage || "").toLowerCase().includes(s));
 
-  renderFilteredTable(filtered);
+  FILTERED_DATA = filtered;
+  currentPage = 1;
+  renderTablePaginated();
 }
 
 ["searchCompany", "searchAuthor", "searchStage"].forEach(id => {
@@ -1681,14 +1687,16 @@ function renderFilteredTable(list) {
 $("#prevPage").addEventListener("click", () => {
   if (currentPage > 1) {
     currentPage--;
-    renderTable();
+    renderTablePaginated();
   }
 });
+
 $("#nextPage").addEventListener("click", () => {
-  const totalPages = Math.ceil(DATA.length / pageSize) || 1;
+  const source = FILTERED_DATA.length ? FILTERED_DATA : DATA;
+  const totalPages = Math.ceil(source.length / pageSize) || 1;
   if (currentPage < totalPages) {
     currentPage++;
-    renderTable();
+    renderTablePaginated();
   }
 });
 
