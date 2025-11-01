@@ -585,8 +585,10 @@ body {
   grid-column: 1 / -1;
 }
 canvas, svg {
-  width:100%!important;
-  height:260px!important;
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 16 / 9; /* keeps proportion while scaling */
+  max-height: 260px;
   border-radius: 12px;
   background: rgba(255,255,255,0.02);
   border:1px solid rgba(255,255,255,0.03);
@@ -957,6 +959,21 @@ canvas {
   aspect-ratio: 16 / 9;   /* optional but clean */
 }
 
+.chart-container {
+  width: 100%;
+  max-width: 700px;
+  height: auto;
+  aspect-ratio: 16/9;
+}
+
+.dashboard-wrapper {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding-left: clamp(1rem, 6vw, 8rem);
+  padding-right: clamp(1rem, 6vw, 8rem);
+}
+
 
 /* Default: desktop / laptop view */
 .card-full canvas {
@@ -1055,6 +1072,7 @@ window.DD_RUM.onReady(function(){
 
 </head>
 <body>
+<div class="dashboard-wrapper">
 <div class="app-shell">
   <!-- ===== TOPBAR ===== -->
   <header class="topbar">
@@ -2753,6 +2771,7 @@ window.selectCompany = selectCompany;
       <button class="dismiss-btn" onclick="dismissPopup()">Maybe Later</button>
     </div>
   </div>
+</div>
 </div>
 </body>
 </html>
