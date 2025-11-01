@@ -25,6 +25,7 @@ uri = os.getenv("MONGO_URI", '')
 
 
 
+
 mongo_client = MongoClient(uri)
 db = mongo_client["JobStats"]
 collection = db["interview_processes"]
@@ -60,14 +61,15 @@ def fill_missing_stages(messages):
     if not messages:
         return messages
 
-    # Group messages by (company, author)
+    # Group messages by (company, author, new_grad)
+    # This ensures intern and new grad applications are treated as separate journeys
     grouped = {}
     for msg in messages:
-        key = (msg.get('company', ''), msg.get('author', ''))
+        key = (msg.get('company', ''), msg.get('author', ''), msg.get('new_grad', False))
         grouped.setdefault(key, []).append(msg)
 
     augmented = []
-    for (company, author), msgs in grouped.items():
+    for (company, author, new_grad_status), msgs in grouped.items():
         present_stages = {m.get('stage') for m in msgs if m.get('stage')}
 
         # If Reject exists, just pass through original messages – do NOT autogen.
@@ -98,7 +100,8 @@ def fill_missing_stages(messages):
                     'timestamp': None,  # synthetic
                     'text': '[Auto-generated since the user submitted next stage on discord]',
                     'msg_id': f'auto_{company}_{author}_{st}',
-                    'spam': False
+                    'spam': False,
+                    'new_grad': new_grad_status
                 })
 
         augmented.extend(to_add)
