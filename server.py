@@ -14,6 +14,7 @@ app = Flask(__name__)
 CORS(app)
 
 # ---- MongoDB Setup ----
+MONGO_URI = ""
 
 uri = os.getenv("MONGO_URI", MONGO_URI)
 
