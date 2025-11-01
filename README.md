@@ -6,6 +6,12 @@
 This README covers the **project architecture**, **data pipeline**, and **technical challenges solved**.
 
 ---
+<img width="3024" height="1662" alt="image" src="https://github.com/user-attachments/assets/bf118cde-e8da-4ec2-b430-334ac66b8dd8" />
+<img width="3024" height="1654" alt="image" src="https://github.com/user-attachments/assets/5b7a4688-0b77-4986-9040-bd3d8e7f4014" />
+<img width="3020" height="1650" alt="image" src="https://github.com/user-attachments/assets/da2ed7ea-4b5b-41f0-8964-d6180a4b1357" />
+
+
+
 
 ## ⚙️ Core Architecture & Tech Stack
 
@@ -96,6 +102,7 @@ Achieving **100–300 daily active sessions (DAS)** validates both **product-mar
 
 
 <img width="1750" height="1224" alt="image" src="https://github.com/user-attachments/assets/910acfb8-2f91-42cd-84e8-92c19d6cb820" />
+
 
 
 
