@@ -15,7 +15,7 @@ CORS(app)
 
 # ---- MongoDB Setup ----
 
-uri = os.getenv("MONGO_URI", '')
+uri = os.getenv("MONGO_URI", "")
 
 
 
@@ -28,7 +28,7 @@ uri = os.getenv("MONGO_URI", '')
 
 mongo_client = MongoClient(uri)
 db = mongo_client["JobStats"]
-collection = db["interview_processes"]
+collection = db["interview_processes_backfilled"]
 sessions_collection = db["active_sessions"]
 feedback_collection = db["feedback"]
 
@@ -47,67 +47,173 @@ def parse_date(s):
         except ValueError:
             continue
     return None
+from datetime import timedelta
 
-def fill_missing_stages(messages):
-    """
-    Postprocessing: For each (company, author) combination, optionally add
-    earlier missing stages *only if there is NO Reject* in the journey.
+# def fill_missing_stages(messages):
+#     """
+#     Postprocessing: For each (company, author, new_grad) journey, optionally add earlier missing stages.
+#
+#     Improvements:
+#     - Synthetic timestamps: each earlier backfilled stage gets a timestamp 3 days before the nearest real one.
+#     - Prevents None timestamps and keeps analytics timelines consistent.
+#     """
+#
+#     print(f"[Backfill] Starting backfilling process with {len(messages)} messages")
+#     if not messages:
+#         print("[Backfill] No messages to process, returning empty list")
+#         return messages
+#
+#     stage_pos = {st: i for i, st in enumerate(STAGE_ORDER)}
+#     BASE_NEVER_AUTOGEN = {"App", "Offer"}
+#
+#     grouped = {}
+#     for msg in messages:
+#         key = (msg.get("company", ""), msg.get("author", ""), msg.get("new_grad", False))
+#         grouped.setdefault(key, []).append(msg)
+#     print(f"[Backfill] Grouped messages into {len(grouped)} unique user journeys")
+#
+#     # ---- Fetch real stage submissions once
+#     or_conditions = [
+#         {
+#             "company": c,
+#             "author": a,
+#             "new_grad": ng,
+#             "spam": False,
+#             "msg_id": {"$not": {"$regex": "^auto_"}}
+#         }
+#         for (c, a, ng) in grouped.keys()
+#     ]
+#
+#     real_stage_submissions = {}
+#     if or_conditions:
+#         print(f"[Backfill] Querying database for {len(or_conditions)} journeys")
+#         cursor = collection.find(
+#             {"$or": or_conditions},
+#             {"company": 1, "author": 1, "new_grad": 1, "stage": 1, "timestamp": 1, "_id": 0}
+#         )
+#         for doc in cursor:
+#             key = (doc.get("company", ""), doc.get("author", ""), doc.get("new_grad", False))
+#             real_stage_submissions.setdefault(key, []).append(doc)
+#         print(f"[Backfill] Found real stage submissions for {len(real_stage_submissions)} journeys")
+#
+#     augmented = []
+#     total_backfilled_stages = 0
+#     skipped_because_real = []
+#
+#     for (company, author, new_grad_status), msgs in grouped.items():
+#         present_stages = {str(m.get("stage")).strip() for m in msgs if m.get("stage")}
+#         job_type = "new_grad" if new_grad_status else "intern"
+#
+#         if present_stages == {"App"}:
+#             augmented.extend(msgs)
+#             continue
+#
+#         has_reject = "Reject" in present_stages
+#         has_offer = "Offer" in present_stages
+#
+#         # Get latest real timestamp for synthetic offsets
+#         real_docs = real_stage_submissions.get((company, author, new_grad_status), [])
+#         from datetime import datetime
+#
+#         real_timestamps = []
+#         for d in real_docs:
+#             ts = d.get("timestamp")
+#             if not ts:
+#                 continue
+#             if isinstance(ts, str):
+#                 try:
+#                     # Handles timezone-aware ISO strings like "2025-10-27T04:32:52.039000+00:00"
+#                     ts = datetime.fromisoformat(ts)
+#                 except ValueError:
+#                     # fallback: remove 'Z' if present (UTC suffix)
+#                     ts = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+#             real_timestamps.append(ts)
+#
+#         latest_real_ts = max(real_timestamps) if real_timestamps else None
+#
+#         valid_stages = [s for s in present_stages if s in stage_pos]
+#         if not valid_stages:
+#             print(f"[Backfill][Skip] {company} | {author} ({job_type}): No valid stages in STAGE_ORDER — skipping.")
+#             augmented.extend(msgs)
+#             continue
+#
+#
+#         if not has_reject:
+#             latest_idx = max(stage_pos[s] for s in valid_stages)
+#         else:
+#             if present_stages == {"Reject"}:
+#                 latest_idx = stage_pos["OA"]
+#             else:
+#                 reject_idx = stage_pos["Reject"]
+#                 prev_real_stages = [stage_pos[s] for s in valid_stages if stage_pos[s] < reject_idx]
+#                 latest_idx = max(prev_real_stages) if prev_real_stages else stage_pos["OA"]
+#
+#         to_add = []
+#         offset_days = 0
+#
+#         for i in range(latest_idx):
+#             st = STAGE_ORDER[i]
+#
+#             # Never autogen "App"/"Offer"; autogen Interview only if Offer exists
+#             if st in BASE_NEVER_AUTOGEN or (st == "Interview" and not has_offer):
+#                 continue
+#             if st in present_stages:
+#                 continue
+#             if any(d.get("stage") == st for d in real_docs):
+#                 skipped_because_real.append({
+#                     "company": company,
+#                     "author": author,
+#                     "new_grad": new_grad_status,
+#                     "stage": st
+#                 })
+#                 continue
+#
+#             # --- Synthetic timestamp ---
+#             offset_days += 3
+#             ts = None
+#             if latest_real_ts:
+#                 ts = latest_real_ts - timedelta(days=offset_days)
+#
+#             to_add.append({
+#                 "company": company,
+#                 "author": author,
+#                 "stage": st,
+#                 "timestamp": ts,
+#                 "text": "[Auto-generated since the user submitted next stage on discord]",
+#                 "msg_id": f"auto_{company}_{author}_{st}",
+#                 "spam": False,
+#                 "new_grad": new_grad_status
+#             })
+#
+#         if to_add:
+#             bf_list = [x["stage"] for x in to_add]
+#             print(f"[Backfill] {company} | {author} ({job_type}): Backfilled {bf_list}")
+#             total_backfilled_stages += len(to_add)
+#
+#         augmented.extend(to_add)
+#         augmented.extend(msgs)
+#
+#     print(f"[Backfill] ✅ Done. Total backfilled: {total_backfilled_stages}. Output: {len(augmented)} messages")
+#
+#     # ---- Log skipped due to real submissions ----
+#     if skipped_because_real:
+#         from collections import defaultdict
+#         print(f"[Backfill][Skip-Real] Skipped {len(skipped_because_real)} stages because real submissions already exist.")
+#         by_journey = defaultdict(list)
+#         for rec in skipped_because_real:
+#             by_journey[(rec["company"], rec["author"], rec["new_grad"])].append(rec["stage"])
+#         print("[Backfill][Skip-Real] Examples (up to 10 journeys):")
+#         for i, ((comp, auth, ng), stages) in enumerate(by_journey.items()):
+#             print(f"  - {comp} | {auth} | {'new_grad' if ng else 'intern'}: {sorted(set(stages))}")
+#             if i >= 9:
+#                 break
+#     else:
+#         print("[Backfill][Skip-Real] No stages skipped due to real submissions.")
+#
+#     return augmented
 
-    Notes:
-    - Never add anything if Reject is present.
-    - Never autogenerate "App" or "Interview" (as in your code).
-    - Never autogenerate "Offer" (extra guard added).
-    """
-    if not messages:
-        return messages
 
-    # Group messages by (company, author, new_grad)
-    # This ensures intern and new grad applications are treated as separate journeys
-    grouped = {}
-    for msg in messages:
-        key = (msg.get('company', ''), msg.get('author', ''), msg.get('new_grad', False))
-        grouped.setdefault(key, []).append(msg)
 
-    augmented = []
-    for (company, author, new_grad_status), msgs in grouped.items():
-        present_stages = {m.get('stage') for m in msgs if m.get('stage')}
-
-        # If Reject exists, just pass through original messages – do NOT autogen.
-        if 'Reject' in present_stages:
-            augmented.extend(msgs)
-            continue
-
-        # If only 'App' exists, also pass through messages as-is.
-        if present_stages == {'App'}:
-            augmented.extend(msgs)
-            continue
-
-        # Find the earliest present stage in STAGE_ORDER
-        earliest_idx = len(STAGE_ORDER)
-        for st in present_stages:
-            if st in STAGE_ORDER:
-                earliest_idx = min(earliest_idx, STAGE_ORDER.index(st))
-
-        # Add earlier missing stages (guards: no App, no Interview, no Offer)
-        to_add = []
-        for i in range(earliest_idx):
-            st = STAGE_ORDER[i]
-            if st not in present_stages and st not in {'App', 'Offer'}:
-                to_add.append({
-                    'company': company,
-                    'author': author,
-                    'stage': st,
-                    'timestamp': None,  # synthetic
-                    'text': '[Auto-generated since the user submitted next stage on discord]',
-                    'msg_id': f'auto_{company}_{author}_{st}',
-                    'spam': False,
-                    'new_grad': new_grad_status
-                })
-
-        augmented.extend(to_add)
-        augmented.extend(msgs)
-
-    return augmented
 
 
 # ---- Routes ----
@@ -167,6 +273,8 @@ def meta():
 @app.route('/api/messages')
 def api_messages():
     """Return filtered messages based on query params."""
+    print(f"[API /api/messages] Request received with params: start={request.args.get('start')}, end={request.args.get('end')}, companies={request.args.get('companies')}, stages={request.args.get('stages')}, job_types={request.args.get('job_types')}")
+
     start = parse_date(request.args.get('start'))
     end = parse_date(request.args.get('end'))
     companies = [c for c in (request.args.get('companies') or '').split(',') if c]
@@ -178,18 +286,22 @@ def api_messages():
     # Apply company filter (OR logic with $in operator)
     if companies:
         query['company'] = {'$in': companies}
+        print(f"[API /api/messages] Filtering by companies: {companies}")
 
     # Apply stage filter
     if stages:
         query['stage'] = {'$in': stages}
+        print(f"[API /api/messages] Filtering by stages: {stages}")
 
     # Apply job type filter (new_grad vs intern)
     if job_types and len(job_types) == 1:
         if 'new_grad' in job_types:
             query['new_grad'] = True
+            print(f"[API /api/messages] Filtering by job type: new_grad")
         elif 'intern' in job_types:
             # Intern records either don't have new_grad field or have it set to false
             query['$or'] = [{'new_grad': False}, {'new_grad': {'$exists': False}}]
+            print(f"[API /api/messages] Filtering by job type: intern")
 
     # Apply date filters
     if start or end:
@@ -200,15 +312,24 @@ def api_messages():
             # Make end date inclusive by adding 1 day and using $lt
             end_inclusive = end + timedelta(days=1)
             query['timestamp']['$lt'] = end_inclusive.isoformat()
+        print(f"[API /api/messages] Date filter applied: start={start}, end={end}")
+
+    print(f"[API /api/messages] MongoDB query: {query}")
 
     # Query MongoDB
     cursor = collection.find(query, {"_id": 0}).sort("timestamp", -1)
     results = list(cursor)
 
-    # Apply postprocessing: add missing stages
-    augmented_results = fill_missing_stages(results)
+    print(f"[API /api/messages] Retrieved {len(results)} messages from MongoDB")
 
-    return jsonify({'items': augmented_results, 'total': len(augmented_results)})
+    # Apply postprocessing: add missing stages
+    print(f"[API /api/messages] Applying backfilling to messages...")
+    # augmented_results = fill_missing_stages(results)
+
+    # backfilled_count = len(augmented_results) - len(results)
+    # print(f"[API /api/messages] Backfilling complete. Added {backfilled_count} auto-generated stages. Total messages: {len(augmented_results)}")
+
+    return jsonify({'items': results, 'total': len(results)})
 
 
 @app.route('/api/funnel')
@@ -861,6 +982,35 @@ def submit_data():
     except (ValueError, TypeError):
         return jsonify({'error': 'Invalid date format'}), 400
 
+    # Check for existing submissions from this user for this company and position type
+    # Intern and new_grad are treated as separate journeys
+    existing_query = {
+        'author': username,
+        'company': company,
+        'new_grad': position_type == 'new_grad',
+        'spam': False
+    }
+
+    existing_submissions = list(collection.find(existing_query, {"stage": 1, "timestamp": 1, "_id": 0}))
+
+    if existing_submissions:
+        existing_stages = {sub.get('stage') for sub in existing_submissions if sub.get('stage')}
+
+        # Check if they already submitted this exact stage
+        if stage in existing_stages:
+            return jsonify({'error': f'You have already submitted the {stage} stage for {company} ({position_type})'}), 400
+
+        # Check if they've submitted a later stage (prevent going backwards)
+        stage_idx = STAGE_ORDER.index(stage)
+        for existing_stage in existing_stages:
+            if existing_stage in STAGE_ORDER:
+                existing_idx = STAGE_ORDER.index(existing_stage)
+                # Allow submitting later stages, but not earlier ones (except Reject can come anytime)
+                if stage != 'Reject' and existing_idx > stage_idx:
+                    return jsonify({
+                        'error': f'You have already submitted {existing_stage} for {company}. Cannot submit earlier stage {stage}.'
+                    }), 400
+
     # Create submission document
     submission_doc = {
         'msg_id': f'submission_{username}_{company}_{stage}_{int(datetime.utcnow().timestamp())}',
@@ -1004,6 +1154,7 @@ def hiring_trends():
 
     # Get current date and calculate 6 months ago
     now = datetime.utcnow()
+    now = now - timedelta(days=2)
     six_months_ago = now - timedelta(days=180)
 
     # Build the match query
@@ -1185,5 +1336,5 @@ def hiring_trends():
 
 # ---- Entry ----
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 3000))
+    port = int(os.environ.get('PORT', 3050))
     app.run(host='0.0.0.0', port=port, debug=False)
