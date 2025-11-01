@@ -14,18 +14,8 @@ app = Flask(__name__)
 CORS(app)
 
 # ---- MongoDB Setup ----
-MONGO_URI = ""
 
 uri = os.getenv("MONGO_URI", MONGO_URI)
-
-
-
-
-
-
-
-
-
 
 mongo_client = MongoClient(uri)
 db = mongo_client["JobStats"]
@@ -1145,6 +1135,23 @@ def top_offer_companies():
 
     return jsonify({'companies': top_companies})
 
+from datetime import datetime, timedelta
+
+def fill_missing_dates(data):
+    """Fills in missing days with count=0 to avoid straight line jumps."""
+    if not data:
+        return []
+    fmt = "%Y-%m-%d"
+    filled = []
+    start = datetime.strptime(data[0]['date'], fmt)
+    end = datetime.strptime(data[-1]['date'], fmt)
+    existing = {d['date']: d['count'] for d in data}
+    cur = start
+    while cur <= end:
+        date_str = cur.strftime(fmt)
+        filled.append({'date': date_str, 'count': existing.get(date_str, 0)})
+        cur += timedelta(days=1)
+    return filled
 
 @app.route('/api/hiring-trends')
 def hiring_trends():
@@ -1222,6 +1229,7 @@ def hiring_trends():
             return smoothed
 
         daily_data = [{'date': item['_id'], 'count': item['count']} for item in results]
+        daily_data = fill_missing_dates(daily_data)
         smoothed_data = apply_moving_avg(daily_data)
 
         return jsonify({

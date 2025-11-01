@@ -995,7 +995,7 @@ canvas {
   }
 }
 </style>
-
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
 <!-- Datadog RUM (kept from your original) -->
 <script>
 (function(h,o,u,n,d){
@@ -2152,7 +2152,10 @@ async function renderHiringTrends() {
       const companyData = response.companies[company];
       const dataMap = {};
       companyData.forEach(item => { dataMap[item.date] = item.count; });
-      const data = sortedDates.map(date => dataMap[date] || null);
+      const data = sortedDates.map(date => ({
+  x: new Date(date + 'T00:00:00Z'),
+  y: dataMap[date] || null
+}));
 
       if (company === 'Global Average') {
         datasets.push({
@@ -2163,7 +2166,7 @@ async function renderHiringTrends() {
           borderWidth: 3,
           borderDash: [10,5],
           fill: false,
-          tension: 0.4,
+          tension: 0.2,
           pointRadius: 0,
           spanGaps: true,
           order: 0
@@ -2178,7 +2181,7 @@ async function renderHiringTrends() {
           backgroundColor: colors.bg,
           borderWidth: 2.3,
           fill: selectedCompanies.length === 1,
-          tension: 0.35,
+          tension: 0.2,
           pointRadius: 0,
           spanGaps: true,
           order: 1
@@ -2210,28 +2213,39 @@ async function renderHiringTrends() {
             backgroundColor: 'rgba(0, 0, 0, 0.8)'
           }
         },
-        scales: {
-          x: {
-            ticks: {
-              color: textColor,
-              maxRotation: 45,
-              autoSkip: true,
-              maxTicksLimit: 15
-            },
-            grid: {
-              color: 'rgba(128, 128, 128, 0.06)'
-            }
-          },
-          y: {
-            beginAtZero: true,
-            ticks: {
-              color: textColor
-            },
-            grid: {
-              color: 'rgba(128, 128, 128, 0.06)'
-            }
-          }
-        },
+scales: {
+  x: {
+  type: 'time',
+  min: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000), // last 6 months
+  max: new Date(),                                        // today
+  time: {
+    unit: 'week',
+    displayFormats: {
+      week: 'MMM d',
+      month: 'MMM'
+    }
+  },
+  ticks: {
+    color: textColor,
+    maxRotation: 0,
+    autoSkip: true,
+    maxTicksLimit: 15
+  },
+  grid: {
+    color: 'rgba(128, 128, 128, 0.06)'
+  }
+},
+  y: {
+    beginAtZero: true,
+    ticks: {
+      color: textColor
+    },
+    grid: {
+      color: 'rgba(128, 128, 128, 0.06)'
+    }
+  }
+},
+
         interaction: {
           mode: 'index',
           axis: 'x',
