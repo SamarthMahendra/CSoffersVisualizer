@@ -1256,7 +1256,16 @@ window.DD_RUM.onReady(function(){
               <div class="card-sub">Latest interview reports from your sources</div>
             </div>
           </div>
-          <div class="table-wrapper">
+          <div class="local-filters" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+  <input id="searchCompany" type="text" placeholder="Search company..."
+    style="flex:1;min-width:140px;padding:6px 8px;border-radius:8px;border:1px solid rgba(148,163,184,0.25);" />
+
+  <input id="searchAuthor" type="text" placeholder="Search author..."
+    style="flex:1;min-width:140px;padding:6px 8px;border-radius:8px;border:1px solid rgba(148,163,184,0.25);" />
+
+  <input id="searchStage" type="text" placeholder="Search stage..."
+    style="flex:1;min-width:140px;padding:6px 8px;border-radius:8px;border:1px solid rgba(148,163,184,0.25);" />
+</div><div class="table-wrapper">
             <table>
               <thead>
                 <tr>
@@ -1585,6 +1594,7 @@ async function fetchMessages(params = {}) {
   const res = await fetch(`${SERVER}/api/messages?${query}`);
   const payload = await res.json();
   DATA = payload.items || [];
+  applyLocalSearch();
   updateCompanyCounts();
   updateCompanyPlaceholder();
   renderTable();
@@ -1618,6 +1628,56 @@ function renderTable() {
   $("#prevPage").disabled = currentPage === 1;
   $("#nextPage").disabled = currentPage === totalPages;
 }
+function applyLocalSearch() {
+  const c = $("#searchCompany").value.trim().toLowerCase();
+  const a = $("#searchAuthor").value.trim().toLowerCase();
+  const s = $("#searchStage").value.trim().toLowerCase();
+
+  let filtered = DATA;
+  if (c) filtered = filtered.filter(m => (m.company || "").toLowerCase().includes(c));
+  if (a) filtered = filtered.filter(m => (m.author || "").toLowerCase().includes(a));
+  if (s) filtered = filtered.filter(m => (m.stage || "").toLowerCase().includes(s));
+
+  renderFilteredTable(filtered);
+}
+
+["searchCompany", "searchAuthor", "searchStage"].forEach(id => {
+  const input = document.getElementById(id);
+  input.addEventListener("input", debounce(applyLocalSearch, 200));
+});
+
+// small debounce helper to avoid lag on fast typing
+function debounce(fn, delay) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+function renderFilteredTable(list) {
+  const tbody = document.querySelector(".card-full tbody");
+  tbody.innerHTML = "";
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:var(--muted);text-align:center;">No messages</td></tr>`;
+    return;
+  }
+
+  for (const m of list.slice(0, 10)) {
+    const tr = document.createElement("tr");
+    const t = m.timestamp ? new Date(m.timestamp).toLocaleString() : "—";
+    tr.innerHTML = `<td>${t}</td><td>${m.company || ""}</td><td>${m.stage || ""}</td><td>${m.author || ""}</td><td>${m.text || ""}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+// attach listeners
+["filterCompany","filterAuthor","filterStage"].forEach(id => {
+  document.addEventListener("change", e => {
+    if (e.target.id === id) applyLocalFilters();
+  });
+});
+
 $("#prevPage").addEventListener("click", () => {
   if (currentPage > 1) {
     currentPage--;
