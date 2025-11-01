@@ -1125,6 +1125,45 @@ body {
     height: 180px !important; /* slightly taller than aspect-based */
   }
 }
+.refresh-loader {
+  position: absolute;             /* relative to content-area */
+  inset: 0;
+  background: rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(2px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;                    /* stays above cards but below modals */
+  color: #fff;
+  border-radius: 16px;
+  transition: opacity 0.3s ease;
+}
+
+.dashboard-grid {
+  position: relative; /* ensure loader is positioned within it */
+}
+
+.refresh-loader.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.refresh-loader .spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #2997ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
@@ -1418,7 +1457,15 @@ window.DD_RUM.onReady(function(){
             <button id="nextPage">Next</button>
           </div>
         </div>
+              <div id="refreshLoader" class="refresh-loader hidden">
+  <div class="spinner"></div>
+  <p>Refreshing data…</p>
+</div>
+
       </div>
+
+
+
     </section>
   </main>
 </div>
@@ -1566,6 +1613,8 @@ const SERVER = window.location.origin;
 const $  = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 
+let globalCompanyCounts = {};
+
 let META = null;
 let DATA = [];
 let charts = {};
@@ -1586,13 +1635,36 @@ function destroyChart(id) {
 function shortenStage(stage) {
   return stage;
 }
-
-function updateCompanyPlaceholder() {
+async function updateCompanyPlaceholder() {
   const input = $("#companySearch");
-  const uniqueFromData = new Set(DATA.filter(d => d.company).map(d => d.company));
-  const total = uniqueFromData.size || (META?.companies?.length || 0);
-  input.placeholder = `Search companies (${total} total)…`;
+
+  // Respect all filters except selectedCompanies
+  const start = $("#startDate")?.value;
+  const end = $("#endDate")?.value;
+  const newGradChecked = $("#newGradCheckbox")?.checked;
+  const internChecked = $("#internCheckbox")?.checked;
+
+  const jobTypes = [];
+  if (newGradChecked) jobTypes.push("new_grad");
+  if (internChecked) jobTypes.push("intern");
+
+  const params = new URLSearchParams();
+  if (start) params.append("start", start);
+  if (end) params.append("end", end);
+  if (jobTypes.length) params.append("job_types", jobTypes.join(","));
+
+  try {
+    const res = await fetch(`${SERVER}/api/companies/search?${params.toString()}`);
+    const data = await res.json();
+    const total = data.companies?.length || 0;
+    input.placeholder = `Search companies (${total} available)…`;
+  } catch (err) {
+    console.error("Error updating placeholder:", err);
+    input.placeholder = "Search companies…";
+  }
 }
+
+
 
 /* ------------ Company Picker ------------ */
 function renderSelectedCompanies() {
@@ -1617,6 +1689,10 @@ function removeCompany(index) {
     currentPage = 1;
     refresh();
   }
+  else{
+    currentPage = 1;
+    refresh();
+  }
 }
 function updateCompanyCounts() {
   companyCounts = {};
@@ -1626,42 +1702,75 @@ function updateCompanyCounts() {
     }
   });
 }
-function renderCompanyDropdown(searchTerm) {
-  const dropdown = $("#companyDropdown");
-  if (!META || !META.companies) {
-    dropdown.classList.remove("active");
-    dropdown.innerHTML = "";
-    return;
-  }
 
-  let list = META.companies.filter(
-    (c) =>
-      c.toLowerCase().includes((searchTerm || "").toLowerCase()) &&
-      !selectedCompanies.includes(c)
-  );
+async function fetchCompanySuggestions(searchTerm = "") {
+  const start = $("#startDate")?.value;
+  const end = $("#endDate")?.value;
 
-  list = list.sort((a, b) => (companyCounts[b] || 0) - (companyCounts[a] || 0));
+  const newGradChecked = $("#newGradCheckbox")?.checked;
+  const internChecked = $("#internCheckbox")?.checked;
 
-  if (!searchTerm) list = list.slice(0, 10);
+  const jobTypes = [];
+  if (newGradChecked) jobTypes.push("new_grad");
+  if (internChecked) jobTypes.push("intern");
 
-  if (!list.length) {
-    dropdown.classList.remove("active");
-    dropdown.innerHTML = "";
-    return;
-  }
+  const params = new URLSearchParams();
+  if (start) params.append("start", start);
+  if (end) params.append("end", end);
+  if (jobTypes.length) params.append("job_types", jobTypes.join(","));
+  if (searchTerm) params.append("q", searchTerm);
 
-  dropdown.classList.add("active");
-  dropdown.innerHTML = list
-    .map(
-      (c) =>
-        `<div class="company-option" onclick="selectCompany('${c.replace(/'/g, "\\'")}')">${c} <span style="color:var(--muted);font-size:11px">(${companyCounts[c] || 0})</span></div>`
-    )
-    .join("");
+  const res = await fetch(`${SERVER}/api/companies/search?${params.toString()}`);
+  const data = await res.json();
+  return data.companies || [];
 }
+
+
+async function renderCompanyDropdown(searchTerm) {
+  const dropdown = $("#companyDropdown");
+  dropdown.innerHTML = `<div style="padding:8px 12px;font-size:12px;color:var(--muted)">Loading...</div>`;
+  dropdown.classList.add("active");
+
+  try {
+    // Fetch fresh suggestions based on filters
+    const suggestions = await fetchCompanySuggestions(searchTerm);
+
+    // Filter out already selected companies
+    const filtered = suggestions.filter(c => !selectedCompanies.includes(c.name));
+
+    if (!filtered.length) {
+      dropdown.classList.remove("active");
+      dropdown.innerHTML = "";
+      return;
+    }
+
+    // Render results
+    dropdown.innerHTML = filtered
+      .slice(0, 15)
+      .map(
+        (c) => `
+        <div class="company-option" onclick="selectCompany('${c.name.replace(/'/g, "\\'")}')">
+          ${c.name}
+          <span style="color:var(--muted);font-size:11px">(${c.count})</span>
+        </div>`
+      )
+      .join("");
+  } catch (err) {
+    console.error("Error fetching companies:", err);
+    dropdown.classList.remove("active");
+    dropdown.innerHTML = "";
+  }
+}
+
+
+
+
 function selectCompany(company) {
   if (!selectedCompanies.includes(company)) {
     selectedCompanies.push(company);
     renderSelectedCompanies();
+    currentPage = 1;
+    refresh();
   }
   $("#companySearch").value = "";
   $("#companyDropdown").classList.remove("active");
@@ -2400,6 +2509,12 @@ scales: {
 
 /* ------------ Refresh (main orchestrator) ------------ */
 async function refresh() {
+  const loader = document.getElementById("refreshLoader");
+  loader.classList.remove("hidden");
+  companySearch.disabled = true;
+
+  try{
+
   const start = $("#startDate").value;
   const end = $("#endDate").value;
 
@@ -2555,6 +2670,12 @@ async function refresh() {
   renderTopOACompanies();
   renderTopOfferCompanies();
   renderHiringTrends();
+  } catch (error) {
+    console.error("Error during refresh:", error);
+  } finally {
+    loader.classList.add("hidden");
+    companySearch.disabled = false;
+  }
 }
 
 /* ------------ Session Tracking ------------ */
@@ -2799,6 +2920,20 @@ async function initDashboard() {
   $("#endDate").value = fmt(today);
 
   await fetchMeta();
+ // Build global counts once, from META
+if (META && META.company_counts) {
+  globalCompanyCounts = META.company_counts;
+} else if (META && META.company_data) {
+  // fallback: old style array
+  globalCompanyCounts = META.company_data.reduce((acc, d) => {
+    const name = d.company;
+    acc[name] = (acc[name] || 0) + 1;
+    return acc;
+  }, {});
+} else if (META && META.companies) {
+  // fallback if counts missing
+  META.companies.forEach(c => globalCompanyCounts[c] = 0);
+}
   await fetchMessages();
   updateCompanyPlaceholder();
   await refresh();
@@ -2875,6 +3010,13 @@ window.selectCompany = selectCompany;
       }, 10000); // show after 90s
     }
   });
+
+  // Close dropdown when clicking outside
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".company-search-wrapper")) {
+    $("#companyDropdown").classList.remove("active");
+  }
+});
 </script>
 <!-- ===== Share Popup ===== -->
 <div id="share-popup" class="share-popup hidden">

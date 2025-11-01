@@ -16,6 +16,7 @@ CORS(app)
 # ---- MongoDB Setup ----
 MONGO_URI = ""
 
+
 uri = os.getenv("MONGO_URI", MONGO_URI)
 
 mongo_client = MongoClient(uri)
@@ -610,47 +611,54 @@ def api_timeline():
 
 @app.route('/api/companies/search')
 def api_companies_search():
-    """Return companies with counts for search/autocomplete."""
-    search_term = request.args.get('q', '').lower()
+    """
+    Return filtered company suggestions (with counts),
+    respecting date range and job type filters, but ignoring currently selected companies.
+    """
+    search_term = (request.args.get('q') or request.args.get('search') or '').strip().lower()
     start = parse_date(request.args.get('start'))
     end = parse_date(request.args.get('end'))
-    limit = int(request.args.get('limit', 50))
+    job_types = [j for j in (request.args.get('job_types') or '').split(',') if j]
 
-    query = {"spam": False, "stage": {"$ne": "App"}}
+    match_query = {"spam": False, "stage": {"$ne": "App"}}
 
+    # Apply date filters
     if start or end:
-        query['timestamp'] = {}
+        match_query["timestamp"] = {}
         if start:
-            query['timestamp']['$gte'] = start.isoformat()
+            match_query["timestamp"]["$gte"] = start.isoformat()
         if end:
-            # Make end date inclusive by adding 1 day and using $lt
             end_inclusive = end + timedelta(days=1)
-            query['timestamp']['$lt'] = end_inclusive.isoformat()
+            match_query["timestamp"]["$lt"] = end_inclusive.isoformat()
 
-    cursor = collection.find(query, {"company": 1, "_id": 0})
-    results = list(cursor)
+    # Apply job type filter
+    if job_types and len(job_types) == 1:
+        if "new_grad" in job_types:
+            match_query["new_grad"] = True
+        elif "intern" in job_types:
+            match_query["$or"] = [{"new_grad": False}, {"new_grad": {"$exists": False}}]
 
-    # Count companies
-    company_counts = {}
-    for doc in results:
-        company = doc.get('company')
-        if company:
-            company_counts[company] = company_counts.get(company, 0) + 1
+    # Mongo aggregation (efficient count)
+    pipeline = [
+        {"$match": match_query},
+        {"$group": {"_id": "$company", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+    ]
 
-    # Filter by search term
-    filtered_companies = []
-    for company, count in company_counts.items():
-        if search_term in company.lower():
-            filtered_companies.append({'name': company, 'count': count})
+    results = list(collection.aggregate(pipeline))
 
-    # Sort by count (descending) and limit
-    filtered_companies.sort(key=lambda x: x['count'], reverse=True)
-    filtered_companies = filtered_companies[:limit]
+    companies = []
+    for r in results:
+        name = (r.get("_id") or "").strip()
+        if not name:
+            continue
+        if search_term and search_term not in name.lower():
+            continue
+        companies.append({"name": name, "count": r.get("count", 0)})
 
-    return jsonify({
-        'companies': filtered_companies,
-        'total': len(company_counts)
-    })
+    companies.sort(key=lambda x: x["count"], reverse=True)
+    return jsonify({"companies": companies, "total": len(companies)})
+
 
 
 @app.route('/api/dashboard')
