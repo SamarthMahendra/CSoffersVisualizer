@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>JobStats.fyi — Interview Analytics Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
 <!-- SEO Meta Tags -->
 <meta name="description" content="Real-time insights into CS/intern/new-grad interview processes. Track funnel, conversion, and company-level hiring activity from community data.">
@@ -1018,6 +1019,113 @@ canvas {
     order: -1;
   }
 }
+
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+/* === 📱 MOBILE SCALING FIX (for charts, cards, and layout) === */
+@media (max-width: 768px) {
+  /* Overall layout */
+  .dashboard-wrapper {
+    padding-left: clamp(0.5rem, 4vw, 1rem);
+    padding-right: clamp(0.5rem, 4vw, 1rem);
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .card, .metric-card {
+    padding: 10px 12px;
+    border-radius: 18px;
+  }
+
+  /* Charts and SVGs: allow more height and flexible scaling */
+  svg, canvas {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: unset !important;
+    max-height: none !important;
+  }
+
+  /* Ensure each chart section gets enough breathing room */
+  #heatmap, #timeline, #barline, #hiringTrends {
+    min-height: 320px !important;
+  }
+
+  /* Prevent text overlap */
+  text, .card-title, .card-sub {
+    font-size: 13px !important;
+  }
+
+  /* Topbar tweaks */
+  .topbar {
+    padding: 12px 14px;
+    justify-content: space-between;
+  }
+  .topbar-center {
+    display: none; /* hide middle pills on smaller screens */
+  }
+
+  /* Sidebar becomes full-width */
+  .sidebar {
+    width: 100%;
+    order: -1;
+  }
+
+  /* Prevent feedback button from blocking charts */
+  .feedback-btn {
+    bottom: 14px;
+    right: 14px;
+    transform: scale(0.9);
+  }
+
+  /* Avoid text wrapping on labels */
+  .funnel-label {
+    font-size: 12px !important;
+    min-width: 60px;
+  }
+}
+
+/* === 📱 Responsive Chart Fix (Stage Focus chart) === */
+#barline {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1.8 / 1 !important; /* better proportions for small screens */
+  max-height: 400px !important;
+  display: block;
+}
+
+/* Fine-tune for small phones */
+@media (max-width: 600px) {
+  #barline {
+    aspect-ratio: 1.2 / 1 !important;
+    max-height: 250px !important;
+    margin: 0 auto;
+  }
+
+  /* Fix card padding + spacing */
+  .card {
+    padding: 12px 10px !important;
+  }
+
+  /* Make legend readable */
+  .chartjs-legend {
+    font-size: 12px !important;
+  }
+}
+#barline {
+  width: 100%;
+  height: 300px; /* default desktop */
+}
+
+@media (max-width: 600px) {
+  #barline {
+    height: 180px !important; /* slightly taller than aspect-based */
+  }
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
 <!-- Datadog RUM (kept from your original) -->
@@ -1951,23 +2059,24 @@ function renderBarLine(stages, counts) {
           yAxisID: "y",
         },
         {
-          label: "Cumulative",
-          type: "line",
-          data: cumulative,
-          borderColor: "#f2994a",
-          borderWidth: 3,
-          fill: false,
-          tension: 0.35,
-          pointBackgroundColor: "#f2994a",
-          pointRadius: 5,
-          pointHoverRadius: 6,
-          yAxisID: "y1",
-        },
+  label: "Cumulative",
+  type: "line",
+  data: cumulative,
+  borderColor: "#f2994a",
+  borderWidth: 3,
+  fill: false,
+  tension: 0.25, // smoother and less stretched
+  pointBackgroundColor: "#f2994a",
+  pointRadius: 4, // smaller dots for better scaling
+  pointHoverRadius: 5,
+  yAxisID: "y1",
+},
       ],
     },
     options: {
-      maintainAspectRatio: true,
+      maintainAspectRatio: false,
       responsive: true,
+      aspectRatio: 1.6,
       plugins: {
         legend: {
           display: true,
