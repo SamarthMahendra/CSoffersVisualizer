@@ -2967,6 +2967,30 @@ if (META && META.company_counts) {
       $("#companyDropdown").classList.remove("active");
     }
   });
+   $("#companySearch").addEventListener("input", (e) => renderCompanyDropdown(e.target.value));
+  $("#companySearch").addEventListener("focus", (e) => renderCompanyDropdown(e.target.value));
+  $("#applyBtn").addEventListener("click", () => {
+    currentPage = 1;
+    refresh();
+  });
+
+  ["#newGradCheckbox", "#internCheckbox"].forEach(id => {
+  document.querySelector(id).addEventListener("change", () => {
+    const newGrad = document.querySelector("#newGradCheckbox");
+    const intern = document.querySelector("#internCheckbox");
+
+    // 🚫 Prevent both from being unchecked
+    if (!newGrad.checked && !intern.checked) {
+      // Re-check the one that was just unchecked
+      event.target.checked = true;
+      return;
+    }
+
+    // ✅ Auto-refresh when valid state
+    currentPage = 1;
+    refresh();
+  });
+});
 
   initSessionTracking();
   initFeedbackModal();
