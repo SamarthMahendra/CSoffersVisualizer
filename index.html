@@ -1608,6 +1608,16 @@ window.DD_RUM.onReady(function() {
 </div>
 
 <script>
+
+  // Add this helper once near the top
+function debounce(fn, delay) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
 /* ------------ Globals & Helpers (kept from your original logic, just reorganized) ------------ */
 const SERVER = window.location.origin;
 const $  = (s) => document.querySelector(s);
@@ -2955,33 +2965,44 @@ if (META && META.company_counts) {
       refresh();
     });
   });
+  // === Debounce helper ===
+function debounce(fn, delay) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
 
-  $("#companySearch").addEventListener("input", (e) => renderCompanyDropdown(e.target.value));
-  $("#companySearch").addEventListener("focus", (e) => renderCompanyDropdown(e.target.value));
-  $("#applyBtn").addEventListener("click", () => {
-    currentPage = 1;
-    refresh();
-  });
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest(".company-search-wrapper")) {
-      $("#companyDropdown").classList.remove("active");
-    }
-  });
-   $("#companySearch").addEventListener("input", (e) => renderCompanyDropdown(e.target.value));
-  $("#companySearch").addEventListener("focus", (e) => renderCompanyDropdown(e.target.value));
-  $("#applyBtn").addEventListener("click", () => {
-    currentPage = 1;
-    refresh();
-  });
+// === Debounced input handler for company search ===
+const debouncedCompanySearch = debounce((e) => {
+  renderCompanyDropdown(e.target.value);
+}, 300);
 
-  ["#newGradCheckbox", "#internCheckbox"].forEach(id => {
-  document.querySelector(id).addEventListener("change", () => {
+// === Event listeners ===
+$("#companySearch").addEventListener("input", debouncedCompanySearch);
+$("#companySearch").addEventListener("focus", (e) => renderCompanyDropdown(e.target.value));
+
+$("#applyBtn").addEventListener("click", () => {
+  currentPage = 1;
+  refresh();
+});
+
+// Hide dropdown when clicking outside
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".company-search-wrapper")) {
+    $("#companyDropdown").classList.remove("active");
+  }
+});
+
+// === Job-type checkbox logic ===
+["#newGradCheckbox", "#internCheckbox"].forEach(id => {
+  document.querySelector(id).addEventListener("change", (event) => {
     const newGrad = document.querySelector("#newGradCheckbox");
     const intern = document.querySelector("#internCheckbox");
 
     // 🚫 Prevent both from being unchecked
     if (!newGrad.checked && !intern.checked) {
-      // Re-check the one that was just unchecked
       event.target.checked = true;
       return;
     }
@@ -2991,6 +3012,7 @@ if (META && META.company_counts) {
     refresh();
   });
 });
+
 
   initSessionTracking();
   initFeedbackModal();
