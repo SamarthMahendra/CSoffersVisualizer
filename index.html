@@ -1175,7 +1175,7 @@ body {
   n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n);
 })(window,document,'script','https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js','DD_RUM');
 
-window.DD_RUM.onReady(function(){
+window.DD_RUM.onReady(function() {
 
   // ---------- 1️⃣ Generate Anonymous Visitor ID ----------
   let visitorId = localStorage.getItem("visitor_id");
@@ -1184,15 +1184,11 @@ window.DD_RUM.onReady(function(){
     localStorage.setItem("visitor_id", visitorId);
   }
 
-  // ---------- 2️⃣ Track Returning Visitors ----------
+  // ---------- 2️⃣ Track Returning Visitors (Simple Version) ----------
   const lastVisit = localStorage.getItem("last_visit");
   const now = Date.now();
-  const isReturning = lastVisit ? (now - parseInt(lastVisit)) > 24 * 60 * 60 * 1000 : false;
-
-  // Only update if first visit OR if they're returning after 24h
-  if (!lastVisit || isReturning) {
-    localStorage.setItem("last_visit", now);
-  }
+  const isReturning = !!lastVisit;  // ✅ true if they’ve visited before
+  localStorage.setItem("last_visit", now);  // ✅ always update on every visit
 
   // ---------- 3️⃣ Initialize Datadog RUM ----------
   window.DD_RUM.init({
@@ -1209,19 +1205,23 @@ window.DD_RUM.onReady(function(){
   // ---------- 4️⃣ Attach Global Context ----------
   window.DD_RUM.setGlobalContextProperty('visitor_id', visitorId);
   window.DD_RUM.setGlobalContextProperty('is_returning', isReturning);
-  window.DD_RUM.setGlobalContextProperty('theme',
+  window.DD_RUM.setGlobalContextProperty(
+    'theme',
     window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   );
-  window.DD_RUM.setGlobalContextProperty('device_type',
+  window.DD_RUM.setGlobalContextProperty(
+    'device_type',
     /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop'
   );
 
-  // ---------- 5️⃣ Optional: Add Page Custom Events ----------
+  // ---------- 5️⃣ Optional: Log Event ----------
   window.DD_RUM.addAction("page_loaded", {
     visitor_id: visitorId,
-    timestamp: new Date().toISOString()
+    is_returning: isReturning,
+    timestamp: new Date().toISOString(),
   });
 });
+
 </script>
 
 </head>
