@@ -16,10 +16,26 @@ CORS(app)
 # ---- MongoDB Setup ----
 MONGO_URI = ""
 
+from functools import lru_cache
+from time import time
+
+CACHE = {}
+def cache_get(key, ttl=3000):
+    if key in CACHE and time() - CACHE[key]["time"] < ttl:
+        return CACHE[key]["data"]
+    return None
+
+def cache_set(key, data):
+    CACHE[key] = {"data": data, "time": time()}
 
 uri = os.getenv("MONGO_URI", MONGO_URI)
 
-mongo_client = MongoClient(uri)
+mongo_client = MongoClient(
+    uri,
+    maxPoolSize=10,    # reasonable limit
+    minPoolSize=0,
+    serverSelectionTimeoutMS=5000
+)
 db = mongo_client["JobStats"]
 collection = db["interview_processes_backfilled"]
 sessions_collection = db["active_sessions"]
@@ -232,10 +248,15 @@ def robots():
 @app.route('/api/meta')
 def meta():
     """Return meta information: companies, stages, date range, author count, and total submissions."""
+    cached = cache_get('meta')
+    if cached: return jsonify(cached)
     query = {"spam": False, "stage": {"$ne": "App"}}
-    docs = list(collection.find(query, {"timestamp": 1, "company": 1, "author": 1}))
+    test = collection.find(query, {"timestamp": 1, "company": 1, "author": 1})
+    docs = []
+    for doc in test:
+        docs.append(doc)
     if not docs:
-        return jsonify({
+        result = {
             'companies': [],
             'stages': STAGE_ORDER,
             'min_timestamp': None,
@@ -243,7 +264,9 @@ def meta():
             'count': 0,
             'author_count': 0,
             'submission_count': 0
-        })
+        }
+        cache_set('meta', result)
+        return jsonify(result)
 
     timestamps = [
         datetime.fromisoformat(d['timestamp']) if isinstance(d['timestamp'], str) else d['timestamp']
@@ -262,11 +285,38 @@ def meta():
         'submission_count': len(docs)  # Total number of submissions (same as count)
     })
 
+import hashlib
+import json
+
+def make_cache_key(base: str, params: dict):
+    """
+    Generates a unique cache key for a route based on query parameters.
+    Converts the params dict to a sorted JSON string and hashes it
+    so even long query strings produce short keys.
+    """
+    serialized = json.dumps(params, sort_keys=True)
+    key_hash = hashlib.md5(serialized.encode()).hexdigest()
+    return f"{base}:{key_hash}"
 
 @app.route('/api/messages')
 def api_messages():
     """Return filtered messages based on query params."""
     print(f"[API /api/messages] Request received with params: start={request.args.get('start')}, end={request.args.get('end')}, companies={request.args.get('companies')}, stages={request.args.get('stages')}, job_types={request.args.get('job_types')}")
+
+    params = {
+        "start": request.args.get("start"),
+        "end": request.args.get("end"),
+        "companies": request.args.get("companies"),
+        "stages": request.args.get("stages"),
+        "job_types": request.args.get("job_types"),
+    }
+
+    # --- Build cache key based on params ---
+    cache_key = make_cache_key("messages", params)
+    cached = cache_get(cache_key)  # 3-minute TTL (customize)
+    if cached:
+        print(f"[Cache] Hit for {cache_key}")
+        return jsonify(cached)
 
     start = parse_date(request.args.get('start'))
     end = parse_date(request.args.get('end'))
@@ -322,7 +372,13 @@ def api_messages():
     # backfilled_count = len(augmented_results) - len(results)
     # print(f"[API /api/messages] Backfilling complete. Added {backfilled_count} auto-generated stages. Total messages: {len(augmented_results)}")
 
-    return jsonify({'items': results, 'total': len(results)})
+    result_payload = {'items': results, 'total': len(results)}
+
+    # --- Store result in cache ---
+    cache_set(cache_key, result_payload)
+    print(f"[Cache] Stored result for {cache_key} (size={len(results)})")
+
+    return jsonify(result_payload)
 
 
 @app.route('/api/funnel')
@@ -1354,5 +1410,5 @@ def hiring_trends():
 
 # ---- Entry ----
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 3050))
+    port = int(os.environ.get('PORT', 3200))
     app.run(host='0.0.0.0', port=port, debug=False)
