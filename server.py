@@ -19,14 +19,39 @@ MONGO_URI = ""
 from functools import lru_cache
 from time import time
 
-CACHE = {}
-def cache_get(key, ttl=3000):
-    if key in CACHE and time() - CACHE[key]["time"] < ttl:
-        return CACHE[key]["data"]
-    return None
+from functools import lru_cache
+from collections import OrderedDict
+from time import time
 
-def cache_set(key, data):
-    CACHE[key] = {"data": data, "time": time()}
+class TTLCache(OrderedDict):
+    def __init__(self, maxsize=256, ttl=300):
+        super().__init__()
+        self.maxsize = maxsize
+        self.ttl = ttl
+
+    def get(self, key):
+        item = super().get(key)
+        if not item:
+            return None
+        data, ts = item
+        if time() - ts > self.ttl:
+            del self[key]
+            return None
+        self.move_to_end(key)
+        return data
+
+    def set(self, key, value):
+        if key in self:
+            self.move_to_end(key)
+        self[key] = (value, time())
+        if len(self) > self.maxsize:
+            self.popitem(last=False)
+
+CACHE = TTLCache(maxsize=128, ttl=300)
+
+def cache_get(key): return CACHE.get(key)
+def cache_set(key, data): CACHE.set(key, data)
+
 
 uri = os.getenv("MONGO_URI", MONGO_URI)
 
