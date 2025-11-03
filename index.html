@@ -1163,7 +1163,60 @@ body {
   to {
     transform: rotate(360deg);
   }
+
+/* On smaller phones, compress further */
+@media (max-width: 600px) {
+  #timeline {
+    aspect-ratio: 1.2 / 1 !important;
+    max-height: 220px !important;
+  }
+  /* shrink axis text */
+  #timeline text {
+    font-size: 10px !important;
+  }
+  /* tighter left margin inside D3 plot */
+  #timeline g {
+    transform: translate(90px, 20px) !important;
+  }
 }
+
+/* 🚫 Remove all inner padding and margin for cards on phones */
+@media (max-width: 600px) {
+  .card,
+  .metric-card,
+  .funnel-card,
+  .card-header,
+  .card-title,
+  .card-sub,
+  .funnel-row,
+  .company-cards-container,
+  .company-card-item,
+  .table-wrapper,
+  .metrics-banner {
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 0 !important;
+  }
+
+  /* ensure chart/visual fills card width cleanly */
+  svg,
+  canvas {
+    border-radius: 0 !important;
+    max-height: none !important;
+  }
+
+  /* no spacing between metric cards or dashboard cards */
+  .dashboard-grid {
+    gap: 0 !important;
+  }
+
+  /* flatten titles/subtitles */
+  .card-title,
+  .card-sub {
+    line-height: 1.2 !important;
+  }
+}
+
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
@@ -2104,9 +2157,12 @@ function renderTimeline(sel, transitionsForTimeline, stageTimes) {
   if (!rows.some(r => r.days > 0)) return;
 
   const y = d3.scaleBand().domain(rows.map(r => r.label)).range([0, h]).padding(0.2);
-  const x = d3.scaleLinear()
-    .domain([0, Math.max(5, d3.max(rows, r => r.days) || 0) + 5])
-    .range([0, w]);
+  // Find max value dynamically and add +1 day for breathing room
+const maxDays = d3.max(rows, r => r.days) || 0;
+const x = d3.scaleLinear()
+  .domain([0, maxDays + 1])
+  .nice() // rounds to cleaner tick values (e.g. 5, 10, 15)
+  .range([0, w]);
 
   const color = d3.scaleSequential(d3.interpolateViridis).domain([0, rows.length - 1]);
 
