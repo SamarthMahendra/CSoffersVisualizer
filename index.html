@@ -1163,6 +1163,7 @@ body {
   to {
     transform: rotate(360deg);
   }
+}
 
 /* On smaller phones, compress further */
 @media (max-width: 600px) {
@@ -1875,21 +1876,22 @@ function updateMetrics() {
   animateCounter($("#totalSubmissions"), roundedSubmissions, 2000, true);
 
   const lastUpdatedEl = $("#lastUpdated");
- if (META.max_timestamp) {
-  const maxTs = new Date(META.max_timestamp);
-  const today = new Date();
+  if (META.max_timestamp) {
+    const maxTs = new Date(META.max_timestamp);
+    const today = new Date();
 
-  // ✅ Ensure lastUpdated never goes beyond today
-  const safeDate = maxTs > today ? today : maxTs;
+    // ✅ Ensure lastUpdated never goes beyond today
+    const safeDate = maxTs > today ? today : maxTs;
 
-  const formatted = safeDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  });
-  lastUpdatedEl.textContent = formatted;
-} else {
-  lastUpdatedEl.textContent = "N/A";
+    const formatted = safeDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    lastUpdatedEl.textContent = formatted;
+  } else {
+    lastUpdatedEl.textContent = "N/A";
+  }
 }
 
 /* ------------ Fetchers ------------ */
