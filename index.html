@@ -1163,7 +1163,7 @@ body {
   to {
     transform: rotate(360deg);
   }
-
+}
 
 /* On smaller phones, compress further */
 @media (max-width: 600px) {
@@ -1174,10 +1174,6 @@ body {
   /* shrink axis text */
   #timeline text {
     font-size: 10px !important;
-  }
-  /* tighter left margin inside D3 plot */
-  #timeline g {
-    transform: translate(90px, 20px) !important;
   }
 }
 
@@ -1194,21 +1190,20 @@ body {
   .company-card-item,
   .table-wrapper,
   .metrics-banner {
-    padding: 0 !important;
-    margin: 0 !important;
-    gap: 0 !important;
+    margin: 3px !important;
+    gap: 3px !important;
   }
 
   /* ensure chart/visual fills card width cleanly */
   svg,
   canvas {
-    border-radius: 0 !important;
+    border-radius: 2px !important;
     max-height: none !important;
   }
 
   /* no spacing between metric cards or dashboard cards */
   .dashboard-grid {
-    gap: 0 !important;
+    gap: 2px !important;
   }
 
   /* flatten titles/subtitles */
