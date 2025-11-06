@@ -1875,17 +1875,21 @@ function updateMetrics() {
   animateCounter($("#totalSubmissions"), roundedSubmissions, 2000, true);
 
   const lastUpdatedEl = $("#lastUpdated");
-  if (META.max_timestamp) {
-    const lastUpdated = new Date(META.max_timestamp);
-    const formatted = lastUpdated.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-    lastUpdatedEl.textContent = formatted;
-  } else {
-    lastUpdatedEl.textContent = "N/A";
-  }
+ if (META.max_timestamp) {
+  const maxTs = new Date(META.max_timestamp);
+  const today = new Date();
+
+  // ✅ Ensure lastUpdated never goes beyond today
+  const safeDate = maxTs > today ? today : maxTs;
+
+  const formatted = safeDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  });
+  lastUpdatedEl.textContent = formatted;
+} else {
+  lastUpdatedEl.textContent = "N/A";
 }
 
 /* ------------ Fetchers ------------ */
