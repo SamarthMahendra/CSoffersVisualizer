@@ -1219,6 +1219,26 @@ body {
 }
 
 
+/* ===== Data Pause Banner ===== */
+.data-pause-banner {
+  background: linear-gradient(90deg, #fff7e6, #fff1d6);
+  color: #8b5e00;
+  font-size: 13px;
+  padding: 10px 14px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 204, 102, 0.6);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  font-weight: 500;
+}
+@media (prefers-color-scheme: dark) {
+  .data-pause-banner {
+    background: linear-gradient(90deg, #3a2d00, #2a2000);
+    color: #ffd58a;
+    border-bottom: 1px solid rgba(255, 204, 102, 0.2);
+  }
+}
+
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
 <!-- Datadog RUM (kept from your original) -->
@@ -1317,6 +1337,11 @@ window.DD_RUM.onReady(function() {
       </div>
     </div>
   </header>
+  <div class="data-pause-banner" id="dataPauseBanner">
+  🔒 <strong>Note:</strong> Data collection is currently <strong>paused</strong>.
+  Dashboard shows updates until <strong>Nov 10, 2025</strong>.
+  <span id="bannerStatus">We'll resume once permissions are restored.</span>
+</div>
 
   <!-- ===== MAIN ===== -->
   <main class="main-shell">
@@ -1662,6 +1687,23 @@ window.DD_RUM.onReady(function() {
 </div>
 
 <script>
+
+  // Example toggle function — you can modify or disable later
+function setBannerActive(isPaused) {
+  const banner = document.getElementById("dataPauseBanner");
+  const status = document.getElementById("bannerStatus");
+  if (isPaused) {
+    banner.style.display = "block";
+    status.textContent = "We'll resume once permissions are restored.";
+  } else {
+    status.textContent = "✅ Data collection resumed — now updating live.";
+    banner.style.background = "linear-gradient(90deg, #e6ffed, #d6ffe1)";
+    banner.style.color = "#055a24";
+  }
+}
+
+// default: paused
+setBannerActive(true);
 
   // Add this helper once near the top
 function debounce(fn, delay) {
