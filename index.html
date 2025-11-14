@@ -1337,12 +1337,12 @@ window.DD_RUM.onReady(function() {
       </div>
     </div>
   </header>
-<div class="data-pause-banner" id="dataPauseBanner">
-  🔒 <strong>Note:</strong> Data collection is currently <strong>paused</strong>.
-  Dashboard shows updates until <strong>Nov 11, 2025</strong>.
-  You can still explore all previous data below.
-  <span id="bannerStatus">We'll resume once permissions are restored.</span>
-</div>
+<!--<div class="data-pause-banner" id="dataPauseBanner">-->
+<!--  🔒 <strong>Note:</strong> Data collection is currently <strong>paused</strong>.-->
+<!--  Dashboard shows updates until <strong>Nov 11, 2025</strong>.-->
+<!--  You can still explore all previous data below.-->
+<!--  <span id="bannerStatus">We'll resume once permissions are restored.</span>-->
+<!--</div>-->
 
   <!-- ===== MAIN ===== -->
   <main class="main-shell">
@@ -1689,19 +1689,25 @@ window.DD_RUM.onReady(function() {
 
 <script>
 
-  // Example toggle function — you can modify or disable later
-function setBannerActive(isPaused) {
-  const banner = document.getElementById("dataPauseBanner");
-  const status = document.getElementById("bannerStatus");
-  if (isPaused) {
-    banner.style.display = "block";
-    status.textContent = "We'll resume once permissions are restored.";
-  } else {
-    status.textContent = "✅ Data collection resumed — now updating live.";
-    banner.style.background = "linear-gradient(90deg, #e6ffed, #d6ffe1)";
-    banner.style.color = "#055a24";
-  }
+  function maskAuthor(name) {
+  if (!name) return "";
+  if (name.length <= 3) return name[0] + "**";
+  return name.slice(0, 3) + "***";
 }
+
+//   // Example toggle function — you can modify or disable later
+// function setBannerActive(isPaused) {
+//   const banner = document.getElementById("dataPauseBanner");
+//   const status = document.getElementById("bannerStatus");
+//   if (isPaused) {
+//     banner.style.display = "block";
+//     status.textContent = "We'll resume once permissions are restored.";
+//   } else {
+//     status.textContent = "✅ Data collection resumed — now updating live.";
+//     banner.style.background = "linear-gradient(90deg, #e6ffed, #d6ffe1)";
+//     banner.style.color = "#055a24";
+//   }
+// }
 
 // default: paused
 setBannerActive(true);
@@ -1976,7 +1982,13 @@ function renderTablePaginated() {
   for (const m of pageItems) {
     const tr = document.createElement("tr");
     const t = m.timestamp ? new Date(m.timestamp).toLocaleString() : "—";
-    tr.innerHTML = `<td>${t}</td><td>${m.company || ""}</td><td>${m.stage || ""}</td><td>${m.author || ""}</td><td>${m.text || ""}</td>`;
+    tr.innerHTML = `
+  <td>${t}</td>
+  <td>${m.company || ""}</td>
+  <td>${m.stage || ""}</td>
+  <td>${maskAuthor(m.author)}</td>
+  <td>${m.text || ""}</td>
+`;
     tbody.appendChild(tr);
   }
 
