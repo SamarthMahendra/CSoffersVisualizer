@@ -2060,6 +2060,25 @@ function renderHeatmap(sel, companies, transitions, convMat) {
   svg.selectAll("*").remove();
   if (!companies.length || !transitions.length) return;
 
+  // --- 1. Tooltip Setup (creates/selects the tooltip div) ---
+  let tooltip = d3.select("body").select("#heatmap-tooltip");
+  if (tooltip.empty()) {
+    tooltip = d3.select("body").append("div")
+      .attr("id", "heatmap-tooltip")
+      .style("position", "absolute")
+      .style("opacity", 0)
+      .style("background", "rgba(15, 23, 42, 0.9)") // Use dashboard colors
+      .style("color", "white")
+      .style("padding", "6px 10px")
+      .style("border-radius", "8px")
+      .style("pointer-events", "none") // Lets mouse events pass through
+      .style("font-size", "12px")
+      .style("z-index", "1010") // Ensures it's on top
+      .style("transition", "opacity 0.2s")
+      .style("line-height", "1.4");
+  }
+  // --- End Tooltip Setup ---
+
   const margin = { top: 20, right: 80, bottom: 50, left: 100 };
   const W = svg.node().getBoundingClientRect().width;
   const H = svg.node().getBoundingClientRect().height;
@@ -2093,6 +2112,7 @@ function renderHeatmap(sel, companies, transitions, convMat) {
     transitions.forEach((t, i) => {
       const val = convMat[c]?.[t] ?? 0;
       const shortT = shortTransitions[i];
+
       g.append("rect")
         .attr("x", x(shortT))
         .attr("y", y(c))
@@ -2100,8 +2120,26 @@ function renderHeatmap(sel, companies, transitions, convMat) {
         .attr("height", y.bandwidth())
         .attr("rx", 6)
         .attr("fill", color(val))
-        .append("title")
-        .text(`${c} ${t}: ${val.toFixed(1)}%`);
+        // --- 2. Remove the old .append("title") ---
+        // .append("title")
+        // .text(`${c} ${t}: ${val.toFixed(1)}%`);
+
+        // --- 3. Add new D3 mouse events ---
+        .on("mouseover", function(event) {
+          tooltip.style("opacity", 1);
+        })
+        .on("mousemove", function(event) {
+          // Format the text for the tooltip
+          const text = `${c}<br>${t}: <strong>${val.toFixed(1)}%</strong>`;
+          tooltip
+            .html(text)
+            .style("left", (event.pageX + 15) + "px") // Position next to cursor
+            .style("top", (event.pageY - 10) + "px");
+        })
+        .on("mouseout", function(event) {
+          tooltip.style("opacity", 0); // Hide tooltip
+        });
+        // --- End new mouse events ---
     })
   );
 
