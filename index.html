@@ -109,6 +109,7 @@
 }
 
 body {
+  zoom: 0.85;
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--page-bg);
@@ -1067,8 +1068,8 @@ function renderHeatmap(sel, companies, transitions, convMat) {
   const tooltip = d3.select("#tooltip");
 
   const margin = { top: 20, right: 80, bottom: 50, left: 100 };
-  const W = svg.node().getBoundingClientRect().width;
-  const H = Math.min(W * 0.56, 400); // 16:9 aspect ratio, max 400px
+  const W = svg.node().getBoundingClientRect().width*1.1;
+  const H = Math.min(W * 0.6, 500); // 16:9 aspect ratio, max 400px
   svg.attr("height", H); // Set explicit height
 
   const w = Math.max(0, W - margin.left - margin.right);
