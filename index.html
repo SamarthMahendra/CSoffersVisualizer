@@ -35,7 +35,7 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
-  tailwind.config = {
+tailwind.config = {
     theme: {
       extend: {
         fontFamily: {
@@ -48,7 +48,7 @@
       },
     },
     plugins: [
-      require('@tailwindcss/forms'),
+      // This must be removed
     ],
   }
 </script>
@@ -346,7 +346,7 @@ window.DD_RUM.onReady(function() {
   </div>
 </header>
 
-  <main class="main-shell grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-4 py-4 lg:gap-6 lg:py-6">
+ <main class="main-shell grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 py-4 lg:gap-6 lg:py-6">
 
     <aside class="sidebar bg-white p-5 sm:p-6 rounded-xl shadow-lg border border-slate-200/75 h-max flex flex-col gap-5 lg:sticky top-24"><div class="sidebar-title text-sm font-semibold text-slate-800 uppercase tracking-wider">Filters</div>
 
@@ -470,7 +470,7 @@ window.DD_RUM.onReady(function() {
             <div class="card-title font-semibold text-slate-800">3) Avg days between stages</div>
             <div class="card-sub text-sm text-slate-500">How long candidates wait to progress</div>
           </div>
-          <svg id="timeline" class="aspect-[16/9]"></svg>
+         <svg id="timeline"></svg>
         </div>
 
         <div class="card bg-white p-5 sm:p-6 rounded-xl shadow-lg border border-slate-200/75">
@@ -1160,24 +1160,32 @@ function renderTimeline(sel, transitionsForTimeline, stageTimes) {
   svg.selectAll("*").remove();
   if (!transitionsForTimeline.length) return;
 
-  const W = svg.node().getBoundingClientRect().width;
-  const isMobile = W < 500;
-  const margin = { top: 30, right: 30, bottom: 50, left: isMobile ? 90 : 140 };
-
-  const H = Math.min(W * 0.56, 400); // 16:9 aspect ratio, max 400px
-  svg.attr("height", H); // Set explicit height
-
-  const w = Math.max(0, W - margin.left - margin.right);
-  const h = Math.max(0, H - margin.top - margin.bottom);
-  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
+  // 1. DEFINE ROWS FIRST
   const rows = transitionsForTimeline.map((key) => {
     const days = Math.round(stageTimes[key] || 0);
     const label = key === "Overall→Reject" ? key : key.split("→").map(shortenStage).join("→");
     return { key, days, label };
   });
 
+  // 2. CHECK IF THERE IS DATA TO SHOW (from original code)
   if (!rows.some(r => r.days > 0)) return;
+
+  // 3. NOW, CALCULATE MARGINS AND DYNAMIC HEIGHT
+  const W = svg.node().getBoundingClientRect().width;
+  const isMobile = W < 500;
+  const margin = { top: 30, right: 30, bottom: 50, left: isMobile ? 90 : 140 };
+
+  // 4. THIS IS THE DYNAMIC HEIGHT CALCULATION
+  const barHeightWithPadding = 40; // 40px per bar
+  const dynamicH = (rows.length * barHeightWithPadding) + margin.top + margin.bottom;
+  const H = Math.min(dynamicH, 450); // Use dynamic height, but set a max of 450px
+
+  svg.attr("height", H); // Set explicit height
+
+  // 5. THE REST OF THE FUNCTION CONTINUES AS NORMAL
+  const w = Math.max(0, W - margin.left - margin.right);
+  const h = Math.max(0, H - margin.top - margin.bottom);
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
   const y = d3.scaleBand().domain(rows.map(r => r.label)).range([0, h]).padding(0.2);
   const maxDays = d3.max(rows, r => r.days) || 0;
@@ -1192,7 +1200,6 @@ function renderTimeline(sel, transitionsForTimeline, stageTimes) {
   if (isMobile) {
     yAxis.selectAll("text").style("font-size", "10px");
   }
-
 
   const xAxis = g.append("g").attr("transform", `translate(0,${h})`).call(d3.axisBottom(x).ticks(5));
   xAxis.append("text")
