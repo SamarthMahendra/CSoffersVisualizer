@@ -1,0 +1,3180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>JobStats.fyi — Interview Analytics Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+<!-- SEO Meta Tags -->
+<meta name="description" content="Real-time insights into CS/intern/new-grad interview processes. Track funnel, conversion, and company-level hiring activity from community data.">
+<meta name="keywords" content="CS interviews, new grad, internship, interview funnel, tech recruiting, jobstats, jobstats.fyi, interview analytics, interview stages, hiring trends">
+<meta name="author" content="JobStats.fyi">
+<meta name="robots" content="index, follow">
+<meta name="googlebot" content="index, follow">
+<link rel="canonical" href="https://www.jobstats.fyi/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.jobstats.fyi/">
+<meta property="og:title" content="JobStats.fyi — Interview Analytics Dashboard">
+<meta property="og:description" content="See where CS students and new grads are in the interview funnel across 1,400+ companies.">
+<meta property="og:site_name" content="JobStats.fyi">
+<meta property="og:locale" content="en_US">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="JobStats.fyi — Interview Analytics Dashboard">
+<meta name="twitter:description" content="Real-time interview funnel, conversion, and company activity analytics collected from CS career communities.">
+
+<!-- Fonts / Libs -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.8.5/dist/dotlottie-wc.js" type="module"></script>
+
+<style>
+:root {
+  --page-bg: radial-gradient(circle at top, #f5f7fb 0%, #e7ebf3 32%, #dce1eb 60%, #ced4e0 100%);
+  --surface: rgba(255, 255, 255, 0.65);
+  --surface-solid: #ffffff;
+  --surface-dark: rgba(18, 18, 22, 0.55);
+  --border: rgba(11, 15, 25, 0.08);
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --shadow-lg: 0 18px 40px rgba(15, 23, 42, 0.13);
+  --shadow-md: 0 12px 24px rgba(15, 23, 42, 0.08);
+  --accent: #2997ff;
+  --accent-soft: rgba(41, 151, 255, 0.06);
+  --text: #0f172a;
+  --muted: #6b7280;
+  --muted-2: #94a3b8;
+  --card-gap: 18px;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    color-scheme: light;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--page-bg);
+  min-height: 100vh;
+  color: var(--text);
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ===== TOP BAR ===== */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(16px);
+  background: rgba(245, 247, 251, 0.25);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px 14px 20px;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 180px;
+}
+
+.app-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 16px;
+  background: radial-gradient(circle, #2997ff 0%, #0479de 40%, #035d9f 100%);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.04em;
+  box-shadow: 0 12px 26px rgba(0, 113, 227, 0.35);
+}
+.app-title {
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.app-title h1 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+.app-title small {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.topbar-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.topbar-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.4);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.topbar-pill strong {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 12.5px;
+}
+
+.topbar-right {
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.data-info-btn {
+  margin:0;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:6px 12px;
+  border-radius: 12px;
+  background: rgba(41, 151, 255, 0.08);
+  border:1px solid rgba(41,151,255,0.2);
+  cursor:pointer;
+  font-size:12px;
+  color:var(--text);
+  transition: all .2s;
+}
+
+.data-info-btn:hover {
+  background: rgba(41,151,255,0.15);
+  transform: translateY(-1px);
+}
+
+.viewer-counter {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 12px;
+  border-radius: 999px;
+  background: rgba(0,113,227,0.08);
+  border:1px solid rgba(0,113,227,0.15);
+  cursor: default;
+}
+.viewer-icon {
+  font-size: 14px;
+}
+.viewer-count {
+  font-weight: 700;
+  color: var(--accent);
+}
+.viewer-label {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+@media (max-width: 960px) {
+  .topbar-center {
+    display:none;
+  }
+  .topbar {
+    gap:10px;
+  }
+  .data-info-btn span.data-info-text {
+    display:none;
+  }
+}
+
+/* ===== MAIN LAYOUT ===== */
+.main-shell {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 20px;
+  padding: 18px 16px 90px 16px;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden; /* Prevent horizontal scroll */
+  margin: 0 auto;
+}
+
+@media (max-width: 1080px) {
+  .main-shell {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar {
+  background: var(--surface);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 18px;
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(14px);
+  padding: 16px 16px 16px 16px;
+  height: max-content;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.sidebar-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.filter-label {
+  font-size: 12.5px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+.date-presets {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.date-preset-btn {
+  border:none;
+  outline:none;
+  background: rgba(148, 163, 184, 0.12);
+  border:1px solid transparent;
+  border-radius: 10px;
+  padding:5px 10px;
+  font-size:12px;
+  cursor:pointer;
+  transition: all .2s;
+  color: var(--text);
+}
+.date-preset-btn.active,
+.date-preset-btn:hover {
+  background: rgba(41, 151, 255, 0.18);
+  border-color: rgba(41, 151, 255, 0.5);
+}
+.sidebar input[type="date"],
+.sidebar input[type="text"],
+.sidebar select {
+  width:100%;
+  border:1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(255,255,255,0.35);
+  border-radius: 10px;
+  padding:7px 9px;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.company-search-wrapper { position: relative; }
+
+.company-dropdown {
+  position:absolute;
+  top: calc(100% + 4px);
+  left:0;
+  right:0;
+  background: rgba(255,255,255,0.9);
+  border:1px solid rgba(148,163,184,0.25);
+  border-radius: 12px;
+  box-shadow: 0 22px 40px rgba(15, 23, 42, 0.12);
+  max-height: 210px;
+  overflow-y:auto;
+  display:none;
+  z-index:15;
+}
+.company-dropdown.active { display:block; }
+.company-option {
+  padding:8px 12px;
+  font-size:12.5px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+}
+.company-option:hover {
+  background: rgba(41,151,255,0.08);
+}
+
+.selected-companies {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  background: rgba(148,163,184,0.06);
+  border:1px dashed rgba(148,163,184,0.4);
+  border-radius: 10px;
+  padding:6px;
+  min-height:36px;
+}
+.selected-companies.empty {
+  justify-content:center;
+  align-items:center;
+  color: var(--muted);
+  font-size:11.5px;
+}
+.company-tag {
+  background: rgba(41,151,255,0.18);
+  border-radius: 999px;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:2px 8px 2px 10px;
+  font-size: 11.5px;
+  color: #0f172a;
+}
+.company-tag button {
+  background:transparent;
+  border:none;
+  cursor:pointer;
+  font-weight:700;
+  color:inherit;
+  font-size: 14px;
+  line-height:1;
+}
+
+.job-type-checkboxes {
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.checkbox-wrapper {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-size:12.5px;
+  cursor:pointer;
+}
+.checkbox-wrapper input[type="checkbox"] {
+  width:15px;
+  height:15px;
+  accent-color: var(--accent);
+}
+#applyBtn {
+  border:none;
+  background: linear-gradient(135deg, #2997ff, #0071e3);
+  color:#fff;
+  border-radius: 12px;
+  padding:8px 0;
+  font-weight:600;
+  cursor:pointer;
+  font-size:13px;
+  transition:all .2s;
+  margin-top:4px;
+}
+#applyBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(0,113,227,0.25);
+}
+
+/* ===== MAIN CONTENT ===== */
+.content-area {
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  min-width:0;
+}
+
+/* metrics banner */
+.metrics-banner {
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+.metric-card {
+  background: var(--surface);
+  border:1px solid rgba(255,255,255,0.25);
+  border-radius: 16px;
+  padding: 14px 14px 12px 14px;
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(14px);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  position:relative;
+  overflow:hidden;
+}
+.metric-label {
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 500;
+}
+.metric-value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--accent);
+}
+.metric-subtle {
+  font-size: 11px;
+  color: var(--muted-2);
+}
+.metric-card::after {
+  content:"";
+  position:absolute;
+  top:-24px;
+  right:-48px;
+  width:120px;
+  height:120px;
+  border-radius:999px;
+  background: radial-gradient(circle, rgba(41,151,255,0.24) 0%, rgba(41,151,255,0) 70%);
+  pointer-events:none;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(460px, 1fr));
+  gap: 24px;
+  align-items: stretch;
+  justify-content: center;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Force exactly 2 cards per row on desktop */
+@media (min-width: 1080px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Stack on smaller screens */
+@media (max-width: 1079px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.card {
+  background: var(--surface);
+  border:1px solid rgba(255,255,255,0.23);
+  border-radius: 16px;
+  padding: 14px 14px 12px 14px;
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(10px);
+  min-width: 0;
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.funnel-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 4px 4px 4px;
+}
+.funnel-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.funnel-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.funnel-label {
+  width: 70px;
+  font-size: 13px;
+  color: var(--text);
+}
+.funnel-bar {
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(0, 113, 227, 0.1);
+  overflow: hidden;
+}
+.funnel-fill {
+  height: 100%;
+  width: var(--fill);
+  background: linear-gradient(90deg, #0071e3, #2997ff);
+  border-radius: 999px;
+  transition: width 0.6s ease;
+}
+
+.card-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+}
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.card-sub {
+  font-size: 11px;
+  color: var(--muted);
+}
+.card-full {
+  grid-column: 1 / -1;
+}
+canvas, svg {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 16 / 9; /* keeps proportion while scaling */
+  max-height: 260px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.02);
+  border:1px solid rgba(255,255,255,0.03);
+}
+
+/* company cards */
+.company-cards-container {
+  width:100%;
+  max-height: 260px;
+  overflow-y: auto;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding-right:6px;
+}
+.company-card-item {
+  background: radial-gradient(circle at top, rgba(41,151,255,0.05), rgba(41,151,255,0));
+  border:1px solid rgba(148,163,184,0.12);
+  border-radius: 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:9px 10px 8px 10px;
+  transition: all .2s;
+  cursor:pointer;
+}
+.company-card-item:hover {
+  background: radial-gradient(circle at top, rgba(41,151,255,0.16), rgba(41,151,255,0));
+  transform: translateY(-1px);
+  border-color: rgba(41,151,255,0.4);
+}
+.company-card-content {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex:1;
+}
+.company-rank {
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.company-card-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+.company-card-count {
+  background: rgba(41,151,255,0.16);
+  border:1px solid rgba(41,151,255,0.35);
+  color: var(--text);
+  border-radius: 999px;
+  padding:3px 12px 3px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* messages table */
+.table-wrapper {
+  width:100%;
+  overflow-x:auto;
+}
+table {
+  width:100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+thead {
+  background: rgba(148, 163, 184, 0.1);
+}
+th, td {
+  text-align:left;
+  padding:6px 6px;
+  border-bottom:1px solid rgba(148, 163, 184, 0.15);
+}
+tbody tr:hover {
+  background: rgba(41,151,255,0.05);
+}
+.pagination {
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  align-items:center;
+  margin-top:10px;
+}
+.pagination button {
+  border:none;
+  background: rgba(148,163,184,0.12);
+  padding:4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  cursor:pointer;
+}
+
+.funnel-scale {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 11px;
+  color: rgba(60, 60, 67, 0.6);
+  margin-top: 6px;
+  padding-left: 80px;
+  padding-right: 8px;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.funnel-scale span {
+  flex: 1;
+  text-align: center;
+  position: relative;
+}
+
+.funnel-scale span::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  width: 1px;
+  height: 3px;
+  background: rgba(148, 163, 184, 0.3);
+  transform: translateX(-50%);
+}
+
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor:not-allowed;
+}
+
+/* feedback button */
+.feedback-btn {
+  position:fixed;
+  bottom:22px;
+  right:22px;
+  background: linear-gradient(135deg, #2997ff, #0071e3);
+  color:#fff;
+  border:none;
+  border-radius: 999px;
+  padding:10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  display:flex;
+  gap:6px;
+  align-items:center;
+  box-shadow: 0 14px 28px rgba(0,113,227,0.35);
+  cursor:pointer;
+  z-index: 999;
+}
+.feedback-btn:hover {
+  transform: translateY(-1px);
+}
+
+/* modals (feedback, data, submit) */
+.feedback-modal,
+.data-modal,
+.submit-modal {
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background: rgba(15, 23, 42, 0.54);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  padding:18px;
+}
+.feedback-modal.active,
+.data-modal.active,
+.submit-modal.active {
+  display:flex;
+}
+
+.modal-panel {
+  background: var(--surface);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius: 18px;
+  box-shadow: var(--shadow-lg);
+  width: min(520px, 100%);
+  max-height: 88vh;
+  overflow-y: auto;
+}
+.modal-header {
+  padding:16px 18px;
+  border-bottom:1px solid rgba(148,163,184,0.18);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+}
+.modal-title {
+  font-weight: 600;
+  font-size: 15px;
+}
+.modal-close {
+  background:transparent;
+  border:none;
+  font-size: 22px;
+  cursor:pointer;
+  color: var(--muted);
+}
+.modal-body {
+  padding: 16px 18px 20px 18px;
+}
+
+/* feedback form bits */
+.rating-buttons {
+  display:flex;
+  gap:8px;
+}
+.rating-btn {
+  flex:1;
+  border:2px solid transparent;
+  background: rgba(148,163,184,0.08);
+  border-radius: 12px;
+  padding:8px 0;
+  font-size: 22px;
+  cursor:pointer;
+  transition:all .2s;
+}
+.rating-btn.selected,
+.rating-btn:hover {
+  border-color: rgba(41,151,255,0.6);
+  background: rgba(41,151,255,0.08);
+}
+.feedback-modal textarea,
+.feedback-modal input[type="email"],
+.submit-modal input,
+.submit-modal select {
+  width:100%;
+  border:1px solid rgba(148,163,184,0.28);
+  background: rgba(255,255,255,0.4);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  margin-top:4px;
+}
+.feedback-actions {
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+}
+.feedback-cancel,
+.feedback-submit {
+  flex:1;
+  border:none;
+  border-radius: 10px;
+  padding:8px 0;
+  font-weight: 600;
+  cursor:pointer;
+  font-size:13px;
+}
+.feedback-cancel {
+  background: rgba(148,163,184,0.08);
+  color: var(--text);
+}
+.feedback-submit {
+  background: linear-gradient(135deg, #2997ff, #0071e3);
+  color: #fff;
+}
+.feedback-status {
+  margin-top:10px;
+  font-size:12.5px;
+  border-radius: 10px;
+  padding:8px 10px;
+  display:none;
+}
+.feedback-status.success {
+  display:block;
+  background: rgba(55, 178, 88, 0.18);
+  color: #20723b;
+}
+.feedback-status.error {
+  display:block;
+  background: rgba(252, 69, 63, 0.18);
+  color: #b91c1c;
+}
+
+/* ===== Share Popup Styles (Light + Dark Mode) ===== */
+.share-popup {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 320px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.15);
+  color: #111;
+  font-family: 'Inter', sans-serif;
+  padding: 20px;
+  z-index: 9999;
+  animation: fadeIn 0.6s ease;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.share-popup.hidden {
+  display: none;
+}
+
+.popup-content h3 {
+  font-size: 18px;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.popup-content p {
+  font-size: 14px;
+  opacity: 0.85;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.popup-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.share-btn {
+  background: #0071e3;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.share-btn:hover {
+  background: #2997ff;
+}
+
+.dismiss-btn {
+  background: transparent;
+  color: #555;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+
+canvas {
+  width: 100% !important;
+  height: auto !important; /* 👈 Keeps natural proportion */
+  aspect-ratio: 16 / 9;   /* optional but clean */
+}
+
+.chart-container {
+  width: 100%;
+  max-width: 700px;
+  height: auto;
+  aspect-ratio: 16/9;
+}
+
+.dashboard-wrapper {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding-left: clamp(1rem, 6vw, 8rem);
+  padding-right: clamp(1rem, 6vw, 8rem);
+}
+
+@media (max-width: 768px) {
+  .dashboard-wrapper {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+
+/* Default: desktop / laptop view */
+.card-full canvas {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 3 / 1;
+  max-height: 340px !important;
+  border-radius: 12px;
+}
+
+/* 📱 Mobile optimization */
+@media (max-width: 768px) {
+  .card-full canvas {
+    aspect-ratio: 1.6 / 1;  /* increase vertical space */
+    max-height: 420px !important;  /* allow taller height */
+  }
+}
+
+/* small screens */
+@media (max-width: 720px) {
+  .metrics-banner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .topbar {
+    justify-content: space-between;
+  }
+  .feedback-btn {
+    right:12px;
+    bottom:12px;
+  }
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    order: -1;
+  }
+}
+
+body {
+  -webkit-tap-highlight-color: transparent;
+}
+/* === 📱 MOBILE SCALING FIX (for charts, cards, and layout) === */
+@media (max-width: 768px) {
+  /* Overall layout */
+  .dashboard-wrapper {
+    padding-left: clamp(0, 4vw, 1rem);
+    padding-right: clamp(0, 4vw, 1rem);
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .card, .metric-card {
+    padding: 10px 12px;
+    border-radius: 18px;
+  }
+
+  /* Charts and SVGs: allow more height and flexible scaling */
+  svg, canvas {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: unset !important;
+    max-height: none !important;
+  }
+
+  /* Ensure each chart section gets enough breathing room */
+  #heatmap, #timeline, #barline, #hiringTrends {
+    min-height: 320px !important;
+  }
+
+  /* Prevent text overlap */
+  text, .card-title, .card-sub {
+    font-size: 13px !important;
+  }
+
+  /* Topbar tweaks */
+  .topbar {
+    padding: 12px 14px;
+    justify-content: space-between;
+  }
+  .topbar-center {
+    display: none; /* hide middle pills on smaller screens */
+  }
+
+  /* Sidebar becomes full-width */
+  .sidebar {
+    width: 100%;
+    order: -1;
+  }
+
+  /* Prevent feedback button from blocking charts */
+  .feedback-btn {
+    bottom: 14px;
+    right: 14px;
+    transform: scale(0.9);
+  }
+
+  /* Avoid text wrapping on labels */
+  .funnel-label {
+    font-size: 12px !important;
+    min-width: 60px;
+  }
+}
+
+/* === 📱 Responsive Chart Fix (Stage Focus chart) === */
+#barline {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1.8 / 1 !important; /* better proportions for small screens */
+  max-height: 400px !important;
+  display: block;
+}
+
+/* Fine-tune for small phones */
+@media (max-width: 600px) {
+  #barline {
+    aspect-ratio: 1.2 / 1 !important;
+    max-height: 250px !important;
+    margin: 0 auto;
+  }
+
+  /* Fix card padding + spacing */
+  .card {
+    padding: 12px 10px !important;
+  }
+
+  /* Make legend readable */
+  .chartjs-legend {
+    font-size: 12px !important;
+  }
+}
+#barline {
+  width: 100%;
+  height: 300px; /* default desktop */
+}
+
+@media (max-width: 600px) {
+  #barline {
+    height: 180px !important; /* slightly taller than aspect-based */
+  }
+}
+.refresh-loader {
+  position: absolute;             /* relative to content-area */
+  inset: 0;
+  background: rgba(15, 23, 42, 0.12);
+  backdrop-filter: blur(2px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;                    /* stays above cards but below modals */
+  color: #fff;
+  border-radius: 16px;
+  transition: opacity 0.3s ease;
+}
+
+.dashboard-grid {
+  position: relative; /* ensure loader is positioned within it */
+}
+
+.refresh-loader.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.refresh-loader .spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #2997ff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+
+
+/* On smaller phones, compress further */
+@media (max-width: 600px) {
+  #timeline {
+    aspect-ratio: 1.2 / 1 !important;
+    max-height: 220px !important;
+  }
+  /* shrink axis text */
+  #timeline text {
+    font-size: 10px !important;
+  }
+  /* tighter left margin inside D3 plot */
+  #timeline g {
+    transform: translate(90px, 20px) !important;
+  }
+}
+
+/* 🚫 Remove all inner padding and margin for cards on phones */
+@media (max-width: 600px) {
+  .card,
+  .metric-card,
+  .funnel-card,
+  .card-header,
+  .card-title,
+  .card-sub,
+  .funnel-row,
+  .company-cards-container,
+  .company-card-item,
+  .table-wrapper,
+  .metrics-banner {
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 0 !important;
+  }
+
+  /* ensure chart/visual fills card width cleanly */
+  svg,
+  canvas {
+    border-radius: 0 !important;
+    max-height: none !important;
+  }
+
+  /* no spacing between metric cards or dashboard cards */
+  .dashboard-grid {
+    gap: 0 !important;
+  }
+
+  /* flatten titles/subtitles */
+  .card-title,
+  .card-sub {
+    line-height: 1.2 !important;
+  }
+}
+
+
+/* ===== Data Pause Banner ===== */
+.data-pause-banner {
+  background: linear-gradient(90deg, #fff7e6, #fff1d6);
+  color: #8b5e00;
+  font-size: 13px;
+  padding: 10px 14px;
+  text-align: center;
+  border-bottom: 1px solid rgba(255, 204, 102, 0.6);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  font-weight: 500;
+}
+
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3"></script>
+<!-- Datadog RUM (kept from your original) -->
+<script>
+(function(h,o,u,n,d){
+  h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}};
+  d=o.createElement(u);d.async=1;d.src='https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js';
+  n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n);
+})(window,document,'script','https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js','DD_RUM');
+
+window.DD_RUM.onReady(function() {
+
+  // ---------- 1️⃣ Generate Anonymous Visitor ID ----------
+  let visitorId = localStorage.getItem("visitor_id");
+  if (!visitorId) {
+    visitorId = "anon_" + Math.random().toString(36).substring(2, 10) + "_" + Date.now();
+    localStorage.setItem("visitor_id", visitorId);
+  }
+
+  // ---------- 2️⃣ Track Returning Visitors (Simple Version) ----------
+  const lastVisit = localStorage.getItem("last_visit");
+  const now = Date.now();
+  const isReturning = !!lastVisit;  // ✅ true if they’ve visited before
+  localStorage.setItem("last_visit", now);  // ✅ always update on every visit
+
+  // ---------- 3️⃣ Initialize Datadog RUM ----------
+  window.DD_RUM.init({
+    clientToken: 'pubff3c239a28fc040fc4dd99ab202f9135',
+    applicationId: '5aca5b04-e27e-415f-a828-456408d700d8',
+    site: 'us5.datadoghq.com',
+    service: 'jobstats.fyi',
+    env: 'prod',
+    sessionSampleRate: 100,
+    sessionReplaySampleRate: 20,
+    defaultPrivacyLevel: 'mask-user-input',
+  });
+
+  // ---------- 4️⃣ Attach Global Context ----------
+  window.DD_RUM.setGlobalContextProperty('visitor_id', visitorId);
+  window.DD_RUM.setGlobalContextProperty('is_returning', isReturning);
+  window.DD_RUM.setGlobalContextProperty(
+    'theme',
+    window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  );
+  window.DD_RUM.setGlobalContextProperty(
+    'device_type',
+    /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop'
+  );
+
+  // ---------- 5️⃣ Optional: Log Event ----------
+  window.DD_RUM.addAction("page_loaded", {
+    visitor_id: visitorId,
+    is_returning: isReturning,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+</script>
+
+</head>
+<body>
+<div class="dashboard-wrapper">
+<div class="app-shell">
+  <!-- ===== TOPBAR ===== -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="app-logo">JS</div>
+      <div class="app-title">
+        <h1>JobStats.fyi</h1>
+        <small>Interview & hiring signals</small>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <div class="topbar-pill">
+        <span>📅</span>
+        <span>Filters active</span>
+      </div>
+      <div class="topbar-pill">
+        <span>🧪</span>
+        <span>NG + Intern</span>
+      </div>
+      <div class="topbar-pill">
+        <span>📡</span>
+        <span>Realtime data</span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="data-info-btn" id="dataInfoBtn">
+    <span class="data-info-icon">📊</span>
+    <span class="data-info-text">How we collect data</span>
+  </button>
+      <div class="viewer-counter" id="viewerCounter" title="People seeing this page right now">
+        <span class="viewer-icon">👁</span>
+        <span class="viewer-count" id="viewerCount">-</span>
+        <span class="viewer-label">online</span>
+      </div>
+    </div>
+  </header>
+<!--<div class="data-pause-banner" id="dataPauseBanner">-->
+<!--  🔒 <strong>Note:</strong> Data collection is currently <strong>paused</strong>.-->
+<!--  Dashboard shows updates until <strong>Nov 11, 2025</strong>.-->
+<!--  You can still explore all previous data below.-->
+<!--  <span id="bannerStatus">We'll resume once permissions are restored.</span>-->
+<!--</div>-->
+
+  <!-- ===== MAIN ===== -->
+  <main class="main-shell">
+    <!-- SIDEBAR / FILTERS -->
+    <aside class="sidebar">
+      <div class="sidebar-title">Filters</div>
+
+      <div>
+        <div class="filter-label">Quick range</div>
+        <div class="date-presets">
+          <button class="date-preset-btn" data-days="7">Last 7d</button>
+          <button class="date-preset-btn" data-days="30">Last 30d</button>
+          <button class="date-preset-btn active" data-days="90">Last 3m</button>
+          <button class="date-preset-btn" data-days="180">Last 6m</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="filter-label">Start date</div>
+        <input type="date" id="startDate">
+      </div>
+
+      <div>
+        <div class="filter-label">End date</div>
+        <input type="date" id="endDate">
+      </div>
+
+      <div>
+        <div class="filter-label">Company</div>
+        <div class="company-search-wrapper">
+          <input type="text" class="company-search" id="companySearch" placeholder="Search companies…">
+          <div class="company-dropdown" id="companyDropdown"></div>
+        </div>
+        <div class="selected-companies empty" id="selectedCompanies">
+          <span>No companies selected</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="filter-label">Job type</div>
+        <div class="job-type-checkboxes">
+          <label class="checkbox-wrapper">
+            <input type="checkbox" id="newGradCheckbox" checked>
+            <span>New grad</span>
+          </label>
+          <label class="checkbox-wrapper">
+            <input type="checkbox" id="internCheckbox" checked>
+            <span>Internship</span>
+          </label>
+        </div>
+      </div>
+
+      <button id="applyBtn">Apply filters</button>
+    </aside>
+
+    <!-- CONTENT -->
+    <section class="content-area">
+      <!-- METRICS STRIP -->
+      <div class="metrics-banner">
+        <div class="metric-card">
+          <div class="metric-label">Total companies</div>
+          <div class="metric-value" id="totalCompanies">-</div>
+          <div class="metric-subtle">from community sources</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total candidates</div>
+          <div class="metric-value" id="totalCandidates">-</div>
+          <div class="metric-subtle">unique authors & submitters</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total submissions</div>
+          <div class="metric-value" id="totalSubmissions">-</div>
+          <div class="metric-subtle">interview stage updates</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Last updated</div>
+          <div class="metric-value" id="lastUpdated">-</div>
+          <div class="metric-subtle">refreshed daily</div>
+        </div>
+      </div>
+
+      <!-- DASHBOARD GRID -->
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">1) Stage funnel</div>
+              <div class="card-sub">Progression through OA → phone → onsite → offer</div>
+            </div>
+          </div>
+          <div class="funnel-card" id="funnelContainer">
+  <div class="funnel-title">Interview Funnel</div>
+  <div id="funnelRows"></div>
+  <div class="funnel-scale" id="funnelScale"></div>
+</div>
+
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">2) Conversion heatmap</div>
+              <div class="card-sub">Top companies × stage-to-stage win rates</div>
+            </div>
+          </div>
+          <svg id="heatmap"></svg>
+        </div>
+
+                <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">5) Top OAs this week</div>
+              <div class="card-sub">Companies sending the most OAs now</div>
+            </div>
+          </div>
+          <div id="topOACompanies" class="company-cards-container"></div>
+        </div>
+
+
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">6) Top offers this week</div>
+              <div class="card-sub">Who’s actually closing candidates</div>
+            </div>
+          </div>
+          <div id="topOfferCompanies" class="company-cards-container"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">3) Avg days between stages</div>
+              <div class="card-sub">How long candidates wait to progress</div>
+            </div>
+          </div>
+          <svg id="timeline"></svg>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">4) Stage focus</div>
+              <div class="card-sub">Counts + cumulative across funnel</div>
+            </div>
+          </div>
+          <canvas id="barline"></canvas>
+        </div>
+
+
+
+
+        <div class="card card-full">
+          <div class="card-header">
+            <div>
+              <div class="card-title">7) Hiring season trends (past 6 months)</div>
+              <div class="card-sub">Companies vs global average — smoothed</div>
+            </div>
+          </div>
+          <canvas id="hiringTrends"></canvas>
+        </div>
+
+        <div class="card card-full">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Recent messages</div>
+              <div class="card-sub">Latest interview reports from your sources</div>
+            </div>
+          </div>
+          <div class="local-filters" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+  <input id="searchCompany" type="text" placeholder="Search company..."
+    style="flex:1;min-width:140px;padding:6px 8px;border-radius:8px;border:1px solid rgba(148,163,184,0.25);" />
+
+  <input id="searchAuthor" type="text" placeholder="Search author..."
+    style="flex:1;min-width:140px;padding:6px 8px;border-radius:8px;border:1px solid rgba(148,163,184,0.25);" />
+
+  <input id="searchStage" type="text" placeholder="Search stage..."
+    style="flex:1;min-width:140px;padding:6px 8px;border-radius:8px;border:1px solid rgba(148,163,184,0.25);" />
+</div><div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Time</th>
+                  <th>Company</th>
+                  <th>Stage</th>
+                  <th>Author</th>
+                  <th>Text</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="pagination">
+            <button id="prevPage">Prev</button>
+            <span id="pageInfo"></span>
+            <button id="nextPage">Next</button>
+          </div>
+        </div>
+              <div id="refreshLoader" class="refresh-loader hidden">
+  <div class="spinner"></div>
+  <p>Refreshing data…</p>
+</div>
+
+      </div>
+
+
+
+    </section>
+  </main>
+</div>
+
+<!-- Feedback Button -->
+<button class="feedback-btn" id="feedbackBtn" title="Send feedback">
+  💬 Feedback
+</button>
+
+<!-- Feedback Modal -->
+<div class="feedback-modal" id="feedbackModal">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <span class="modal-title">Share your feedback</span>
+      <button class="modal-close" id="feedbackClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="feedbackForm">
+        <label for="feedbackRating">How was your experience?</label>
+        <div class="rating-buttons">
+          <button type="button" class="rating-btn" data-rating="1">😞</button>
+          <button type="button" class="rating-btn" data-rating="2">😐</button>
+          <button type="button" class="rating-btn" data-rating="3">🙂</button>
+          <button type="button" class="rating-btn" data-rating="4">😊</button>
+          <button type="button" class="rating-btn" data-rating="5">🤩</button>
+        </div>
+        <input type="hidden" id="feedbackRating" name="rating">
+
+        <label for="feedbackText" style="margin-top:14px;">Your feedback *</label>
+        <textarea id="feedbackText" name="feedback" rows="5" required placeholder="Tell us what to improve, or what data you expected but didn’t see..."></textarea>
+
+        <label for="feedbackEmail" style="margin-top:14px;">Email (optional)</label>
+        <input type="email" id="feedbackEmail" name="email" placeholder="you@example.com">
+
+        <div class="feedback-actions">
+          <button type="button" class="feedback-cancel" id="feedbackCancel">Cancel</button>
+          <button type="submit" class="feedback-submit">Send</button>
+        </div>
+
+        <div class="feedback-status" id="feedbackStatus"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Data Methodology Modal -->
+<div class="data-modal" id="dataModal">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <span class="modal-title">About our data</span>
+      <button class="modal-close" id="dataClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="data-section">
+        <h3><span class="emoji">🔍</span> Data Sources</h3>
+        <p>Our platform aggregates recruitment data from active CS career communities:</p>
+        <div class="data-sources">
+          <span class="data-source-badge">cscareers.dev</span>
+          <span class="data-source-badge">Grad Process</span>
+          <span class="data-source-badge">Intern Process</span>
+        </div>
+      </div>
+
+      <div class="data-section">
+        <h3><span class="emoji">⏱</span> Data Freshness & Coverage</h3>
+        <ul>
+          <li>Updated daily to reflect the latest submissions</li>
+          <li>Most accurate data from the past 6 months</li>
+          <li>Real-time processing of new entries from source platforms</li>
+        </ul>
+      </div>
+
+      <div class="data-section">
+        <h3><span class="emoji">✅</span> Data Quality & Filtering</h3>
+        <p>We maintain high data quality through multiple validation steps:</p>
+        <ul>
+          <li>Automated spam detection and removal</li>
+          <li>Duplicate entry identification and merging</li>
+          <li>Timeline backfilling when users submit multiple interview rounds</li>
+          <li>Cross-verification of submission patterns</li>
+          <li>Anomaly detection for outlier data points</li>
+        </ul>
+      </div>
+
+      <div class="data-section">
+        <h3><span class="emoji">🧮</span> Processing & Analytics</h3>
+        <p>Our analytics engine applies sophisticated algorithms to extract meaningful insights from raw submissions, including statistical analysis, timeline reconstruction, and conversion rate calculations.</p>
+      </div>
+
+      <div class="data-disclaimer">
+        <p><strong>Important Disclaimer:</strong> All insights and statistics presented on this dashboard are based solely on user-submitted data from our source platforms. They may not represent the complete picture of the job market or any specific company's hiring practices. Use this data as one of many resources in your job search strategy.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Submission Modal (kept but trigger is commented out in header; you can re-enable easily) -->
+<div class="submit-modal" id="submitModal">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <span class="modal-title">Submit interview update</span>
+      <button class="modal-close" id="submitClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="submit-message" id="submitMessage">
+        <span class="submit-message-icon"></span>
+        <span class="submit-message-text"></span>
+      </div>
+      <form id="submitForm">
+        <label class="form-label">Username *</label>
+        <input type="text" id="submitUsername" placeholder="e.g. samarth" required>
+        <label class="form-label" style="margin-top:12px;">Company *</label>
+        <input type="text" id="submitCompany" placeholder="Company" required>
+        <label class="form-label" style="margin-top:12px;">Position type *</label>
+        <select id="submitPositionType" required>
+          <option value="">Select...</option>
+          <option value="new_grad">New Grad</option>
+          <option value="intern">Intern</option>
+        </select>
+        <label class="form-label" style="margin-top:12px;">Stage *</label>
+        <select id="submitStage" required>
+          <option value="">Select...</option>
+          <option value="OA">OA</option>
+          <option value="Phone/R1">Phone/R1</option>
+          <option value="Interview">Interview</option>
+          <option value="Onsite">Onsite</option>
+          <option value="HM">HM</option>
+          <option value="Offer">Offer</option>
+          <option value="Reject">Reject</option>
+        </select>
+        <label class="form-label" style="margin-top:12px;">Date *</label>
+        <input type="date" id="submitDate" required min="2025-10-27">
+        <p style="font-size:12px;color:var(--muted);margin-top:8px;">
+          Use the same username for every submission to let us backfill your timeline automatically.
+        </p>
+        <button type="submit" class="feedback-submit" style="margin-top:14px;">Submit update</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+
+  function maskAuthor(name) {
+  if (!name) return "";
+  if (name.length <= 3) return name[0] + "**";
+  return name.slice(0, 3) + "***";
+}
+
+//   // Example toggle function — you can modify or disable later
+// function setBannerActive(isPaused) {
+//   const banner = document.getElementById("dataPauseBanner");
+//   const status = document.getElementById("bannerStatus");
+//   if (isPaused) {
+//     banner.style.display = "block";
+//     status.textContent = "We'll resume once permissions are restored.";
+//   } else {
+//     status.textContent = "✅ Data collection resumed — now updating live.";
+//     banner.style.background = "linear-gradient(90deg, #e6ffed, #d6ffe1)";
+//     banner.style.color = "#055a24";
+//   }
+// }
+
+// // default: paused
+// setBannerActive(true);
+
+  // Add this helper once near the top
+function debounce(fn, delay) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+/* ------------ Globals & Helpers (kept from your original logic, just reorganized) ------------ */
+const SERVER = window.location.origin;
+const $  = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+let globalCompanyCounts = {};
+
+let META = null;
+let DATA = [];
+let charts = {};
+let currentPage = 1;
+let pageSize = 10;
+let selectedCompanies = [];
+let companyCounts = {};
+let SESSION_ID = null;
+let FILTERED_DATA = [];
+
+function destroyChart(id) {
+  if (charts[id]) {
+    charts[id].destroy();
+    charts[id] = null;
+  }
+}
+
+function shortenStage(stage) {
+  return stage;
+}
+async function updateCompanyPlaceholder() {
+  const input = $("#companySearch");
+
+  // Respect all filters except selectedCompanies
+  const start = $("#startDate")?.value;
+  const end = $("#endDate")?.value;
+  const newGradChecked = $("#newGradCheckbox")?.checked;
+  const internChecked = $("#internCheckbox")?.checked;
+
+  const jobTypes = [];
+  if (newGradChecked) jobTypes.push("new_grad");
+  if (internChecked) jobTypes.push("intern");
+
+  const params = new URLSearchParams();
+  if (start) params.append("start", start);
+  if (end) params.append("end", end);
+  if (jobTypes.length) params.append("job_types", jobTypes.join(","));
+
+  try {
+    const res = await fetch(`${SERVER}/api/companies/search?${params.toString()}`);
+    const data = await res.json();
+    const total = data.companies?.length || 0;
+    input.placeholder = `Search companies (${total} available)…`;
+  } catch (err) {
+    console.error("Error updating placeholder:", err);
+    input.placeholder = "Search companies…";
+  }
+}
+
+
+
+/* ------------ Company Picker ------------ */
+function renderSelectedCompanies() {
+  const container = $("#selectedCompanies");
+  if (!selectedCompanies.length) {
+    container.className = "selected-companies empty";
+    container.innerHTML = '<span>No companies selected</span>';
+    return;
+  }
+  container.className = "selected-companies";
+  container.innerHTML = selectedCompanies
+    .map(
+      (c, i) =>
+        `<div class="company-tag"><span>${c}</span><button onclick="removeCompany(${i})">×</button></div>`
+    )
+    .join("");
+}
+function removeCompany(index) {
+  selectedCompanies.splice(index, 1);
+  renderSelectedCompanies();
+  if (selectedCompanies.length === 0) {
+    currentPage = 1;
+    refresh();
+  }
+  else{
+    currentPage = 1;
+    refresh();
+  }
+}
+function updateCompanyCounts() {
+  companyCounts = {};
+  DATA.forEach((d) => {
+    if (d.company) {
+      companyCounts[d.company] = (companyCounts[d.company] || 0) + 1;
+    }
+  });
+}
+
+async function fetchCompanySuggestions(searchTerm = "") {
+  const start = $("#startDate")?.value;
+  const end = $("#endDate")?.value;
+
+  const newGradChecked = $("#newGradCheckbox")?.checked;
+  const internChecked = $("#internCheckbox")?.checked;
+
+  const jobTypes = [];
+  if (newGradChecked) jobTypes.push("new_grad");
+  if (internChecked) jobTypes.push("intern");
+
+  const params = new URLSearchParams();
+  if (start) params.append("start", start);
+  if (end) params.append("end", end);
+  if (jobTypes.length) params.append("job_types", jobTypes.join(","));
+  if (searchTerm) params.append("q", searchTerm);
+
+  const res = await fetch(`${SERVER}/api/companies/search?${params.toString()}`);
+  const data = await res.json();
+  return data.companies || [];
+}
+
+
+async function renderCompanyDropdown(searchTerm) {
+  const dropdown = $("#companyDropdown");
+  dropdown.innerHTML = `<div style="padding:8px 12px;font-size:12px;color:var(--muted)">Loading...</div>`;
+  dropdown.classList.add("active");
+
+  try {
+    // Fetch fresh suggestions based on filters
+    const suggestions = await fetchCompanySuggestions(searchTerm);
+
+    // Filter out already selected companies
+    const filtered = suggestions.filter(c => !selectedCompanies.includes(c.name));
+
+    if (!filtered.length) {
+      dropdown.classList.remove("active");
+      dropdown.innerHTML = "";
+      return;
+    }
+
+    // Render results
+    dropdown.innerHTML = filtered
+      .slice(0, 15)
+      .map(
+        (c) => `
+        <div class="company-option" onclick="selectCompany('${c.name.replace(/'/g, "\\'")}')">
+          ${c.name}
+          <span style="color:var(--muted);font-size:11px">(${c.count})</span>
+        </div>`
+      )
+      .join("");
+  } catch (err) {
+    console.error("Error fetching companies:", err);
+    dropdown.classList.remove("active");
+    dropdown.innerHTML = "";
+  }
+}
+
+
+
+
+function selectCompany(company) {
+  if (!selectedCompanies.includes(company)) {
+    selectedCompanies.push(company);
+    renderSelectedCompanies();
+    currentPage = 1;
+    refresh();
+  }
+  $("#companySearch").value = "";
+  $("#companyDropdown").classList.remove("active");
+}
+
+/* ------------ Metrics ------------ */
+function animateCounter(element, targetValue, duration = 1500, usePlus = false) {
+  const startTime = performance.now();
+  const startValue = 0;
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+  function updateCounter(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const easedProgress = easeOutCubic(progress);
+    const currentValue = Math.floor(startValue + (targetValue - startValue) * easedProgress);
+    element.textContent = currentValue.toLocaleString() + (usePlus ? '+' : '');
+    if (progress < 1) {
+      requestAnimationFrame(updateCounter);
+    } else {
+      element.textContent = targetValue.toLocaleString() + (usePlus ? '+' : '');
+    }
+  }
+  requestAnimationFrame(updateCounter);
+}
+function updateMetrics() {
+  if (!META) return;
+  const totalCompanies = META.companies?.length || 0;
+  const roundedCompanies = Math.floor(totalCompanies / 10) * 10;
+  animateCounter($("#totalCompanies"), roundedCompanies, 1500, true);
+
+  const authorCount = META.author_count || 0;
+  const roundedCandidates = Math.floor(authorCount / 100) * 100;
+  animateCounter($("#totalCandidates"), roundedCandidates, 1800, true);
+
+  const submissionCount = META.submission_count || 0;
+  const roundedSubmissions = Math.floor(submissionCount / 1000) * 1000;
+  animateCounter($("#totalSubmissions"), roundedSubmissions, 2000, true);
+
+  const lastUpdatedEl = $("#lastUpdated");
+  if (META.max_timestamp) {
+    const maxTs = new Date(META.max_timestamp);
+    const today = new Date();
+
+    // ✅ Ensure lastUpdated never goes beyond today
+    const safeDate = maxTs > today ? today : maxTs;
+
+    const formatted = safeDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+    lastUpdatedEl.textContent = formatted;
+  } else {
+    lastUpdatedEl.textContent = "N/A";
+  }
+}
+
+/* ------------ Fetchers ------------ */
+async function fetchMeta() {
+  const res = await fetch(`${SERVER}/api/meta`);
+  META = await res.json();
+  updateMetrics();
+  renderSelectedCompanies();
+}
+async function fetchMessages(params = {}) {
+  const query = new URLSearchParams(params).toString();
+  const res = await fetch(`${SERVER}/api/messages?${query}`);
+  const payload = await res.json();
+  DATA = payload.items || [];
+  applyLocalSearch();
+  updateCompanyCounts();
+  updateCompanyPlaceholder();
+  renderTablePaginated();
+  return DATA;
+}
+
+/* ------------ Table & Pagination ------------ */
+function renderTablePaginated() {
+  const tbody = document.querySelector("tbody");
+  tbody.innerHTML = "";
+
+  const source = FILTERED_DATA.length ? FILTERED_DATA : DATA;
+  if (!source.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:var(--muted);text-align:center;">No messages</td></tr>`;
+    $("#pageInfo").textContent = `Page 0 / 0`;
+    $("#prevPage").disabled = true;
+    $("#nextPage").disabled = true;
+    return;
+  }
+
+  const start = (currentPage - 1) * pageSize;
+  const pageItems = source.slice(start, start + pageSize);
+
+  for (const m of pageItems) {
+    const tr = document.createElement("tr");
+    const t = m.timestamp ? new Date(m.timestamp).toLocaleString() : "—";
+    tr.innerHTML = `
+  <td>${t}</td>
+  <td>${m.company || ""}</td>
+  <td>${m.stage || ""}</td>
+  <td>${maskAuthor(m.author)}</td>
+  <td>${m.text || ""}</td>
+`;
+    tbody.appendChild(tr);
+  }
+
+  const totalPages = Math.ceil(source.length / pageSize) || 1;
+  $("#pageInfo").textContent = `Page ${currentPage} / ${totalPages}`;
+  $("#prevPage").disabled = currentPage === 1;
+  $("#nextPage").disabled = currentPage === totalPages;
+}
+
+function applyLocalSearch() {
+  const c = $("#searchCompany").value.trim().toLowerCase();
+  const a = $("#searchAuthor").value.trim().toLowerCase();
+  const s = $("#searchStage").value.trim().toLowerCase();
+
+  let filtered = DATA;
+  if (c) filtered = filtered.filter(m => (m.company || "").toLowerCase().includes(c));
+  if (a) filtered = filtered.filter(m => (m.author || "").toLowerCase().includes(a));
+  if (s) filtered = filtered.filter(m => (m.stage || "").toLowerCase().includes(s));
+
+  FILTERED_DATA = filtered;
+  currentPage = 1;
+  renderTablePaginated();
+}
+
+["searchCompany", "searchAuthor", "searchStage"].forEach(id => {
+  const input = document.getElementById(id);
+  input.addEventListener("input", debounce(applyLocalSearch, 200));
+});
+
+// small debounce helper to avoid lag on fast typing
+function debounce(fn, delay) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+function renderFilteredTable(list) {
+  const tbody = document.querySelector(".card-full tbody");
+  tbody.innerHTML = "";
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:var(--muted);text-align:center;">No messages</td></tr>`;
+    return;
+  }
+
+  for (const m of list.slice(0, 10)) {
+    const tr = document.createElement("tr");
+    const t = m.timestamp ? new Date(m.timestamp).toLocaleString() : "—";
+    tr.innerHTML = `<td>${t}</td><td>${m.company || ""}</td><td>${m.stage || ""}</td><td>${m.author || ""}</td><td>${m.text || ""}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+// attach listeners
+["filterCompany","filterAuthor","filterStage"].forEach(id => {
+  document.addEventListener("change", e => {
+    if (e.target.id === id) applyLocalFilters();
+  });
+});
+
+$("#prevPage").addEventListener("click", () => {
+  if (currentPage > 1) {
+    currentPage--;
+    renderTablePaginated();
+  }
+});
+
+$("#nextPage").addEventListener("click", () => {
+  const source = FILTERED_DATA.length ? FILTERED_DATA : DATA;
+  const totalPages = Math.ceil(source.length / pageSize) || 1;
+  if (currentPage < totalPages) {
+    currentPage++;
+    renderTablePaginated();
+  }
+});
+
+function renderFunnel(order, counts) {
+  const rows = document.getElementById("funnelRows");
+  const scale = document.getElementById("funnelScale");
+
+  if (!rows || !scale) {
+    console.warn("❗ Funnel DOM elements not found");
+    return;
+  }
+
+  rows.innerHTML = "";
+  scale.innerHTML = "";
+
+  const maxCount = Math.max(...order.map(s => counts[s] || 0), 1);
+
+  // Render bars
+  order.forEach(stage => {
+    const count = counts[stage] || 0;
+    const percent = ((count / maxCount) * 100).toFixed(1) + "%";
+    const row = document.createElement("div");
+    row.className = "funnel-row";
+    row.innerHTML = `
+      <span class="funnel-label">${stage}</span>
+      <div class="funnel-bar">
+        <div class="funnel-fill" style="--fill:${percent}"></div>
+      </div>
+    `;
+    rows.appendChild(row);
+  });
+
+  // Render dynamic scale (counts)
+  const tickCount = 6;
+  const step = maxCount / (tickCount - 1);
+
+  for (let i = 0; i < tickCount; i++) {
+    const val = Math.round(i * step);
+    const tick = document.createElement("span");
+    tick.textContent = val.toLocaleString();
+    scale.appendChild(tick);  // ✅ each tick as separate span
+  }
+}
+
+
+
+
+
+function renderHeatmap(sel, companies, transitions, convMat) {
+  const svg = d3.select(sel);
+  svg.selectAll("*").remove();
+  if (!companies.length || !transitions.length) return;
+
+  // --- 1. Tooltip Setup (creates/selects the tooltip div) ---
+  let tooltip = d3.select("body").select("#heatmap-tooltip");
+  if (tooltip.empty()) {
+    tooltip = d3.select("body").append("div")
+      .attr("id", "heatmap-tooltip")
+      .style("position", "absolute")
+      .style("opacity", 0)
+      .style("background", "rgba(15, 23, 42, 0.9)") // Use dashboard colors
+      .style("color", "white")
+      .style("padding", "6px 10px")
+      .style("border-radius", "8px")
+      .style("pointer-events", "none") // Lets mouse events pass through
+      .style("font-size", "12px")
+      .style("z-index", "1010") // Ensures it's on top
+      .style("transition", "opacity 0.2s")
+      .style("line-height", "1.4");
+  }
+  // --- End Tooltip Setup ---
+
+  const margin = { top: 20, right: 80, bottom: 50, left: 100 };
+  const W = svg.node().getBoundingClientRect().width;
+  const H = svg.node().getBoundingClientRect().height;
+  const w = Math.max(0, W - margin.left - margin.right);
+  const h = Math.max(0, H - margin.top - margin.bottom);
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+  const y = d3.scaleBand().domain(companies).range([0, h]).padding(0.15);
+  const shortTransitions = transitions.map((t) => {
+    if (t === "Overall→Reject") return t;
+    const parts = t.split("→");
+    return `${shortenStage(parts[0])}→${shortenStage(parts[1])}`;
+  });
+  const x = d3.scaleBand().domain(shortTransitions).range([0, w]).padding(0.15);
+  const color = d3.scaleSequential(d3.interpolateBlues).domain([0, 100]);
+
+  g.append("g")
+    .attr("transform", `translate(0,${h})`)
+    .call(d3.axisBottom(x))
+    .selectAll("text")
+    .attr("transform", "rotate(25)")
+    .style("text-anchor", "start")
+    .style("font-size", "11px");
+
+  g.append("g")
+    .call(d3.axisLeft(y))
+    .selectAll("text")
+    .style("font-size", "11px");
+
+  companies.forEach((c) =>
+    transitions.forEach((t, i) => {
+      const val = convMat[c]?.[t] ?? 0;
+      const shortT = shortTransitions[i];
+
+      g.append("rect")
+        .attr("x", x(shortT))
+        .attr("y", y(c))
+        .attr("width", x.bandwidth())
+        .attr("height", y.bandwidth())
+        .attr("rx", 6)
+        .attr("fill", color(val))
+        // --- 2. Remove the old .append("title") ---
+        // .append("title")
+        // .text(`${c} ${t}: ${val.toFixed(1)}%`);
+
+        // --- 3. Add new D3 mouse events ---
+        .on("mouseover", function(event) {
+          tooltip.style("opacity", 1);
+        })
+        .on("mousemove", function(event) {
+          // Format the text for the tooltip
+          const text = `${c}<br>${t}: <strong>${val.toFixed(1)}%</strong>`;
+          tooltip
+            .html(text)
+            .style("left", (event.pageX + 15) + "px") // Position next to cursor
+            .style("top", (event.pageY - 10) + "px");
+        })
+        .on("mouseout", function(event) {
+          tooltip.style("opacity", 0); // Hide tooltip
+        });
+        // --- End new mouse events ---
+    })
+  );
+
+  const legendWidth = 20;
+  const legendHeight = Math.max(40, h);
+  const legendX = w + 20;
+  const legendScale = d3.scaleLinear().domain([0, 100]).range([legendHeight, 0]);
+  const legendAxis = d3.axisRight(legendScale).ticks(5).tickFormat((d) => `${d}%`);
+
+  const defs = svg.append("defs");
+  const gradId = "heatmap-gradient";
+  const gradient = defs.append("linearGradient").attr("id", gradId).attr("x1", "0%").attr("y1", "100%").attr("x2", "0%").attr("y2", "0%");
+  for (let i = 0; i <= 100; i += 10) {
+    gradient.append("stop").attr("offset", `${i}%`).attr("stop-color", color(i));
+  }
+
+  g.append("rect")
+    .attr("x", legendX)
+    .attr("y", 0)
+    .attr("width", legendWidth)
+    .attr("height", legendHeight)
+    .attr("rx", 4)
+    .style("fill", `url(#${gradId})`);
+
+  g.append("g")
+    .attr("transform", `translate(${legendX + legendWidth},0)`)
+    .call(legendAxis)
+    .selectAll("text")
+    .style("font-size", "11px");
+
+  g.append("text")
+    .attr("x", legendX + legendWidth / 2)
+    .attr("y", -5)
+    .style("font-size", "11px")
+    .style("font-weight", "600")
+    .attr("text-anchor", "middle")
+    .text("Conv %");
+}
+
+function renderTimeline(sel, transitionsForTimeline, stageTimes) {
+  const svg = d3.select(sel);
+  svg.selectAll("*").remove();
+  if (!transitionsForTimeline.length) return;
+
+  const margin = { top: 30, right: 30, bottom: 50, left: 140 };
+  const W = svg.node().getBoundingClientRect().width;
+  const H = svg.node().getBoundingClientRect().height;
+  const w = Math.max(0, W - margin.left - margin.right);
+  const h = Math.max(0, H - margin.top - margin.bottom);
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+  const rows = transitionsForTimeline.map((key) => {
+    const days = Math.round(stageTimes[key] || 0);
+    const label = key === "Overall→Reject" ? key : key.split("→").map(shortenStage).join("→");
+    return { key, days, label };
+  });
+
+  if (!rows.some(r => r.days > 0)) return;
+
+  const y = d3.scaleBand().domain(rows.map(r => r.label)).range([0, h]).padding(0.2);
+  // Find max value dynamically and add +1 day for breathing room
+const maxDays = d3.max(rows, r => r.days) || 0;
+const x = d3.scaleLinear()
+  .domain([0, maxDays + 1])
+  .nice() // rounds to cleaner tick values (e.g. 5, 10, 15)
+  .range([0, w]);
+
+  const color = d3.scaleSequential(d3.interpolateViridis).domain([0, rows.length - 1]);
+
+  g.append("g")
+    .call(d3.axisLeft(y))
+    .selectAll("text")
+    .style("font-size", "11px");
+
+  const xAxis = g.append("g").attr("transform", `translate(0,${h})`).call(d3.axisBottom(x).ticks(5));
+  xAxis.selectAll("text").style("font-size", "11px");
+  xAxis.append("text")
+    .attr("x", w / 2)
+    .attr("y", 35)
+    .attr("fill", "currentColor")
+    .style("text-anchor", "middle")
+    .style("font-size", "11px")
+    .style("font-weight", "600")
+    .text("Days");
+
+  rows.forEach((r, i) => {
+    g.append("rect")
+      .attr("x", 0)
+      .attr("y", y(r.label))
+      .attr("width", x(r.days))
+      .attr("height", y.bandwidth())
+      .attr("rx", 6)
+      .attr("fill", color(i))
+      .append("title")
+      .text(`${r.key}: ${r.days} days`);
+
+    g.append("text")
+      .attr("x", x(r.days) + 5)
+      .attr("y", y(r.label) + y.bandwidth() / 2 + 4)
+      .style("font-size", "11px")
+      .attr("fill", "currentColor")
+      .text(`${r.days}d`);
+  });
+}
+
+function renderBarLine(stages, counts) {
+  destroyChart("barline");
+  const ctx = document.getElementById("barline");
+  const vals = stages.map((s) => counts[s] || 0);
+  if (!vals.some((v) => v > 0)) return;
+
+  const cumulative = [];
+  let sum = 0;
+  for (const v of vals) {
+    sum += v;
+    cumulative.push(sum);
+  }
+
+  const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+  const gridColor = 'rgba(148,163,184,0.15)';
+  const labels = stages.map((s) => shortenStage(s));
+
+  charts.barline = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Count",
+          data: vals,
+          backgroundColor: "rgba(41,151,255,0.8)",
+          borderRadius: 10,
+          barPercentage: 0.8,
+          categoryPercentage: 0.7,
+          yAxisID: "y",
+        },
+        {
+  label: "Cumulative",
+  type: "line",
+  data: cumulative,
+  borderColor: "#f2994a",
+  borderWidth: 3,
+  fill: false,
+  tension: 0.25, // smoother and less stretched
+  pointBackgroundColor: "#f2994a",
+  pointRadius: 4, // smaller dots for better scaling
+  pointHoverRadius: 5,
+  yAxisID: "y1",
+},
+      ],
+    },
+    options: {
+      maintainAspectRatio: false,
+      responsive: true,
+      aspectRatio: 1.6,
+      plugins: {
+        legend: {
+          display: true,
+          position: "top",
+          labels: {
+            color: textColor,
+            font: { size: 13, weight: 500 },
+            boxWidth: 16,
+          },
+        },
+        tooltip: {
+          backgroundColor: "rgba(15,23,42,0.9)",
+          titleFont: { size: 13, weight: 600 },
+          bodyFont: { size: 12 },
+          padding: 10,
+          borderColor: "rgba(255,255,255,0.08)",
+          borderWidth: 1,
+        },
+      },
+      scales: {
+        x: {
+          ticks: { color: textColor, font: { size: 12.5, weight: 500 } },
+          grid: { color: gridColor, drawBorder: false },
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: textColor,
+            stepSize: 2000,
+            font: { size: 12.5, weight: 500 },
+          },
+          grid: { color: gridColor, drawBorder: false },
+          title: { display: true, text: "Count", color: textColor, font: { weight: 600 } },
+        },
+        y1: {
+          beginAtZero: true,
+          position: "right",
+          grid: { drawOnChartArea: false },
+          ticks: {
+            color: textColor,
+            font: { size: 12.5, weight: 500 },
+          },
+          title: { display: true, text: "Cumulative", color: textColor, font: { weight: 600 } },
+        },
+      },
+      animation: { duration: 700, easing: "easeOutQuart" },
+    },
+  });
+}
+
+
+function renderCompanyCards(sel, companies) {
+  const container = document.querySelector(sel);
+  container.innerHTML = '';
+
+  if (!companies || companies.length === 0) {
+    container.innerHTML = '<div class="empty-state" style="font-size:12px;color:var(--muted);">No data available</div>';
+    return;
+  }
+
+  companies.forEach((company, index) => {
+    const card = document.createElement('div');
+    card.className = 'company-card-item';
+    card.setAttribute('data-company', company.company);
+    card.innerHTML = `
+      <div class="company-card-content">
+        <div class="company-rank">#${index + 1}</div>
+        <div class="company-card-name">${company.company}</div>
+      </div>
+      <div class="company-card-count">${company.count}</div>
+    `;
+    card.addEventListener('click', () => {
+      if (!selectedCompanies.includes(company.company)) {
+        selectedCompanies.push(company.company);
+        renderSelectedCompanies();
+        currentPage = 1;
+        refresh();
+      }
+    });
+    container.appendChild(card);
+  });
+}
+
+async function renderTopOACompanies() {
+  const container = $("#topOACompanies");
+  container.innerHTML = '<div style="font-size:12px;color:var(--muted);">Loading...</div>';
+
+  try {
+    const newGradChecked = $("#newGradCheckbox").checked;
+    const internChecked = $("#internCheckbox").checked;
+    const jobTypes = [];
+    if (newGradChecked) jobTypes.push("new_grad");
+    if (internChecked) jobTypes.push("intern");
+
+    const params = new URLSearchParams();
+    if (jobTypes.length > 0) {
+      params.append('job_types', jobTypes.join(','));
+    }
+
+    const res = await fetch(`${SERVER}/api/top-oa-companies?${params}`);
+    const data = await res.json();
+
+    if (!data.companies || data.companies.length === 0) {
+      container.innerHTML = '<div style="font-size:12px;color:var(--muted);">No OA data available for this week</div>';
+      return;
+    }
+
+    renderCompanyCards("#topOACompanies", data.companies);
+  } catch (error) {
+    console.error('Failed to fetch top OA companies:', error);
+    container.innerHTML = '<div style="font-size:12px;color:var(--muted);">Failed to load data</div>';
+  }
+}
+
+async function renderTopOfferCompanies() {
+  const container = $("#topOfferCompanies");
+  container.innerHTML = '<div style="font-size:12px;color:var(--muted);">Loading...</div>';
+
+  try {
+    const newGradChecked = $("#newGradCheckbox").checked;
+    const internChecked = $("#internCheckbox").checked;
+    const jobTypes = [];
+    if (newGradChecked) jobTypes.push("new_grad");
+    if (internChecked) jobTypes.push("intern");
+
+    const params = new URLSearchParams();
+    if (jobTypes.length > 0) {
+      params.append('job_types', jobTypes.join(','));
+    }
+
+    const res = await fetch(`${SERVER}/api/top-offer-companies?${params}`);
+    const data = await res.json();
+
+    if (!data.companies || data.companies.length === 0) {
+      container.innerHTML = '<div style="font-size:12px;color:var(--muted);">No offer data available for this week</div>';
+      return;
+    }
+
+    renderCompanyCards("#topOfferCompanies", data.companies);
+  } catch (error) {
+    console.error('Failed to fetch top offer companies:', error);
+    container.innerHTML = '<div style="font-size:12px;color:var(--muted);">Failed to load data</div>';
+  }
+}
+
+async function renderHiringTrends() {
+  const canvas = $("#hiringTrends");
+  const container = canvas.parentElement;
+  container.style.opacity = '0.6';
+
+  try {
+    const newGradChecked = $("#newGradCheckbox").checked;
+    const internChecked = $("#internCheckbox").checked;
+    const jobTypes = [];
+    if (newGradChecked) jobTypes.push("new_grad");
+    if (internChecked) jobTypes.push("intern");
+
+    const params = new URLSearchParams();
+    if (jobTypes.length > 0) {
+      params.append('job_types', jobTypes.join(','));
+    }
+    if (selectedCompanies.length === 1) {
+      params.append('company', selectedCompanies[0]);
+    }
+
+    const res = await fetch(`${SERVER}/api/hiring-trends?${params}`);
+    const response = await res.json();
+
+    if (!response.companies || Object.keys(response.companies).length === 0) {
+      container.style.opacity = '1';
+      return;
+    }
+
+    destroyChart("hiringTrends");
+
+    const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text').trim();
+
+    const colorPalette = [
+      { border: '#0071e3', bg: 'rgba(0, 113, 227, 0.1)' },
+      { border: '#ff6b6b', bg: 'rgba(255, 107, 107, 0.1)' },
+      { border: '#4ecb71', bg: 'rgba(78, 203, 113, 0.1)' },
+      { border: '#ffa726', bg: 'rgba(255, 167, 38, 0.1)' },
+      { border: '#ab47bc', bg: 'rgba(171, 71, 188, 0.1)' }
+    ];
+
+    const globalAverageStyle = {
+      border: textColor,
+      bg: 'rgba(0, 0, 0, 0.05)'
+    };
+
+    const allDates = new Set();
+    Object.values(response.companies).forEach(companyData => {
+      companyData.forEach(item => allDates.add(item.date));
+    });
+
+    const sortedDates = Array.from(allDates).sort();
+    const labels = sortedDates.map(dateStr => {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+
+    const datasets = [];
+    const companies = Object.keys(response.companies);
+    let regularCompanyIndex = 0;
+
+    companies.forEach((company) => {
+      const companyData = response.companies[company];
+      const dataMap = {};
+      companyData.forEach(item => { dataMap[item.date] = item.count; });
+      const data = sortedDates.map(date => ({
+  x: new Date(date + 'T00:00:00Z'),
+  y: dataMap[date] || null
+}));
+
+      if (company === 'Global Average') {
+        datasets.push({
+          label: company,
+          data: data,
+          borderColor: globalAverageStyle.border,
+          backgroundColor: globalAverageStyle.bg,
+          borderWidth: 3,
+          borderDash: [10,5],
+          fill: false,
+          tension: 0.2,
+          pointRadius: 0,
+          spanGaps: true,
+          order: 0
+        });
+      } else {
+        const colors = colorPalette[regularCompanyIndex % colorPalette.length];
+        regularCompanyIndex++;
+        datasets.push({
+          label: company,
+          data: data,
+          borderColor: colors.border,
+          backgroundColor: colors.bg,
+          borderWidth: 2.3,
+          fill: selectedCompanies.length === 1,
+          tension: 0.2,
+          pointRadius: 0,
+          spanGaps: true,
+          order: 1
+        });
+      }
+    });
+
+    const ctx = canvas.getContext('2d');
+    charts.hiringTrends = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            labels: {
+              color: textColor,
+              usePointStyle: true,
+            }
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)'
+          }
+        },
+scales: {
+  x: {
+  type: 'time',
+  min: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000), // last 6 months
+  max: new Date(),                                        // today
+  time: {
+    unit: 'week',
+    displayFormats: {
+      week: 'MMM d',
+      month: 'MMM'
+    }
+  },
+  ticks: {
+    color: textColor,
+    maxRotation: 0,
+    autoSkip: true,
+    maxTicksLimit: 15
+  },
+  grid: {
+    color: 'rgba(128, 128, 128, 0.06)'
+  }
+},
+  y: {
+    beginAtZero: true,
+    ticks: {
+      color: textColor
+    },
+    grid: {
+      color: 'rgba(128, 128, 128, 0.06)'
+    }
+  }
+},
+
+        interaction: {
+          mode: 'index',
+          axis: 'x',
+          intersect: false
+        },
+        animation: {
+          duration: 700
+        }
+      }
+    });
+
+    container.style.opacity = '1';
+  } catch (error) {
+    console.error('Failed to fetch hiring trends:', error);
+    container.style.opacity = '1';
+  }
+}
+
+/* ------------ Refresh (main orchestrator) ------------ */
+async function refresh() {
+  const loader = document.getElementById("refreshLoader");
+  loader.classList.remove("hidden");
+  companySearch.disabled = true;
+
+  try{
+
+  const start = $("#startDate").value;
+  const end = $("#endDate").value;
+
+  const newGradChecked = $("#newGradCheckbox").checked;
+  const internChecked = $("#internCheckbox").checked;
+  const jobTypes = [];
+  if (newGradChecked) jobTypes.push("new_grad");
+  if (internChecked) jobTypes.push("intern");
+
+  const params = { start, end };
+  if (selectedCompanies.length) {
+    params.companies = selectedCompanies.join(",");
+  }
+  if (jobTypes.length > 0) {
+    params.job_types = jobTypes.join(",");
+  }
+
+  const data = await fetchMessages(params);
+
+  const stages = META.stages || [];
+  const counts = Object.fromEntries(stages.map((s) => [s, 0]));
+  data.forEach((d) => {
+    if (counts[d.stage] != null) counts[d.stage]++;
+  });
+
+  const baseCompanies = selectedCompanies.length ? selectedCompanies : META.companies || [];
+  const compCounts = {};
+  baseCompanies.forEach((c) => (compCounts[c] = 0));
+  data.forEach((d) => {
+    if (compCounts[d.company] != null) compCounts[d.company]++;
+  });
+  const top8Companies = Object.entries(compCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([c]) => c);
+
+  const convMat = {};
+  const applications = {};
+  data.forEach((d) => {
+    const key = `${d.company}|${d.author}`;
+    (applications[key] ||= []).push({
+      stage: d.stage,
+      ts: d.timestamp ? new Date(d.timestamp).getTime() : null,
+    });
+  });
+
+  // Track user journeys per company (key: company|author -> set of stages)
+  const userStages = {};
+  Object.entries(applications).forEach(([key, msgs]) => {
+    const stagesSeen = new Set(msgs.map(m => m.stage).filter(Boolean));
+    userStages[key] = stagesSeen;
+  });
+
+  top8Companies.forEach((c) => {
+    convMat[c] = {};
+    // Get all users for this company
+    const companyUsers = Object.keys(userStages).filter(k => k.startsWith(`${c}|`));
+
+    for (let i = 0; i < stages.length - 1; i++) {
+      const from = stages[i];
+      const to = stages[i + 1];
+      if ((to || "").toLowerCase() === "reject") continue;
+
+      // Count users who had from_stage
+      const fromCount = companyUsers.filter(k => userStages[k].has(from)).length;
+
+      // Count users who had BOTH from_stage AND to_stage (actual progression)
+      const toCount = companyUsers.filter(k => userStages[k].has(from) && userStages[k].has(to)).length;
+
+      const pct = fromCount > 0 ? (toCount / fromCount) * 100 : 0;
+      convMat[c][`${from}→${to}`] = pct;
+    }
+  });
+
+  const appsByCompany = {};
+  top8Companies.forEach((c) => (appsByCompany[c] = new Set()));
+  Object.keys(applications).forEach((key) => {
+    const [company] = key.split("|");
+    if (appsByCompany[company]) appsByCompany[company].add(key);
+  });
+  top8Companies.forEach((c) => {
+    const keys = Array.from(appsByCompany[c] || []);
+    if (!keys.length) {
+      convMat[c]["Overall→Reject"] = 0;
+      return;
+    }
+    let rejected = 0;
+    keys.forEach((k) => {
+      const stagesSeen = new Set((applications[k] || []).map((x) => x.stage).filter(Boolean));
+      if (stagesSeen.has("Reject")) rejected += 1;
+    });
+    convMat[c]["Overall→Reject"] = (rejected / keys.length) * 100;
+  });
+
+  const transitionDays = {};
+  stages.slice(0, -1).forEach((s, i) => {
+    const to = stages[i + 1];
+    transitionDays[`${s}→${to}`] = [];
+  });
+
+  const appEarliest = {};
+  Object.entries(applications).forEach(([key, msgs]) => {
+    const stageMap = {};
+    msgs.forEach((m) => {
+      if (!m.stage || !Number.isFinite(m.ts)) return;
+      if (!(m.stage in stageMap) || m.ts < stageMap[m.stage]) {
+        stageMap[m.stage] = m.ts;
+      }
+    });
+    appEarliest[key] = stageMap;
+  });
+
+  Object.values(appEarliest).forEach((stageMap) => {
+    for (let i = 0; i < stages.length - 1; i++) {
+      const from = stages[i], to = stages[i + 1];
+      if (stageMap[from] != null && stageMap[to] != null) {
+        const days = (stageMap[to] - stageMap[from]) / (1000 * 60 * 60 * 24);
+        if (Number.isFinite(days) && days >= 0) transitionDays[`${from}→${to}`].push(days);
+      }
+    }
+  });
+
+  const HM = "HM";
+  const REJECT = "Reject";
+  const hmToRejectDays = [];
+  Object.values(appEarliest).forEach((stageMap) => {
+    if (stageMap[HM] != null && stageMap[REJECT] != null) {
+      const days = (stageMap[REJECT] - stageMap[HM]) / (1000 * 60 * 60 * 24);
+      if (Number.isFinite(days) && days >= 0) hmToRejectDays.push(days);
+    }
+  });
+
+  const stageTimes = {};
+  Object.keys(transitionDays).forEach((k) => {
+    const arr = transitionDays[k];
+    stageTimes[k] = arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+  });
+  stageTimes["Overall→Reject"] = hmToRejectDays.length
+    ? hmToRejectDays.reduce((a, b) => a + b, 0) / hmToRejectDays.length
+    : 0;
+
+  const transitions = stages
+    .slice(0, -1)
+    .filter((_, i) => (stages[i + 1] || "").toLowerCase() !== "reject")
+    .map((_, i) => `${stages[i]}→${stages[i + 1]}`);
+
+  const transitionsWithOverallReject = [...transitions, "Overall→Reject"];
+
+  renderFunnel(stages, counts);
+  renderHeatmap("#heatmap", top8Companies, transitionsWithOverallReject, convMat);
+  renderTimeline("#timeline", transitionsWithOverallReject, stageTimes);
+  renderBarLine(stages, counts);
+  renderTopOACompanies();
+  renderTopOfferCompanies();
+  renderHiringTrends();
+  } catch (error) {
+    console.error("Error during refresh:", error);
+  } finally {
+    loader.classList.add("hidden");
+    companySearch.disabled = false;
+  }
+}
+
+/* ------------ Session Tracking ------------ */
+function generateSessionId() {
+  let sessionId = localStorage.getItem('viewer_session_id');
+  if (!sessionId) {
+    sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    localStorage.setItem('viewer_session_id', sessionId);
+  }
+  return sessionId;
+}
+async function startSession() {
+  SESSION_ID = generateSessionId();
+  try {
+    await fetch(`${SERVER}/api/session/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: SESSION_ID })
+    });
+  } catch (error) {
+    console.error('Failed to start session:', error);
+  }
+}
+async function sendHeartbeat() {
+  if (!SESSION_ID) return;
+  try {
+    await fetch(`${SERVER}/api/session/heartbeat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: SESSION_ID })
+    });
+  } catch (error) {
+    console.error('Failed to send heartbeat:', error);
+  }
+}
+async function updateViewerCount() {
+  try {
+    const res = await fetch(`${SERVER}/api/viewers/count`);
+    const data = await res.json();
+    $("#viewerCount").textContent = data.count || 0;
+  } catch (error) {
+    console.error('Failed to fetch viewer count:', error);
+    $("#viewerCount").textContent = '-';
+  }
+}
+function initSessionTracking() {
+  startSession();
+  updateViewerCount();
+  setInterval(sendHeartbeat, 30000);
+  setInterval(updateViewerCount, 30000);
+}
+
+/* ------------ Modals ------------ */
+function initFeedbackModal() {
+  const modal = $("#feedbackModal");
+  const openBtn = $("#feedbackBtn");
+  const closeBtn = $("#feedbackClose");
+  const cancelBtn = $("#feedbackCancel");
+  const form = $("#feedbackForm");
+  const statusEl = $("#feedbackStatus");
+  const ratingButtons = $$(".rating-btn");
+  const ratingInput = $("#feedbackRating");
+
+  const open = () => {
+    modal.classList.add("active");
+    document.body.style.overflow = "hidden";
+  };
+  const close = () => {
+    modal.classList.remove("active");
+    document.body.style.overflow = "";
+    form.reset();
+    statusEl.className = "feedback-status";
+    statusEl.textContent = "";
+    ratingButtons.forEach(btn => btn.classList.remove("selected"));
+    ratingInput.value = "";
+  };
+
+  openBtn.addEventListener("click", open);
+  closeBtn.addEventListener("click", close);
+  cancelBtn.addEventListener("click", close);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) close();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("active")) close();
+  });
+
+  ratingButtons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      ratingButtons.forEach(b => b.classList.remove("selected"));
+      btn.addEventListener("click", () => {});
+      btn.classList.add("selected");
+      ratingInput.value = btn.getAttribute("data-rating");
+    });
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const feedbackText = $("#feedbackText").value.trim();
+    const email = $("#feedbackEmail").value.trim();
+    const rating = ratingInput.value;
+
+    if (!feedbackText) {
+      statusEl.className = "feedback-status error";
+      statusEl.textContent = "Please share some feedback.";
+      return;
+    }
+
+    const submitBtn = form.querySelector(".feedback-submit");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Sending...";
+
+    try {
+      const res = await fetch(`${SERVER}/api/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          feedback: feedbackText,
+          email: email || null,
+          rating: rating ? parseInt(rating) : null,
+          session_id: SESSION_ID
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        statusEl.className = "feedback-status success";
+        statusEl.textContent = "Thanks — feedback saved.";
+        setTimeout(() => close(), 1800);
+      } else {
+        throw new Error(data.error || "Failed to submit");
+      }
+    } catch (error) {
+      console.error("Feedback submission error:", error);
+      statusEl.className = "feedback-status error";
+      statusEl.textContent = "Failed to submit, please try again.";
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Send";
+    }
+  });
+}
+
+function initDataModal() {
+  const modal = $("#dataModal");
+  const openBtn = $("#dataInfoBtn");
+  const closeBtn = $("#dataClose");
+
+  const open = () => {
+    modal.classList.add("active");
+    document.body.style.overflow = "hidden";
+  };
+  const close = () => {
+    modal.classList.remove("active");
+    document.body.style.overflow = "";
+  };
+
+  openBtn.addEventListener("click", open);
+  closeBtn.addEventListener("click", close);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) close();
+  });
+}
+
+function initSubmitModal() {
+  const modal = $("#submitModal");
+  const submitClose = $("#submitClose");
+  const form = $("#submitForm");
+  const message = $("#submitMessage");
+
+  const close = () => {
+    modal.classList.remove("active");
+    document.body.style.overflow = "";
+    form.reset();
+    message.classList.remove("active", "success", "error");
+  };
+
+  submitClose.addEventListener("click", close);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) close();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("active")) {
+      close();
+    }
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const formData = {
+      username: $("#submitUsername").value.trim(),
+      company: $("#submitCompany").value.trim(),
+      position_type: $("#submitPositionType").value,
+      stage: $("#submitStage").value,
+      date: $("#submitDate").value
+    };
+    const submitButton = form.querySelector(".feedback-submit");
+    submitButton.disabled = true;
+    submitButton.textContent = "Submitting...";
+
+    try {
+      const res = await fetch(`${SERVER}/api/submit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        message.className = "feedback-status success active";
+        message.textContent = "Interview update submitted!";
+        setTimeout(() => {
+          close();
+        }, 1500);
+      } else {
+        throw new Error(data.error || "Failed to submit");
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      message.className = "feedback-status error active";
+      message.textContent = "Failed to submit. Please try again.";
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Submit update";
+    }
+  });
+}
+
+/* ------------ Init ------------ */
+async function initDashboard() {
+  const today = new Date();
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(today.getMonth() - 3);
+
+  const fmt = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${dd}`;
+  };
+
+  $("#startDate").value = fmt(threeMonthsAgo);
+  $("#endDate").value = fmt(today);
+
+  await fetchMeta();
+ // Build global counts once, from META
+if (META && META.company_counts) {
+  globalCompanyCounts = META.company_counts;
+} else if (META && META.company_data) {
+  // fallback: old style array
+  globalCompanyCounts = META.company_data.reduce((acc, d) => {
+    const name = d.company;
+    acc[name] = (acc[name] || 0) + 1;
+    return acc;
+  }, {});
+} else if (META && META.companies) {
+  // fallback if counts missing
+  META.companies.forEach(c => globalCompanyCounts[c] = 0);
+}
+  await fetchMessages();
+  updateCompanyPlaceholder();
+  await refresh();
+
+  renderTopOACompanies();
+  renderTopOfferCompanies();
+
+  $$(".date-preset-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const days = parseInt(btn.getAttribute("data-days"));
+      const today = new Date();
+      const pastDate = new Date();
+      pastDate.setDate(today.getDate() - days);
+      $("#startDate").value = fmt(pastDate);
+      $("#endDate").value = fmt(today);
+      $$(".date-preset-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentPage = 1;
+      refresh();
+    });
+  });
+  // === Debounce helper ===
+function debounce(fn, delay) {
+  let timer;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+// === Debounced input handler for company search ===
+const debouncedCompanySearch = debounce((e) => {
+  renderCompanyDropdown(e.target.value);
+}, 300);
+
+// === Event listeners ===
+$("#companySearch").addEventListener("input", debouncedCompanySearch);
+$("#companySearch").addEventListener("focus", (e) => renderCompanyDropdown(e.target.value));
+
+$("#applyBtn").addEventListener("click", () => {
+  currentPage = 1;
+  refresh();
+});
+
+// Hide dropdown when clicking outside
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".company-search-wrapper")) {
+    $("#companyDropdown").classList.remove("active");
+  }
+});
+
+// === Job-type checkbox logic ===
+["#newGradCheckbox", "#internCheckbox"].forEach(id => {
+  document.querySelector(id).addEventListener("change", (event) => {
+    const newGrad = document.querySelector("#newGradCheckbox");
+    const intern = document.querySelector("#internCheckbox");
+
+    // 🚫 Prevent both from being unchecked
+    if (!newGrad.checked && !intern.checked) {
+      event.target.checked = true;
+      return;
+    }
+
+    // ✅ Auto-refresh when valid state
+    currentPage = 1;
+    refresh();
+  });
+});
+
+
+  initSessionTracking();
+  initFeedbackModal();
+  initDataModal();
+  initSubmitModal();
+}
+
+window.addEventListener("DOMContentLoaded", initDashboard);
+window.removeCompany = removeCompany;
+window.selectCompany = selectCompany;
+</script>
+<script>
+  function showSharePopup() {
+    document.getElementById("share-popup").classList.remove("hidden");
+  }
+
+  function dismissPopup() {
+    document.getElementById("share-popup").classList.add("hidden");
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText("https://jobstats.fyi");
+    alert("Copied! Thanks for helping others 💙");
+    dismissPopup();
+  }
+
+  function shareLinkedIn() {
+    const url = encodeURIComponent("https://jobstats.fyi");
+    window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, "_blank");
+    dismissPopup();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const shownRecently = localStorage.getItem("popupShownTime");
+    const now = Date.now();
+
+    if ((!shownRecently || now - shownRecently > 7 * 24 * 60 * 60 * 1000) && Math.random() < 0.3) {
+      setTimeout(() => {
+        showSharePopup();
+        localStorage.setItem("popupShownTime", now);
+      }, 10000); // show after 90s
+    }
+  });
+
+  // Close dropdown when clicking outside
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".company-search-wrapper")) {
+    $("#companyDropdown").classList.remove("active");
+  }
+});
+</script>
+<!-- ===== Share Popup ===== -->
+<div id="share-popup" class="share-popup hidden">
+  <div class="popup-content">
+    <h3>💙 Did JobStats help you?</h3>
+    <p>Share it with your friends and help more students track interview trends.</p>
+    <div class="popup-buttons">
+      <button class="share-btn" onclick="copyLink()">🔗 Copy Link</button>
+      <button class="share-btn" onclick="shareLinkedIn()">💼 Share on LinkedIn</button>
+      <button class="dismiss-btn" onclick="dismissPopup()">Maybe Later</button>
+    </div>
+  </div>
+</div>
+</div>
+</body>
+</html>
