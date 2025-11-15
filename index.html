@@ -531,7 +531,7 @@ window.DD_RUM.onReady(function() {
   </main>
 </div>
 
-<button class="feedback-btn fixed bottom-6 right-6 z-50 bg-gradient-to-br from-blue-500 to-blue-700 text-white font-semibold py-3 px-5 rounded-full shadow-xl hover:shadow-2xl hover:from-blue-600 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2" id="feedbackBtn" title="Send feedback">
+<button class="feedback-btn fixed bottom-6 right-6 z-50 bg-gradient-to-br from-blue-500 to-blue-700 text-white font-semibold py-3 px-5 rounded-full shadow-xl hover:shadow-2xl hover:from-blue-600 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2" id="feedbackBtn" title="Send feedback" style="display: none;">
   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
   Feedback
 </button>
@@ -2111,6 +2111,7 @@ async function initDashboard() {
       localStorage.setItem("popupShownTime", now);
     }, 10000);
   }
+  $("#feedbackBtn").style.display = "flex";
 }
 
 window.addEventListener("DOMContentLoaded", initDashboard);
